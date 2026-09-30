@@ -3,12 +3,12 @@
 | Campo | Valor |
 |---|---|
 | Artefato | `SPEC/2026-09-30-catalogo-aprendizagem.md` (T2.1 — SPEC do domínio D3) |
-| Status | **Nova — aguardando auditoria/aprovação** |
+| Status | **Aprovada — auditoria concluída e aprovada; correções F-01–F-07 aplicadas (2026-09-30)** |
 | Data | 2026-09-30 |
 | Domínio / Fase | **D3 — Catálogo de aprendizagem (cursos, módulos, aulas)** · Fase **F2** (`PLAN.md` §7) |
 | Tarefa de origem | **T2.1** (`TASKS.md` — "Elaborar SPEC do domínio D3 (catálogo)") |
 | Fontes de verdade | `SPEC/2026-09-30-visao-geral.md` → `PLAN.md` → `TASKS.md` → `SPEC/2026-09-30-decisoes-pendentes.md`; decisões técnicas vinculantes: `SPEC/2026-09-30-tecnica-fundacoes.md` (aprovada; P-08/P-09 delegam modelo físico e contratos de D3/F2 às SPECs de domínio) |
-| Desbloqueia (conteúdo) | T2.2 (hierarquia), T2.4 (autoria), T2.5 (consumo e conclusão); condições de conteúdo de T2.3 (estrutura dos três tipos de conteúdo — **formato/limites permanecem bloqueados por DP-19**) e de T2.6 (validação de F2) |
+| Desbloqueia (conteúdo) | T2.2 (hierarquia), T2.4 (autoria); **T2.5 apenas para o registro de conclusão** (F2-14, AC-08/AC-09 — a leitura/consumo do conteúdo permanece dependente de DP-19 via F2-13 e T2.3); condições de conteúdo de T2.3 (estrutura dos três tipos de conteúdo — **formato/limites permanecem bloqueados por DP-19**) e de T2.6 (validação de F2) |
 | Não resolve | **DP-19 registrada como pendência, não resolvida** (§10.1); DP-04–DP-18 (nenhuma); P-08/P-09 apenas na parcela de D3/F2 (D4–D17 e F3–F13 permanecem abertos); pendências novas P-14–P-17 (§10.2); nada pertencente a D2, D4–D17 |
 | Restrições desta etapa | Sem código; sem alterar `PLAN.md`, `TASKS.md`, SPEC de visão, SPEC técnica ou `decisoes-pendentes.md`; sem inventar requisitos — informação não especificada vira pendência (§10) |
 
@@ -75,14 +75,14 @@ Registradas aqui apenas como base de execução — **não são redecididas nem 
 | Decisão | Onde (SPEC técnica) | Uso em D3 |
 |---|---|---|
 | Stack (TypeScript, Node.js, Express, React/Vite, PostgreSQL, Prisma, Vitest, JSON/HTTP) | §2.1.2 | meios de T2.2–T2.6 (sem efeito em critérios funcionais) |
-| Convenções de modelo: UUID v4 gerado pela aplicação, timestamps `criado_em`/`atualizado_em`, ENUMs minúsculas, migrações versionadas na etapa de implementação | §2.2.1 | §5 (tabelas de D3) |
+| Convenções de modelo: UUID v4 gerado pela aplicação, timestamps `criado_em`/`atualizado_em`, ENUMs minúsculas (estilo das tabelas da técnica §2.2.2), migrações versionadas na etapa de implementação | §2.2.1, §2.2.2 | §5 (tabelas de D3) |
 | Integridade: FKs com **ON DELETE CASCADE** nas tabelas dependentes; ENUM para conjuntos fixos; transação em operações compostas | §2.2.3 (regra 4) | §5; R-13; consequências de exclusão → P-16 |
 | Erro padrão `{"erro": {"codigo", "mensagem"}}` e códigos 400/401/403/404/409/500 | §2.3.1 | §7 e contrafluxos de §3 |
 | Versionamento por URL sob prefixo **`/api/v1`**; regras de versão aditiva/quebra | §2.3.1 | §3.5 (contratos de F2) |
 | Autenticação: sessão servidor-side + cookie `eduquest_session` (HttpOnly, SameSite=Lax; Secure quando HTTPS); `401` sem sessão, `403` com papel/titularidade insuficiente | §2.3.2 | §4.2 (matriz de F2) |
 | **P-08** — modelo físico de D3–D17 delegado às "SPECs de domínio (+ revisão desta SPEC)" | §6.4 | esta SPEC define o modelo de D3 em §5 (parcela D3 cumprida; D4–D17 seguem abertos) |
 | **P-09** — contratos de F2–F13 delegados às "SPECs de domínio (+ revisão desta SPEC)" | §6.4 | esta SPEC define os contratos de F2 em §3.5 (parcela F2 cumprida; F3–F13 seguem abertos) |
-| Fronteira de vídeo: "Não é um host de vídeo: aulas podem exibir vídeo por incorporação (embed) de provedor externo, mas o EduQuest não armazena nem transmite vídeo próprio" | visão §6 (limite fixo) | R-18 (§4); verificação em T2.6 |
+| Fronteira de vídeo: "Não é um host de vídeo: aulas podem exibir vídeo por incorporação (embed) de provedor externo, mas o EduQuest não armazena nem transmite vídeo próprio" | visão §6 (limite fixo — fonte: SPEC de visão, não da SPEC técnica) | R-18 (§4); verificação em T2.6 |
 | Revisão formal de `PLAN.md`/`TASKS.md` (remoção de bloqueios, marcação de DPs) é pós-requisito, não executado na etapa de SPEC | técnica §5, §6.5; D1 §9.4 | §9.4 |
 
 ---
@@ -101,7 +101,7 @@ Os **nomes exatos das chaves JSON** de requisição/resposta não estão fixados
 2. Professor adiciona **módulos** ao curso (F2-06) e **aulas** a cada módulo (F2-09), sempre dentro da hierarquia fixa (R-12): módulo só em curso existente, aula só em módulo existente. → `201 {moduloId}` / `201 {aulaId}`; todos nascem em rascunho.
 3. Professor registra o **conteúdo da aula** (`PUT /api/v1/aulas/{id}/conteudo`, F2-12) com um dos três tipos declarados na visão — **texto**, **média embedada** ou **material anexo** (§5.4). O **formato do corpo, limites de tamanho/upload e regras de embed não estão especificados** → **DP-19** (§10.1); nesta SPEC o contrato existe com resposta `204` e a validade de formato fica pendente (E-24). O PUT é de **substituição total** (decisão técnica REST, não regra de produto).
 4. Professor **publica** os recursos que deseja tornar disponíveis, alterando `publicado` via PATCH (F2-04/F2-07/F2-10) → `200`. Publicação é **ação explícita por recurso** (R-16); a visibilidade para leitores segue R-17 (§4).
-5. Professor pode **editar** (PATCH) ou **excluir** (DELETE → `204`) qualquer recurso do qual é dono (efeitos: §3.4/§3.5, P-15/P-16).
+5. Professor pode **editar** (PATCH) ou **excluir** (DELETE → `204`) qualquer recurso do qual é dono (efeitos da exclusão: §7.3 E-25, §10.2 P-16; despublicação: §7.3 E-26, P-15).
 
 **Contrafluxos:** sem sessão → `401` (E-14); papel que não é professor tentando **criar curso** → `403` (E-15 — visão §3 P2 "CRUD dos próprios cursos"; P3 "não substitui o professor na autoria"); professor não-dono ou estudante em qualquer mutação → `403` (E-16); alvo inexistente → `404` (E-18); referência de hierarquia inexistente no caminho → `404`, payload malformado → `400` (E-17); título ausente → `400` por campo obrigatório, **política de formato/tamanho é P-17** (§10.2); conteúdo com formato não conforme → `400`, **validade pendente de DP-19** (E-24).
 
@@ -200,7 +200,7 @@ Determinada apenas de requisitos existentes (nenhuma regra nova):
 
 ## 5. Dados do catálogo de aprendizagem (modelo físico — exercício de P-08)
 
-Modelo delegado a esta SPEC pela técnica §6.4 (P-08), escrito nas convenções da técnica §2.2.1 (PostgreSQL; UUID v4 gerado pela aplicação como PK; `criado_em`/`atualizado_em`; ENUMs minúsculas; FKs `ON DELETE CASCADE` conforme §2.2.3 regra 4). **Nenhum campo além dos abaixo é criado** — validação e atributos não detalhados são pendência P-17 (§10.2) e o formato de conteúdo é DP-19 (§10.1).
+Modelo delegado a esta SPEC pela técnica §6.4 (P-08), escrito nas convenções da técnica §2.2.1 (PostgreSQL; UUID v4 gerado pela aplicação como PK; `criado_em`/`atualizado_em`) e §2.2.2 (estilo das tabelas: ENUMs com valores minúsculos), com FKs `ON DELETE CASCADE` conforme §2.2.3 regra 4. **Nenhum campo além dos abaixo é criado** — validação e atributos não detalhados são pendência P-17 (§10.2) e o formato de conteúdo é DP-19 (§10.1).
 
 ### 5.1 Curso — tabela `curso`
 
@@ -284,10 +284,10 @@ Modelo delegado a esta SPEC pela técnica §6.4 (P-08), escrito nas convenções
 | AC-08 | **Conclusão:** apenas papel estudante conclui (`403` demais — E-21); aula não visível → `404` (E-22); sucesso `201 {aulaId, concluidaEm}` persiste evento em `conclusao_aula` (§5.5) declarado como insumo de D6/D7; D3 não calcula progresso/XP | §4 R-15, §3.4, §5.5, E-21/E-22; teste em T2.5 |
 | AC-09 | **Duplicata de conclusão (critério de T2.5):** comportamento observável mínimo fixado — repetição não produz `5xx` e preserva o registro original; a semântica (novo evento × idempotente × `409`) **não** é fixada e está registrada como P-14; o modelo não impõe unicidade (§5.5) | §3.4 passo 4, §5.5, E-23, §10.2 |
 | AC-10 | **Fronteira de vídeo:** nenhum armazenamento/transmissão de vídeo próprio em F2 — mídia é apenas embed de provedor externo (R-18), coerente com visão §6 e com T2.3/T2.6 | §4 R-18, §3.3, §8; `TASKS.md` T2.3, T2.6 |
-| AC-11 | **Modelo físico de D3** presente com as 5 tabelas (`curso`, `modulo`, `aula`, `conteudo_aula`, `conclusao_aula`) nas convenções da técnica §2.2.1 (UUID, timestamps, ENUMs, FKs CASCADE), sem campo inventado — parcela D3 de **P-08** cumprida, demais domínios seguem abertos | leitura de §5 × técnica §2.2; §10.3 |
+| AC-11 | **Modelo físico de D3** presente com as 5 tabelas (`curso`, `modulo`, `aula`, `conteudo_aula`, `conclusao_aula`) nas convenções da técnica §2.2.1/§2.2.2 (UUID, timestamps, estilo de ENUM) e §2.2.3 regra 4 (FKs CASCADE), sem campo inventado — parcela D3 de **P-08** cumprida, demais domínios seguem abertos | leitura de §5 × técnica §2.2; §10.3 |
 | AC-12 | **Contratos de F2** presentes: 14 operações sob `/api/v1` no formato de erro da técnica §2.3.1, **sem contrato órfão e sem tarefa de F2 sem contrato** (mapa §9.3); corpo de conteúdo remetido a DP-19 nos contratos F2-12/F2-13 — parcela F2 de **P-09** cumprida | cruzamento §3.5 × `TASKS.md` T2.2–T2.6 × técnica §2.3 |
 | AC-13 | **Matriz de sessão e papel** de F2 presente (§4.2): todas as rotas com sessão exigida; criação professor; mutações dono/admin; conclusão estudante; leitura por visibilidade — base rastreável e `401`/`403` conforme técnica §2.3.2 | §4.2 × visão §3/§5 D3 × técnica §2.3.2 |
-| AC-14 | **DP-19 citada como pendência, não resolvida:** nenhuma forma de conteúdo, limite de upload, regra de embed ou critério de validade de formato é fixado; F2-12/F2-13 remetem a DP-19; T2.3 permanece `[Bloqueada: DP-19]` para formato/limites | busca por `DP-19` no arquivo (ocorrências apenas como pendência: §2.3, §3, §5.4, §10.1); conferência de ausência de formatos/tamanhos definidos |
+| AC-14 | **DP-19 citada como pendência, não resolvida:** nenhuma forma de conteúdo, limite de upload, regra de embed ou critério de validade de formato é fixado; F2-12/F2-13 remetem a DP-19; T2.3 permanece `[Bloqueada: DP-19]` para formato/limites | busca por `DP-19` no arquivo: **todas** as ocorrências (§2.3, §3.1, §3.3, §5.4, §7.3 E-24, §10.1) são remissões à pendência, **nenhuma resolve a decisão**; conferência de ausência de formatos/tamanhos definidos |
 | AC-15 | **Nenhuma outra decisão é resolvida:** DP-04–DP-18 não recebem tratamento; P-14–P-17 registradas com motivo e destino, **nenhum valor arbitrário** (sem política de validação, sem semântica de duplicata/despublicação/exclusão, sem ordenação definida) | leitura de §10; conferência de ausência de valores inventados |
 | AC-16 | Os casos de erro **E-14–E-27** (§7) estão todos contemplados, cada um com resposta já definida (técnica §2.3.1) ou pendência declarada | cruzamento §7 × §3.5 × técnica §2.3.1 |
 | AC-17 | Toda regra funcional desta SPEC é rastreável a SPEC visão, `PLAN.md`, `TASKS.md` ou SPEC técnica (coluna "Rastreabilidade" completa em §4; referências em §2/§3/§5) | leitura de colunas de rastreabilidade |
@@ -331,7 +331,7 @@ Modelo delegado a esta SPEC pela técnica §6.4 (P-08), escrito nas convenções
 | E-24 | `PUT` de conteúdo com formato inválido | `400` — **o que é "válido" depende de DP-19** (nenhum formato é definido aqui) | visão §5 D3; `PLAN.md` §8 (DP-19); AC-14 |
 | E-25 | Exclusão (F2-05/F2-08/F2-11) concedida (`204`) com conclusões/progresso existentes | `204`; **efeitos sobre conclusões, progresso e certificados não especificados** → **P-16** | técnica §2.2.3 regra 4 (CASCADE); §10.2 |
 | E-26 | Despublicação (`publicado: false`) de recurso com conclusões existentes | `200`; **efeito sobre conclusões/progresso já registrados não especificado** → **P-15** | visão (não especifica); §10.2 |
-| E-27 | Título vazio/ausente ou fora de política (formato, tamanho); limites de quantidade de módulos/aulas | comportamento **não fixado** — ausência de política → **P-17** (o `400` de campo obrigatório em §3.1 é o mínimo mecânico; tamanho/formato/límites são P-17) | visão (não especifica); §10.2 |
+| E-27 | Título fora da política de formato/tamanho ou com limites de quantidade de módulos/aulas excedidos | política de validação **não fixada** → **P-17**; **título vazio/ausente segue fixado como `400`** (campo obrigatório — §3.1, coerente com `titulo TEXT NOT NULL` em §5.1–§5.3); formato/tamanho e limites de quantidade são P-17 | visão (não especifica); §3.1; §10.2 |
 
 **Não especificados (sem comportamento inventado):** semântica de conclusão repetida (**P-14**); encadeamento/visibilidade/despublicação (**P-15**); efeitos de exclusão de curso/módulo/aula/conta sobre progresso e certificados (**P-16**); validação, atributos extras, limites quantitativos e ordenação (**P-17**); formato de conteúdo, limites de upload e regras de embed (**DP-19**). Ver §10.
 
@@ -364,7 +364,7 @@ Modelo delegado a esta SPEC pela técnica §6.4 (P-08), escrito nas convenções
 | `SPEC/2026-09-30-visao-geral.md` | §5 D3 (escopo, entidades, 4 regras); §4 passos 3–4 + fluxo do professor + regra de ouro; §3 P1–P3; §6 (não é host de vídeo, não é LMS); §5 D4–D7/D13/D16/D17 (fronteiras) | §2, §3, §4, §5, §6, §7, §8 |
 | `PLAN.md` | §5.3 (escopo/entidades/regras/pendências de D3), §6 item 3 (dependências), §7 F2 (objetivo O2 parte 1, resultado, validação, pendência vinculada), §2 (funcionalidades 3–5), §8 (DP-19), §11 item 9 | §1, §2, §4, §6, §9 |
 | `TASKS.md` | T2.1 (origem), T2.2, T2.3, T2.4, T2.5, T2.6; preâmbulo (bloqueios) | §2.1, §3, §6, §9.3 |
-| `SPEC/2026-09-30-tecnica-fundacoes.md` | §2.1.2 (stack), §2.2 (convenções), §2.3 (formato de erro, `/api/v1`, sessão, `401`/`403`), §6.4 (P-08/P-09 + P-11–P-13 contexto da série P), §5/§6.5 (revisão formal) | §2.4, §3.5, §4.2, §5, §9.4, §10 |
+| `SPEC/2026-09-30-tecnica-fundacoes.md` | §2.1.2 (stack), §2.2 (convenções), §2.3 (formato de erro, `/api/v1`, sessão, `401`/`403`), §6.4 (P-08/P-09 — início da série P; P-11–P-13 são da SPEC de D1 §10.2), §5/§6.5 (revisão formal) | §2.4, §3.5, §4.2, §5, §9.4, §10 |
 | `SPEC/2026-09-30-identidade-acesso-credenciais.md` | §9.4 (pós-requisito de revisão formal), §10 (tratamento de pendências) | §9.4, §10 |
 | `SPEC/2026-09-30-decisoes-pendentes.md` | §2 (status das DPs), entrada **DP-19**, §4 Categoria B, §6 (critérios de encerramento) | §8, §10 |
 
@@ -373,7 +373,7 @@ Modelo delegado a esta SPEC pela técnica §6.4 (P-08), escrito nas convenções
 - **T2.2** (hierarquia e publicação) — critérios AC-05, AC-07; casos E-17–E-20; fluxo A/B; R-12/R-16/R-17.
 - **T2.3** (conteúdo de aula) — estrutura dos três tipos: AC-10, §5.4, R-18; **formato/limites permanecem `[Bloqueada: DP-19]`** (AC-14).
 - **T2.4** (autoria) — critérios AC-06; matriz §4.2; casos E-15, E-16; R-13.
-- **T2.5** (consumo e conclusão) — critérios AC-08, AC-09; fluxos C/D; casos E-20–E-23; R-14/R-15.
+- **T2.5** (consumo e conclusão) — critérios AC-08, AC-09; fluxos C/D; casos E-20–E-23; R-14/R-15. **Desbloqueada apenas para o registro de conclusão** (F2-14 — AC-08/AC-09): a leitura/consumo do conteúdo (F2-13, forma de `conteudo`) permanece dependente de DP-19 via T2.3.
 - **T2.6** (validação de F2) — percurso dos passos 3–4 (AC-03), regras via §6.1, fronteira de vídeo (AC-10).
 - **SPECs posteriores** — D6 consome `conclusao_aula` (P-14/P-16 relevantes); D4/D5 consomem a estrutura de curso/módulo; D17 recebe as rotas de moderação fora de F2.
 
@@ -405,7 +405,7 @@ Série **P-xx** iniciada na técnica (P-01–P-10) e continuada na SPEC de D1 (P
 |---|---|---|---|
 | **DP-19** | **Formato de conteúdo de aula, limites de upload e regras de embed** (inclui forma interna de `conteudo_aula.dados` e cardinalidade fina dos blocos) | a visão §5 D3 cita as entidades de conteúdo (texto, mídia embedada, material anexo) **sem detalhá-las**; o embed de vídeo externo é limite fixo (visão §6), mas formato, tamanhos, provedores e critérios de validade não estão em nenhuma fonte (visão §5/§6, `PLAN.md` §8/§11 item 9, `TASKS.md` T2.3) | **SPEC de conteúdo** (`PLAN.md` §8; `decisoes-pendentes.md` entrada DP-19) — antes do detalhe/formato de T2.3; **não é resolvida por este documento** (AC-14) |
 
-Efeito reconhecido: **T2.3 permanece `[Bloqueada: DP-19]`** para formato/limites (execução parcial de estrutura é `[Livre]`, conforme `TASKS.md` T2.3); F2-12/F2-13 existem como contrato com corpo remetido a DP-19.
+Efeito reconhecido: **T2.3 permanece `[Bloqueada: DP-19]`** para formato/limites (execução parcial de estrutura é `[Livre]`, conforme `TASKS.md` T2.3); F2-12/F2-13 existem como contrato com corpo remetido a DP-19. **T2.5 permanece desbloqueada apenas para o registro de conclusão** (F2-14, AC-08/AC-09); a leitura/consumo do conteúdo (F2-13, forma de `conteudo`) segue dependente de DP-19 e de T2.3.
 
 ### 10.2 Pendências novas abertas por esta SPEC
 
