@@ -5,7 +5,7 @@
 | Artefato | `SPEC/2026-09-30-decisoes-pendentes.md` (apoio ao processo SDD) |
 | Tarefa de origem | T0.1 — Inventário das decisões pendentes do EduQuest (`TASKS.md`, fase F0) |
 | Fonte de autoridade | SPEC → PLAN → TASKS → este documento |
-| Status | Inventário registrado; nenhuma decisão resolvida |
+| Status | Inventário registrado. **Revisão 2026-09-30:** DP-19 marcada como **Resolvida** (`SPEC/2026-09-30-conteudo-aula.md`, aprovada) — critério §6 atendido; demais DPs inalteradas neste documento |
 | Data | 2026-09-30 |
 | Fora de escopo deste artefato | Resolver DP-01–DP-19; escolher stack, arquitetura, endpoints, schemas, fórmulas ou tipos de questão; alterar SPEC/PLAN/TASKS; escrever código |
 
@@ -51,9 +51,11 @@ Legenda de status: **Pendente** = decisão ainda não tomada, com artefato futur
 | DP-16 | Aspectos legais (termos de uso, LGPD/GDPR, consentimentos) | Pendente (consideração futura) | Não atribuída no `PLAN.md` | Não gera tarefas | Nenhuma declarada |
 | DP-17 | Persona P4 e relatórios de analytics | Pendente | F11 (antes/durante F11) | **Parcial** — só P4: T11.5 bloqueada; T11.1 parcial (`[Livre]` para professor/admin) | Nenhuma outra DP declarada |
 | DP-18 | Catálogos e tabelas de gamificação (conquistas, missões, itens/preços, desafios) | Pendente | F5, F6, F8 | **Sim** — T5.5, T6.1, T6.3, T8.1 | Nenhuma outra DP declarada |
-| DP-19 | Formato de conteúdo de aula, limites de upload, embeds | Pendente | F2 (antes do detalhe de F2) | **Parcial** — só formato/limites: T2.3 bloqueada; T2.1 (registro) e execução parcial `[Livre]` | Nenhuma outra DP declarada |
+| DP-19 | Formato de conteúdo de aula, limites de upload, embeds | **Resolvida (2026-09-30 — `SPEC/2026-09-30-conteudo-aula.md`)** | F2 (antes do detalhe de F2) | **Não mais** — bloqueio de T2.3 removido na revisão de `TASKS.md` de 2026-09-30 | Nenhuma outra DP declarada |
 
-**Contagem:** 19 decisões (DP-01–DP-19); 16 com status **Pendente**; 3 **Fora de escopo (desta visão)** (DP-12, DP-13, DP-14); **0 resolvidas**.
+**Contagem:** 19 decisões (DP-01–DP-19); 15 com status **Pendente**; 3 **Fora de escopo (desta visão)** (DP-12, DP-13, DP-14); **1 resolvida** (DP-19, 2026-09-30).
+
+> **Observação (não corrigida nesta revisão):** DP-01–DP-03 foram resolvidas pela `SPEC/2026-09-30-tecnica-fundacoes.md` (aprovada), mas a revisão formal prevista na técnica §5 ainda não foi feita neste documento nem no `PLAN.md` §8 — segue como pendência de processo.
 
 ---
 
@@ -269,6 +271,7 @@ Para cada decisão: ID; nome; descrição objetiva; origem no `PLAN.md`; domíni
 - **Dependências:** nenhuma outra DP declarada.
 - **Bloqueadora:** **Parcial** — só formato/limites de T2.3; a hierarquia e a estrutura de conteúdo seguem em `[Livre]`.
 - **Artefato futuro:** **SPEC de conteúdo** (`PLAN.md` §8).
+- **Resolução (2026-09-30):** `SPEC/2026-09-30-conteudo-aula.md` — aprovada após auditoria (§13 daquela SPEC); os 6 critérios da §6 foram atendidos (artefato, decisão inequívoca, status "Aprovada", rastreabilidade, registro em `PLAN.md` §8 e aqui, bloqueio de T2.3 removido). Pendências derivadas abertas: P-18–P-21 (naquela SPEC, §11).
 
 ---
 

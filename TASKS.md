@@ -218,12 +218,12 @@
 #### T2.3 — Implementar conteúdo de aula (texto, mídia embedada, material anexo)
 
 - **Fase / Domínio:** F2 / D3
-- **Descrição:** Implementar os tipos de conteúdo de aula declarados na visão geral: texto, mídia incorporada de provedor externo e material anexo.
+- **Descrição:** Implementar os tipos de conteúdo de aula declarados na visão geral: texto, mídia incorporada de provedor externo e material anexo — no formato e com os limites de `SPEC/2026-09-30-conteudo-aula.md` (DP-19): lista ordenada de 0–50 blocos com `posicao` (F2-12/F2-13 definitivos), upload de anexo em JSON+base64 (F2-15) e download (F2-16).
 - **Pré-requisitos:** T2.2.
-- **Artefatos esperados:** editor/exibição dos três tipos de conteúdo; suporte a embed externo sem armazenamento de vídeo próprio.
-- **Validação:** nenhum armazenamento/transmissão de vídeo próprio (limite da visão); formato detalhado e limites de upload permanecem pendentes (DP-19).
-- **Rastreabilidade:** `PLAN.md` §5.3, §7 F2, §11 item 9; SPEC §5 D3, §6 (não é host de vídeo).
-- **Bloqueios:** `[Bloqueada: DP-19]` para formato/limites; execução parcial (estrutura) é `[Livre]` + global DP-01–DP-03
+- **Artefatos esperados:** editor/exibição dos três tipos de conteúdo (formulário por tipo, sem JSON livre); suporte a embed externo sem armazenamento de vídeo próprio; migração (`posicao` em `conteudo_aula`, tabela `arquivo` com binário `BYTEA`); rotas F2-15/F2-16; testes TC-01–TC-20 da SPEC de conteúdo.
+- **Validação:** nenhum armazenamento/transmissão de vídeo próprio (limite da visão; R-C9); critérios AC-01–AC-16 e TC-01–TC-20 de `SPEC/2026-09-30-conteudo-aula.md`.
+- **Rastreabilidade:** `PLAN.md` §5.3, §7 F2, §8 DP-19, §11 item 9; SPEC §5 D3, §6 (não é host de vídeo); `SPEC/2026-09-30-conteudo-aula.md` §4–§8.
+- **Bloqueios:** `[Livre]` — DP-19 resolvida em 2026-09-30 (`SPEC/2026-09-30-conteudo-aula.md`, aprovada); bloqueio removido nesta revisão formal. Pendências derivadas P-18–P-21 não bloqueiam (o que depende delas não é implementado) + global DP-01–DP-03
 
 #### T2.4 — Implementar restrição de autoria (professor dono ou admin)
 
@@ -251,8 +251,8 @@
 - **Descrição:** Executar a validação da fase: regras de D3 e passos 3–4 do fluxo, incluindo verificação de fronteira de vídeo.
 - **Pré-requisitos:** T2.2–T2.5.
 - **Artefatos esperados:** relatório de validação da fase F2.
-- **Validação:** hierarquia, publicação, autoria e conclusão cobertas; nenhum recurso de vídeo próprio presente.
-- **Rastreabilidade:** `PLAN.md` §7 F2, §9.
+- **Validação:** hierarquia, publicação, autoria e conclusão cobertas; nenhum recurso de vídeo próprio presente (R-C9 de `SPEC/2026-09-30-conteudo-aula.md`: F2-15 rejeita `video/*`, F2-12 não aceita binário).
+- **Rastreabilidade:** `PLAN.md` §7 F2, §9; `SPEC/2026-09-30-conteudo-aula.md` §8 (TC-01–TC-20).
 - **Bloqueios:** `[Livre]`
 
 ---

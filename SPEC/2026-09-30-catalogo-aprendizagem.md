@@ -11,6 +11,7 @@
 | Desbloqueia (conteúdo) | T2.2 (hierarquia), T2.4 (autoria); **T2.5 apenas para o registro de conclusão** (F2-14, AC-08/AC-09 — a leitura/consumo do conteúdo permanece dependente de DP-19 via F2-13 e T2.3); condições de conteúdo de T2.3 (estrutura dos três tipos de conteúdo — **formato/limites permanecem bloqueados por DP-19**) e de T2.6 (validação de F2) |
 | Não resolve | **DP-19 registrada como pendência, não resolvida** (§10.1); DP-04–DP-18 (nenhuma); P-08/P-09 apenas na parcela de D3/F2 (D4–D17 e F3–F13 permanecem abertos); pendências novas P-14–P-17 (§10.2); nada pertencente a D2, D4–D17 |
 | Restrições desta etapa | Sem código; sem alterar `PLAN.md`, `TASKS.md`, SPEC de visão, SPEC técnica ou `decisoes-pendentes.md`; sem inventar requisitos — informação não especificada vira pendência (§10) |
+| Revisão formal (2026-09-30) | **DP-19 resolvida** por `SPEC/2026-09-30-conteudo-aula.md` (aprovada, §10.2 daquela SPEC). Nesta revisão: §3.5 passa a **16 contratos** (F2-12/F2-13 definitivos + F2-15/F2-16); §5.4 recebe `posicao` e a forma de `dados`; nova tabela `arquivo` (§5.6); §10.1 registra a resolução. Onde o texto original diz "DP-19 pendente", prevalece a SPEC de conteúdo. Nenhuma outra regra desta SPEC mudou |
 
 ---
 
@@ -141,7 +142,7 @@ Os **nomes exatos das chaves JSON** de requisição/resposta não estão fixados
 
 ### 3.5 Contratos de F2 (exercício de P-09 — técnica §6.4)
 
-Todos sob `/api/v1`, JSON sobre HTTP, erro `{"erro": {"codigo", "mensagem"}}` e códigos conforme técnica §2.3.1. **14 contratos**, sem contrato órfão e sem tarefa de F2 sem contrato (mapa em §9.3).
+Todos sob `/api/v1`, JSON sobre HTTP, erro `{"erro": {"codigo", "mensagem"}}` e códigos conforme técnica §2.3.1. **16 contratos** (revisão 2026-09-30: eram 14; F2-15/F2-16 criados pela SPEC de conteúdo — DP-19), sem contrato órfão e sem tarefa de F2 sem contrato (mapa em §9.3).
 
 | # | Método | Rota | Propósito | Rastreabilidade | Sucesso | Erros |
 |---|---|---|---|---|---|---|
@@ -156,9 +157,11 @@ Todos sob `/api/v1`, JSON sobre HTTP, erro `{"erro": {"codigo", "mensagem"}}` e 
 | F2-09 | POST | `/api/v1/modulos/{id}/aulas` | Criar aula no módulo | T2.2, T2.4 | `201` `{aulaId}` (rascunho) | `400`; `401`; `403`; `404` (módulo) |
 | F2-10 | PATCH | `/api/v1/aulas/{id}` | Editar `titulo` / `publicado` da aula | T2.2, T2.4 | `200` com aula atualizada | `400` (P-17); `401`; `403`; `404` |
 | F2-11 | DELETE | `/api/v1/aulas/{id}` | Excluir aula (e conteúdo) | T2.2, T2.4; efeitos → P-16 | `204` | `401`; `403`; `404` |
-| F2-12 | PUT | `/api/v1/aulas/{id}/conteudo` | Definir conteúdo da aula (substituição total) | T2.3; visão §5 D3; **formato → DP-19** | `204` | `400` (validade do formato: **DP-19**); `401`; `403`; `404` |
-| F2-13 | GET | `/api/v1/aulas/{id}` | Consumir aula publicada (conteúdo) | T2.3, T2.5; visão §4 passo 4 | `200` `{id, titulo, publicado, conteudo}` (**forma de `conteudo`: DP-19**) | `401`; `404` (inexistente ou não publicada p/ não-dono) |
+| F2-12 | PUT | `/api/v1/aulas/{id}/conteudo` | Definir conteúdo da aula (substituição total) | T2.3; visão §5 D3; **formato: SPEC de conteúdo §6.1** | `204` | `400` (validade: SPEC de conteúdo §6.1/§9); `401`; `403`; `404` |
+| F2-13 | GET | `/api/v1/aulas/{id}` | Consumir aula publicada (conteúdo) | T2.3, T2.5; visão §4 passo 4 | `200` `{id, titulo, publicado, conteudo}` (**forma de `conteudo`: SPEC de conteúdo §6.2**) | `401`; `404` (inexistente ou não publicada p/ não-dono) |
 | F2-14 | POST | `/api/v1/aulas/{id}/conclusao` | Registrar conclusão da aula por estudante | T2.5; visão §5 D3, §4 passo 4 | `201` `{aulaId, concluidaEm}` | `400`; `401`; `403` (não-estudante); `404`; duplicata → P-14 (E-23) |
+| F2-15 | POST | `/api/v1/aulas/{id}/arquivos` | Enviar material anexo (JSON+base64) | T2.3; **SPEC de conteúdo §6.3** (DP-19) | `201` `{arquivoId, nome, mime, tamanho}` | `400`; `401`; `403`; `404` |
+| F2-16 | GET | `/api/v1/arquivos/{id}` | Baixar material anexo | T2.3, T2.5; **SPEC de conteúdo §6.4** (DP-19) | `200` binário (`attachment`) | `401`; `404` (inexistente ou aula não visível) |
 
 **Notas:** (a) `409` **não é usado** em F2 enquanto P-14 estiver aberta — se a decisão futura adotar conflito, o código passa a ser emitido pela revisão correspondente; (b) nenhuma rota aceita filtro, paginação ou ordenação por parâmetro — nada disso está especificado (ordenação: P-17); (c) rotas administrativas de moderação de conteúdo (D17) não existem aqui (§2.3).
 
@@ -239,10 +242,15 @@ Modelo delegado a esta SPEC pela técnica §6.4 (P-08), escrito nas convenções
 | `id` | UUID (PK) | identificador do bloco de conteúdo | técnica §2.2.1 |
 | `aula_id` | FK → `aula.id` (ON DELETE CASCADE), INDEX | conteúdo pertence à aula; excluir aula remove conteúdo | visão §5 D3 |
 | `tipo` | ENUM(`texto`, `midia_embedada`, `material_anexo`), NOT NULL | **exatamente os 3 tipos declarados na visão** (conjunto fechado) | visão §5 D3 |
-| `dados` | JSONB NOT NULL | conteúdo do bloco — **forma interna, formatos aceitos, limites e regras de embed: DP-19 (não definidos aqui)** | visão §5 D3; `PLAN.md` §8 (DP-19); §10.1 |
+| `posicao` | INTEGER NOT NULL; UNIQUE (`aula_id`, `posicao`) | ordem do bloco, 0…n−1 contígua (revisão 2026-09-30) | SPEC de conteúdo R-C2, §7.1 |
+| `dados` | JSONB NOT NULL | conteúdo do bloco — forma interna fechada por tipo definida na **SPEC de conteúdo §2.2** (revisão 2026-09-30; originalmente "DP-19 não definida") | visão §5 D3; SPEC de conteúdo §2.2/§6 |
 | `criado_em` / `atualizado_em` | TIMESTAMP NOT NULL | timestamps | técnica §2.2.1 |
 
-**Cardinalidade:** aula 1:N blocos — a **estrutura fina** (ordem, quantidade máxima, um-bloco-por-aula ou lista) é parte de **DP-19** e não é fixada como requisito aqui; a modelagem apenas não impede a lista.
+**Cardinalidade:** aula 1:N blocos — lista ordenada de **0–50** blocos com `posicao` (revisão 2026-09-30: fixada pela SPEC de conteúdo R-C2/R-C3, §6.5).
+
+### 5.6 Material anexo — tabela `arquivo` (revisão 2026-09-30)
+
+Criada pela SPEC de conteúdo (DP-19), §7.2: `id` UUID PK; `aula_id` FK → `aula.id` (ON DELETE CASCADE), INDEX; `nome` VARCHAR(255); `mime` VARCHAR(100); `tamanho` INTEGER; `conteudo` BYTEA (binário); `criado_em`/`atualizado_em`. Detalhes e regras: SPEC de conteúdo R-C6/R-C7.
 
 ### 5.5 Conclusão de aula — tabela `conclusao_aula` (registro do evento; regra R-15)
 
@@ -405,7 +413,9 @@ Série **P-xx** iniciada na técnica (P-01–P-10) e continuada na SPEC de D1 (P
 |---|---|---|---|
 | **DP-19** | **Formato de conteúdo de aula, limites de upload e regras de embed** (inclui forma interna de `conteudo_aula.dados` e cardinalidade fina dos blocos) | a visão §5 D3 cita as entidades de conteúdo (texto, mídia embedada, material anexo) **sem detalhá-las**; o embed de vídeo externo é limite fixo (visão §6), mas formato, tamanhos, provedores e critérios de validade não estão em nenhuma fonte (visão §5/§6, `PLAN.md` §8/§11 item 9, `TASKS.md` T2.3) | **SPEC de conteúdo** (`PLAN.md` §8; `decisoes-pendentes.md` entrada DP-19) — antes do detalhe/formato de T2.3; **não é resolvida por este documento** (AC-14) |
 
-Efeito reconhecido: **T2.3 permanece `[Bloqueada: DP-19]`** para formato/limites (execução parcial de estrutura é `[Livre]`, conforme `TASKS.md` T2.3); F2-12/F2-13 existem como contrato com corpo remetido a DP-19. **T2.5 permanece desbloqueada apenas para o registro de conclusão** (F2-14, AC-08/AC-09); a leitura/consumo do conteúdo (F2-13, forma de `conteudo`) segue dependente de DP-19 e de T2.3.
+**Revisão 2026-09-30:** DP-19 **resolvida** por `SPEC/2026-09-30-conteudo-aula.md` (aprovada); T2.3 desbloqueada em `TASKS.md`; F2-12/F2-13 com corpo definitivo e F2-15/F2-16 criados (§3.5). O parágrafo abaixo é o registro histórico do estado anterior.
+
+Efeito reconhecido (histórico): **T2.3 permanece `[Bloqueada: DP-19]`** para formato/limites (execução parcial de estrutura é `[Livre]`, conforme `TASKS.md` T2.3); F2-12/F2-13 existem como contrato com corpo remetido a DP-19. **T2.5 permanece desbloqueada apenas para o registro de conclusão** (F2-14, AC-08/AC-09); a leitura/consumo do conteúdo (F2-13, forma de `conteudo`) segue dependente de DP-19 e de T2.3.
 
 ### 10.2 Pendências novas abertas por esta SPEC
 
