@@ -122,7 +122,19 @@ describe('T2.6 — superfície web do catálogo (F2-01, F2-13, F2-14)', () => {
           titulo: 'Equacoes',
           publicado: true,
           conteudo: [
-            { id: 'bloco-1', tipo: 'texto', dados: { markdown: 'x + y = z' } },
+            { id: 'bloco-1', tipo: 'texto', posicao: 0, dados: { texto: 'x + y = z\n<b>nao e html</b>' } },
+            {
+              id: 'bloco-2',
+              tipo: 'midia_embedada',
+              posicao: 1,
+              dados: { url: 'https://provedor.example/embed/abc' },
+            },
+            {
+              id: 'bloco-3',
+              tipo: 'material_anexo',
+              posicao: 2,
+              dados: { arquivoId: 'arq-1', nome: 'lista.pdf', mime: 'application/pdf', tamanho: 2048 },
+            },
           ],
         })
       }
@@ -143,8 +155,18 @@ describe('T2.6 — superfície web do catálogo (F2-01, F2-13, F2-14)', () => {
 
     fireEvent.click(screen.getByText('Abrir aula'))
     await screen.findByText('Conteudo')
-    expect(screen.getByText('texto')).toBeTruthy()
-    expect(screen.getByText(/x \+ y = z/)).toBeTruthy()
+    const texto = screen.getByText(/x \+ y = z/)
+    expect(texto.textContent).toBe('x + y = z\n<b>nao e html</b>')
+    expect(texto.querySelector('b')).toBeNull()
+    const iframe = screen.getByTitle('Midia da aula')
+    expect(iframe.getAttribute('src')).toBe('https://provedor.example/embed/abc')
+    expect(iframe.getAttribute('sandbox')).toBe('allow-scripts allow-same-origin allow-popups allow-presentation')
+    expect(screen.getByText('Abrir midia em nova aba').getAttribute('rel')).toContain('noopener')
+    expect(screen.getByText('Baixar lista.pdf').getAttribute('href')).toBe('/api/v1/arquivos/arq-1')
+    const ordem = Array.from(document.querySelectorAll('ol > li')).map((item) => item.textContent ?? '')
+    expect(ordem[0]).toContain('x + y = z')
+    expect(ordem[1]).toContain('Abrir midia')
+    expect(ordem[2]).toContain('Baixar lista.pdf')
     expect(screen.queryByLabelText('Tipo do bloco')).toBeNull()
 
     fireEvent.click(screen.getByText('Marcar aula como concluida'))
@@ -154,5 +176,95 @@ describe('T2.6 — superfície web do catálogo (F2-01, F2-13, F2-14)', () => {
       return init?.method === 'POST' && String(chamada[0]).includes('/conclusao')
     })
     expect(conclusao).toBeTruthy()
+  })
+
+  it('professor dono edita por formulário: texto, mídia https e anexo via F2-15, reenviando anexo como {arquivoId} (R-C8/A-3)', async () => {
+    const cursoId = '88888888-8888-4888-8888-888888888888'
+    const aulaId = '99999999-9999-4999-8999-999999999999'
+    const base = mockDeSessao(sessaoProfessor)
+    let conteudo: unknown[] = [
+      {
+        id: 'bloco-1',
+        tipo: 'material_anexo',
+        posicao: 0,
+        dados: { arquivoId: 'arq-1', nome: 'antigo.pdf', mime: 'application/pdf', tamanho: 10 },
+      },
+    ]
+    const envios: unknown[] = []
+    const uploads: { nome: string; mime: string; base64: string }[] = []
+    const fetchMock = vi.fn(async (url: unknown, init?: { method?: string; body?: string }) => {
+      const alvo = String(url)
+      const metodo = init?.method ?? 'GET'
+      if (alvo.endsWith('/api/v1/cursos') && metodo === 'GET') {
+        return respostaJson([
+          { id: cursoId, titulo: 'Fisica', publicado: false, donoId: sessaoProfessor.usuarioId },
+        ])
+      }
+      if (alvo === `/api/v1/cursos/${cursoId}`) {
+        return respostaJson({
+          id: cursoId,
+          titulo: 'Fisica',
+          publicado: false,
+          donoId: sessaoProfessor.usuarioId,
+          modulos: [
+            { id: 'mod-1', titulo: 'Cinematica', publicado: false, aulas: [{ id: aulaId, titulo: 'MRU', publicado: false }] },
+          ],
+        })
+      }
+      if (alvo === `/api/v1/aulas/${aulaId}` && metodo === 'GET') {
+        return respostaJson({ id: aulaId, titulo: 'MRU', publicado: false, conteudo })
+      }
+      if (alvo === `/api/v1/aulas/${aulaId}/arquivos` && metodo === 'POST') {
+        const corpo = JSON.parse(init?.body ?? '{}')
+        uploads.push(corpo)
+        return respostaJson({ arquivoId: 'arq-2', nome: corpo.nome, mime: corpo.mime, tamanho: 4 }, 201)
+      }
+      if (alvo === `/api/v1/aulas/${aulaId}/conteudo` && metodo === 'PUT') {
+        const corpo = JSON.parse(init?.body ?? '[]') as { tipo: string; dados: unknown }[]
+        envios.push(corpo)
+        conteudo = corpo.map((bloco, posicao) => ({ id: `novo-${posicao}`, posicao, ...bloco }))
+        return { ok: true, status: 204, text: async () => '' }
+      }
+      return base(url, init)
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    render(<App />)
+    fireEvent.click(await screen.findByText('Catálogo'))
+    fireEvent.click(await screen.findByText('Abrir'))
+    fireEvent.click(await screen.findByText('Abrir aula'))
+    await screen.findByText('Baixar antigo.pdf')
+    expect(screen.queryByLabelText(/JSON/)).toBeNull()
+
+    const texto = screen.getByLabelText('Texto')
+    fireEvent.change(texto, { target: { value: 'Velocidade constante.' } })
+    fireEvent.submit(texto.closest('form')!)
+    await waitFor(() => expect(envios).toHaveLength(1))
+    expect(envios[0]).toEqual([
+      { tipo: 'material_anexo', dados: { arquivoId: 'arq-1' } },
+      { tipo: 'texto', dados: { texto: 'Velocidade constante.' } },
+    ])
+    await screen.findByText('Velocidade constante.')
+
+    fireEvent.change(screen.getByLabelText('Tipo do bloco'), { target: { value: 'midia_embedada' } })
+    const url = screen.getByLabelText('URL da midia (https)')
+    fireEvent.change(url, { target: { value: 'http://inseguro.example/v' } })
+    fireEvent.submit(url.closest('form')!)
+    await screen.findByText('A URL da midia precisa comecar com https://.')
+    expect(envios).toHaveLength(1)
+
+    fireEvent.change(screen.getByLabelText('Tipo do bloco'), { target: { value: 'material_anexo' } })
+    const campoArquivo = screen.getByLabelText(/Arquivo \(PDF/)
+    expect(campoArquivo.getAttribute('accept')).toContain('application/pdf')
+    const arquivo = new File(['%PDF'], 'nova.pdf', { type: 'application/pdf' })
+    fireEvent.change(campoArquivo, { target: { files: [arquivo] } })
+    fireEvent.submit(campoArquivo.closest('form')!)
+    await waitFor(() => expect(envios).toHaveLength(2))
+    expect(uploads).toEqual([{ nome: 'nova.pdf', mime: 'application/pdf', base64: 'JVBERg==' }])
+    expect(envios[1]).toEqual([
+      { tipo: 'material_anexo', dados: { arquivoId: 'arq-1' } },
+      { tipo: 'texto', dados: { texto: 'Velocidade constante.' } },
+      { tipo: 'material_anexo', dados: { arquivoId: 'arq-2' } },
+    ])
   })
 })

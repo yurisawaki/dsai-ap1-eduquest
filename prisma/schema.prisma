@@ -147,6 +147,7 @@ model Aula {
   modulo     Modulo         @relation(fields: [modulo_id], references: [id], onDelete: Cascade)
   conteudos  ConteudoAula[]
   conclusoes ConclusaoAula[]
+  arquivos   Arquivo[]
 
   @@index([modulo_id])
   @@map("aula")
@@ -156,14 +157,31 @@ model ConteudoAula {
   id            String       @id @db.Uuid
   aula_id       String       @db.Uuid
   tipo          TipoConteudo
+  posicao       Int
   dados         Json
   criado_em     DateTime     @default(now())
   atualizado_em DateTime     @updatedAt
 
   aula Aula @relation(fields: [aula_id], references: [id], onDelete: Cascade)
 
-  @@index([aula_id])
+  @@unique([aula_id, posicao])
   @@map("conteudo_aula")
+}
+
+model Arquivo {
+  id            String   @id @db.Uuid
+  aula_id       String   @db.Uuid
+  nome          String   @db.VarChar(255)
+  mime          String   @db.VarChar(100)
+  tamanho       Int
+  conteudo      Bytes
+  criado_em     DateTime @default(now())
+  atualizado_em DateTime @updatedAt
+
+  aula Aula @relation(fields: [aula_id], references: [id], onDelete: Cascade)
+
+  @@index([aula_id])
+  @@map("arquivo")
 }
 
 model ConclusaoAula {

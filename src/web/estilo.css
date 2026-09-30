@@ -87,3 +87,14 @@ section {
 .erro {
   color: #a4262c;
 }
+
+/* R-C8 (SPEC de conteudo): texto simples preservando quebras de linha */
+.texto-aula {
+  white-space: pre-wrap;
+}
+
+iframe {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 1px solid #d8dbe0;
+}

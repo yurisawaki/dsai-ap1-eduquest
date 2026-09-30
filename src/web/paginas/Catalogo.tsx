@@ -29,7 +29,15 @@ interface CursoDetalhe extends ResumoCurso {
 interface BlocoConteudo {
   id?: string
   tipo: string
+  posicao?: number
   dados: unknown
+}
+
+interface ArquivoEnviado {
+  arquivoId: string
+  nome: string
+  mime: string
+  tamanho: number
 }
 
 interface AulaDetalhe {
@@ -43,10 +51,100 @@ interface Props {
   sessao: Sessao
 }
 
-const TIPOS_CONTEUDO = ['texto', 'midia_embedada', 'material_anexo'] as const
+const TIPOS_CONTEUDO = [
+  { valor: 'texto', rotulo: 'Texto' },
+  { valor: 'midia_embedada', rotulo: 'Midia embedada' },
+  { valor: 'material_anexo', rotulo: 'Material anexo' },
+] as const
+
+// R-C6b da SPEC de conteúdo: os 5 tipos aceitos pela F2-15
+const TIPOS_ANEXO = 'application/pdf,image/png,image/jpeg,image/gif,application/zip,.pdf,.png,.jpg,.jpeg,.gif,.zip'
 
 function estado(publicado: boolean): string {
   return publicado ? 'Publicado' : 'Rascunho'
+}
+
+function campo(dados: unknown, chave: string): string | null {
+  if (dados === null || typeof dados !== 'object') return null
+  const valor = (dados as Record<string, unknown>)[chave]
+  return typeof valor === 'string' ? valor : null
+}
+
+function tamanhoLegivel(bytes: unknown): string {
+  if (typeof bytes !== 'number') return ''
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+function urlHttps(valor: string): boolean {
+  try {
+    return new URL(valor).protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
+// R-C8/A-3: o PUT recebe só {tipo, dados}; anexo é projetado para {arquivoId}
+function paraEnvio(bloco: BlocoConteudo): { tipo: string; dados: unknown } {
+  if (bloco.tipo === 'material_anexo') {
+    return { tipo: bloco.tipo, dados: { arquivoId: campo(bloco.dados, 'arquivoId') } }
+  }
+  return { tipo: bloco.tipo, dados: bloco.dados }
+}
+
+function lerBase64(arquivo: File): Promise<string> {
+  return new Promise((resolver, rejeitar) => {
+    const leitor = new FileReader()
+    leitor.onload = () => {
+      const url = String(leitor.result ?? '')
+      resolver(url.slice(url.indexOf(',') + 1))
+    }
+    leitor.onerror = () => rejeitar(new Error('Nao foi possivel ler o arquivo.'))
+    leitor.readAsDataURL(arquivo)
+  })
+}
+
+// R-C8: cada tipo tem renderização própria; texto nunca é interpretado como marcação
+function BlocoRenderizado({ bloco }: { bloco: BlocoConteudo }) {
+  if (bloco.tipo === 'texto') {
+    const texto = campo(bloco.dados, 'texto')
+    if (texto !== null) return <p className="texto-aula">{texto}</p>
+  }
+  if (bloco.tipo === 'midia_embedada') {
+    const url = campo(bloco.dados, 'url')
+    if (url !== null) {
+      return (
+        <div>
+          <iframe
+            src={url}
+            title="Midia da aula"
+            loading="lazy"
+            sandbox="allow-scripts allow-same-origin allow-popups allow-presentation"
+          />
+          <p>
+            <a href={url} target="_blank" rel="noopener noreferrer">
+              Abrir midia em nova aba
+            </a>
+          </p>
+        </div>
+      )
+    }
+  }
+  if (bloco.tipo === 'material_anexo') {
+    const arquivoId = campo(bloco.dados, 'arquivoId')
+    const nome = campo(bloco.dados, 'nome')
+    if (arquivoId !== null && nome !== null) {
+      const tamanho = tamanhoLegivel((bloco.dados as Record<string, unknown>).tamanho)
+      return (
+        <p>
+          <a href={`/api/v1/arquivos/${arquivoId}`}>Baixar {nome}</a>
+          {tamanho && ` (${tamanho})`}
+        </p>
+      )
+    }
+  }
+  return <p>Bloco em formato nao suportado.</p>
 }
 
 export function PaginaCatalogo({ sessao }: Props) {
@@ -466,8 +564,10 @@ function DetalheAula({ sessao, aulaId, donoId, aoVoltar }: PropsAula) {
   const [aula, setAula] = useState<AulaDetalhe | null>(null)
   const [erro, setErro] = useState<string | null>(null)
   const [mensagem, setMensagem] = useState<string | null>(null)
-  const [tipoNovo, setTipoNovo] = useState<string>(TIPOS_CONTEUDO[0])
-  const [dadosNovos, setDadosNovos] = useState('{}')
+  const [tipoNovo, setTipoNovo] = useState<string>(TIPOS_CONTEUDO[0].valor)
+  const [textoNovo, setTextoNovo] = useState('')
+  const [urlNova, setUrlNova] = useState('')
+  const [arquivoNovo, setArquivoNovo] = useState<File | null>(null)
 
   const carregar = useCallback(async () => {
     try {
@@ -483,32 +583,70 @@ function DetalheAula({ sessao, aulaId, donoId, aoVoltar }: PropsAula) {
     void carregar()
   }, [carregar])
 
-  async function salvarConteudo(blocos: BlocoConteudo[]) {
-    setErro(null)
-    setMensagem(null)
+  async function salvarConteudo(blocos: BlocoConteudo[]): Promise<boolean> {
     try {
       await api(`/api/v1/aulas/${aulaId}/conteudo`, {
         metodo: 'PUT',
-        corpo: blocos.map(({ tipo, dados }) => ({ tipo, dados })),
+        corpo: blocos.map(paraEnvio),
       })
       setMensagem('Conteudo salvo.')
       await carregar()
+      return true
     } catch (erroSalvamento) {
       setErro(mensagemDeErro(erroSalvamento))
+      return false
     }
+  }
+
+  async function removerBloco(indice: number) {
+    setErro(null)
+    setMensagem(null)
+    await salvarConteudo((aula?.conteudo ?? []).filter((_item, posicao) => posicao !== indice))
+  }
+
+  async function novoBloco(): Promise<BlocoConteudo | null> {
+    if (tipoNovo === 'texto') {
+      if (textoNovo.trim().length === 0) {
+        setErro('Informe o texto do bloco.')
+        return null
+      }
+      return { tipo: 'texto', dados: { texto: textoNovo } }
+    }
+    if (tipoNovo === 'midia_embedada') {
+      if (!urlHttps(urlNova)) {
+        setErro('A URL da midia precisa comecar com https://.')
+        return null
+      }
+      return { tipo: 'midia_embedada', dados: { url: urlNova } }
+    }
+    if (!arquivoNovo) {
+      setErro('Escolha um arquivo.')
+      return null
+    }
+    const enviado = await api<ArquivoEnviado>(`/api/v1/aulas/${aulaId}/arquivos`, {
+      metodo: 'POST',
+      corpo: { nome: arquivoNovo.name, mime: arquivoNovo.type, base64: await lerBase64(arquivoNovo) },
+    })
+    return { tipo: 'material_anexo', dados: { arquivoId: enviado.arquivoId } }
   }
 
   async function adicionarBloco(evento: FormEvent) {
     evento.preventDefault()
-    let dados: unknown
+    setErro(null)
+    setMensagem(null)
+    let bloco: BlocoConteudo | null
     try {
-      dados = JSON.parse(dadosNovos)
-    } catch {
-      setErro('Conteudo do bloco precisa ser JSON valido.')
+      bloco = await novoBloco()
+    } catch (erroEnvio) {
+      setErro(mensagemDeErro(erroEnvio))
       return
     }
-    await salvarConteudo([...(aula?.conteudo ?? []), { tipo: tipoNovo, dados }])
-    setDadosNovos('{}')
+    if (!bloco) return
+    if (await salvarConteudo([...(aula?.conteudo ?? []), bloco])) {
+      setTextoNovo('')
+      setUrlNova('')
+      setArquivoNovo(null)
+    }
   }
 
   async function concluir() {
@@ -563,26 +701,18 @@ function DetalheAula({ sessao, aulaId, donoId, aoVoltar }: PropsAula) {
         {aula.conteudo.length === 0 ? (
           <p>Sem conteudo.</p>
         ) : (
-          <ul>
+          <ol>
             {aula.conteudo.map((bloco, indice) => (
               <li key={bloco.id ?? indice}>
-                <strong>{bloco.tipo}</strong>
-                <pre>{JSON.stringify(bloco.dados, null, 2)}</pre>
+                <BlocoRenderizado bloco={bloco} />
                 {podeEditar && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      void salvarConteudo(
-                        aula.conteudo.filter((_item, posicao) => posicao !== indice)
-                      )
-                    }
-                  >
+                  <button type="button" onClick={() => void removerBloco(indice)}>
                     Remover bloco
                   </button>
                 )}
               </li>
             ))}
-          </ul>
+          </ol>
         )}
       </section>
 
@@ -595,18 +725,44 @@ function DetalheAula({ sessao, aulaId, donoId, aoVoltar }: PropsAula) {
             onChange={(evento) => setTipoNovo(evento.target.value)}
           >
             {TIPOS_CONTEUDO.map((tipo) => (
-              <option key={tipo} value={tipo}>
-                {tipo}
+              <option key={tipo.valor} value={tipo.valor}>
+                {tipo.rotulo}
               </option>
             ))}
           </select>
 
-          <label htmlFor="dados-conteudo">Dados do bloco (JSON)</label>
-          <textarea
-            id="dados-conteudo"
-            value={dadosNovos}
-            onChange={(evento) => setDadosNovos(evento.target.value)}
-          />
+          {tipoNovo === 'texto' && (
+            <>
+              <label htmlFor="texto-conteudo">Texto</label>
+              <textarea
+                id="texto-conteudo"
+                value={textoNovo}
+                onChange={(evento) => setTextoNovo(evento.target.value)}
+              />
+            </>
+          )}
+          {tipoNovo === 'midia_embedada' && (
+            <>
+              <label htmlFor="url-conteudo">URL da midia (https)</label>
+              <input
+                id="url-conteudo"
+                type="url"
+                value={urlNova}
+                onChange={(evento) => setUrlNova(evento.target.value)}
+              />
+            </>
+          )}
+          {tipoNovo === 'material_anexo' && (
+            <>
+              <label htmlFor="arquivo-conteudo">Arquivo (PDF, PNG, JPEG, GIF ou ZIP ate 5 MB)</label>
+              <input
+                id="arquivo-conteudo"
+                type="file"
+                accept={TIPOS_ANEXO}
+                onChange={(evento) => setArquivoNovo(evento.target.files?.[0] ?? null)}
+              />
+            </>
+          )}
           <button type="submit">Adicionar bloco</button>
         </form>
       )}

@@ -3,6 +3,12 @@ import type { Prisma, TipoConteudo } from '@prisma/client'
 import { erroNaoEncontrado, erroProibido, erroValidacao } from '../erros'
 import { prisma } from '../prisma'
 import { uuidValido } from '../tipos'
+import {
+  type BlocoValidado,
+  MAXIMO_ARQUIVOS_POR_AULA,
+  validarArquivo,
+  validarBlocos,
+} from './conteudo'
 
 type Papel = 'estudante' | 'professor' | 'administrador'
 
@@ -56,7 +62,21 @@ export interface CursoComEstrutura {
 export interface BlocoConteudo {
   id: string
   tipo: TipoConteudo
+  posicao: number
   dados: unknown
+}
+
+export interface ResumoArquivo {
+  arquivoId: string
+  nome: string
+  mime: string
+  tamanho: number
+}
+
+export interface ArquivoParaDownload {
+  nome: string
+  mime: string
+  conteudo: Uint8Array
 }
 
 export interface AulaComConteudo {
@@ -76,8 +96,6 @@ interface Alteracoes {
   titulo?: string
   publicado?: boolean
 }
-
-const TIPOS_CONTEUDO: readonly TipoConteudo[] = ['texto', 'midia_embedada', 'material_anexo']
 
 function objeto(corpo: unknown): Record<string, unknown> {
   if (corpo === null || typeof corpo !== 'object' || Array.isArray(corpo)) {
@@ -117,24 +135,6 @@ function alteracoes(corpo: unknown): Alteracoes {
   return alteracao
 }
 
-function blocosConteudo(corpo: unknown): { tipo: TipoConteudo; dados: Prisma.InputJsonValue }[] {
-  const entrada = Array.isArray(corpo) ? corpo : [corpo]
-  return entrada.map((item) => {
-    if (item === null || typeof item !== 'object' || Array.isArray(item)) {
-      throw erroValidacao('bloco de conteudo invalido')
-    }
-    const bloco = item as Record<string, unknown>
-    const tipo = bloco.tipo
-    if (typeof tipo !== 'string' || !TIPOS_CONTEUDO.includes(tipo as TipoConteudo)) {
-      throw erroValidacao('tipo de conteudo invalido')
-    }
-    if (!('dados' in bloco) || bloco.dados === null) {
-      throw erroValidacao('dados de conteudo ausentes')
-    }
-    return { tipo: tipo as TipoConteudo, dados: bloco.dados as Prisma.InputJsonValue }
-  })
-}
-
 function exigirAutoria(donoId: string, usuario: UsuarioSessao) {
   if (usuario.papel === 'administrador') return
   if (usuario.papel === 'professor' && donoId === usuario.id) return
@@ -143,6 +143,17 @@ function exigirAutoria(donoId: string, usuario: UsuarioSessao) {
 
 function ehDonoOuAdmin(donoId: string, usuario: UsuarioSessao): boolean {
   return usuario.papel === 'administrador' || donoId === usuario.id
+}
+
+interface CadeiaDaAula {
+  publicado: boolean
+  modulo: { publicado: boolean; curso: { dono_id: string; publicado: boolean } }
+}
+
+// R-14/R-17: leitor comum só vê aula com a cadeia aula→módulo→curso publicada
+function aulaVisivel(aula: CadeiaDaAula, usuario: UsuarioSessao): boolean {
+  const cadeiaPublicada = aula.publicado && aula.modulo.publicado && aula.modulo.curso.publicado
+  return cadeiaPublicada || ehDonoOuAdmin(aula.modulo.curso.dono_id, usuario)
 }
 
 async function cursoParaAlteracao(id: unknown, usuario: UsuarioSessao) {
@@ -177,7 +188,7 @@ async function aulaEncadeada(id: unknown) {
   return prisma.aula.findUnique({
     where: { id },
     include: {
-      conteudos: { orderBy: { criado_em: 'asc' } },
+      conteudos: { orderBy: { posicao: 'asc' } },
       modulo: { include: { curso: { select: { dono_id: true, publicado: true } } } },
     },
   })
@@ -350,27 +361,104 @@ export async function excluirAula(usuario: UsuarioSessao, id: unknown): Promise<
   await prisma.aula.delete({ where: { id: aula.id } })
 }
 
+// SPEC de conteúdo §7.3: valida tudo antes de escrever; substituição total em transação única
 export async function substituirConteudo(
   usuario: UsuarioSessao,
   id: unknown,
   corpo: unknown
 ): Promise<void> {
   const aula = await aulaParaAlteracao(id, usuario)
-  const blocos = blocosConteudo(corpo)
+  const blocos = validarBlocos(corpo)
+
+  // R-C7: anexo referencia arquivo existente da mesma aula; dados são enriquecidos na gravação
+  const idsArquivos = [
+    ...new Set(
+      blocos.flatMap((bloco) => (bloco.tipo === 'material_anexo' ? [bloco.dados.arquivoId] : []))
+    ),
+  ]
+  const arquivos = await prisma.arquivo.findMany({
+    where: { id: { in: idsArquivos }, aula_id: aula.id },
+    select: { id: true, nome: true, mime: true, tamanho: true },
+  })
+  const porId = new Map(arquivos.map((arquivo) => [arquivo.id, arquivo]))
+  if (porId.size !== idsArquivos.length) {
+    throw erroValidacao('arquivoId desconhecido ou de outra aula')
+  }
+
+  function dadosGravados(bloco: BlocoValidado): Prisma.InputJsonValue {
+    if (bloco.tipo !== 'material_anexo') return bloco.dados
+    const arquivo = porId.get(bloco.dados.arquivoId)!
+    return { arquivoId: arquivo.id, nome: arquivo.nome, mime: arquivo.mime, tamanho: arquivo.tamanho }
+  }
+
   const remocao = prisma.conteudoAula.deleteMany({ where: { aula_id: aula.id } })
   if (blocos.length === 0) {
     await remocao
     return
   }
   const insercao = prisma.conteudoAula.createMany({
-    data: blocos.map((bloco) => ({
+    data: blocos.map((bloco, posicao) => ({
       id: randomUUID(),
       aula_id: aula.id,
       tipo: bloco.tipo,
-      dados: bloco.dados,
+      posicao,
+      dados: dadosGravados(bloco),
     })),
   })
   await prisma.$transaction([remocao, insercao])
+}
+
+// F2-15 (SPEC de conteúdo §6.3)
+export async function criarArquivo(
+  usuario: UsuarioSessao,
+  aulaId: unknown,
+  corpo: unknown
+): Promise<ResumoArquivo> {
+  const aula = await aulaParaAlteracao(aulaId, usuario)
+  const arquivo = validarArquivo(corpo)
+  const existentes = await prisma.arquivo.count({ where: { aula_id: aula.id } })
+  if (existentes >= MAXIMO_ARQUIVOS_POR_AULA) {
+    throw erroValidacao(`maximo de ${MAXIMO_ARQUIVOS_POR_AULA} arquivos por aula`)
+  }
+  const criado = await prisma.arquivo.create({
+    data: {
+      id: randomUUID(),
+      aula_id: aula.id,
+      nome: arquivo.nome,
+      mime: arquivo.mime,
+      tamanho: arquivo.conteudo.length,
+      conteudo: arquivo.conteudo,
+    },
+    select: { id: true, nome: true, mime: true, tamanho: true },
+  })
+  return { arquivoId: criado.id, nome: criado.nome, mime: criado.mime, tamanho: criado.tamanho }
+}
+
+// F2-16 (SPEC de conteúdo §6.4): mesma visibilidade do F2-13; não visível → 404
+export async function lerArquivo(usuario: UsuarioSessao, id: unknown): Promise<ArquivoParaDownload> {
+  const arquivo =
+    typeof id === 'string' && uuidValido.test(id)
+      ? await prisma.arquivo.findUnique({
+          where: { id },
+          include: {
+            aula: {
+              select: {
+                publicado: true,
+                modulo: {
+                  select: {
+                    publicado: true,
+                    curso: { select: { dono_id: true, publicado: true } },
+                  },
+                },
+              },
+            },
+          },
+        })
+      : null
+  if (!arquivo || !aulaVisivel(arquivo.aula, usuario)) {
+    throw erroNaoEncontrado('arquivo nao encontrado')
+  }
+  return { nome: arquivo.nome, mime: arquivo.mime, conteudo: arquivo.conteudo }
 }
 
 export async function lerAula(usuario: UsuarioSessao, id: unknown): Promise<AulaComConteudo> {
@@ -378,10 +466,7 @@ export async function lerAula(usuario: UsuarioSessao, id: unknown): Promise<Aula
   if (!aula) {
     throw erroNaoEncontrado('aula nao encontrada')
   }
-  const autor = ehDonoOuAdmin(aula.modulo.curso.dono_id, usuario)
-  const cadeiaPublicada =
-    aula.publicado && aula.modulo.publicado && aula.modulo.curso.publicado
-  if (!autor && !cadeiaPublicada) {
+  if (!aulaVisivel(aula, usuario)) {
     throw erroNaoEncontrado('aula nao encontrada')
   }
   return {
@@ -391,6 +476,7 @@ export async function lerAula(usuario: UsuarioSessao, id: unknown): Promise<Aula
     conteudo: aula.conteudos.map((bloco) => ({
       id: bloco.id,
       tipo: bloco.tipo,
+      posicao: bloco.posicao,
       dados: bloco.dados,
     })),
   }
@@ -404,9 +490,7 @@ export async function concluirAula(
   if (!aula) {
     throw erroNaoEncontrado('aula nao encontrada')
   }
-  const cadeiaPublicada =
-    aula.publicado && aula.modulo.publicado && aula.modulo.curso.publicado
-  if (!cadeiaPublicada && !ehDonoOuAdmin(aula.modulo.curso.dono_id, usuario)) {
+  if (!aulaVisivel(aula, usuario)) {
     throw erroNaoEncontrado('aula nao encontrada')
   }
   const existente = await prisma.conclusaoAula.findFirst({
