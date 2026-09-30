@@ -1,0 +1,112 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Papel {
+  estudante
+  professor
+  administrador
+}
+
+model Usuario {
+  id            String   @id @db.Uuid
+  email         String   @unique @db.VarChar(255)
+  papel         Papel
+  criado_em     DateTime @default(now())
+  atualizado_em DateTime @updatedAt
+
+  credencial         Credencial?
+  sessoes            Sessao[]
+  perfil_estudante   PerfilEstudante?
+  perfil_professor   PerfilProfessor?
+  preferencias       Preferencia[]
+  visibilidades      Visibilidade[]
+  tokens_recuperacao TokenRecuperacao[]
+
+  @@map("usuario")
+}
+
+model Credencial {
+  usuario_id    String   @id @db.Uuid
+  hash_senha    String   @db.Text
+  atualizada_em DateTime @updatedAt
+
+  usuario Usuario @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+
+  @@map("credencial")
+}
+
+model Sessao {
+  id          String    @id @db.Uuid
+  usuario_id  String    @db.Uuid
+  criado_em   DateTime  @default(now())
+  expira_em   DateTime
+  revogada_em DateTime?
+
+  usuario Usuario @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+
+  @@index([usuario_id])
+  @@index([expira_em])
+  @@map("sessao")
+}
+
+model PerfilEstudante {
+  usuario_id    String   @id @db.Uuid
+  criado_em     DateTime @default(now())
+  atualizado_em DateTime @updatedAt
+
+  usuario Usuario @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+
+  @@map("perfil_estudante")
+}
+
+model PerfilProfessor {
+  usuario_id    String   @id @db.Uuid
+  bio           String?  @db.Text
+  criado_em     DateTime @default(now())
+  atualizado_em DateTime @updatedAt
+
+  usuario Usuario @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+
+  @@map("perfil_professor")
+}
+
+model Preferencia {
+  usuario_id String   @db.Uuid
+  chave       String   @db.VarChar(100)
+  valor       Json
+
+  usuario Usuario @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+
+  @@id([usuario_id, chave])
+  @@map("preferencias")
+}
+
+model Visibilidade {
+  usuario_id String   @db.Uuid
+  chave       String   @db.VarChar(100)
+  visivel     Boolean
+
+  usuario Usuario @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+
+  @@id([usuario_id, chave])
+  @@map("visibilidade")
+}
+
+model TokenRecuperacao {
+  id         String   @id @db.Uuid
+  usuario_id String   @db.Uuid
+  hash_token String   @unique @db.VarChar(64)
+  criado_em  DateTime @default(now())
+  expira_em  DateTime
+
+  usuario Usuario @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+
+  @@index([usuario_id])
+  @@map("token_recuperacao")
+}

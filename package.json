@@ -1,0 +1,48 @@
+{
+  "name": "eduquest",
+  "private": true,
+  "version": "0.0.1",
+  "scripts": {
+    "dev:server": "tsx watch src/server/index.ts",
+    "dev:web": "vite",
+    "build": "npm run build:server && npm run build:web",
+    "build:server": "tsc -p tsconfig.server.json",
+    "build:web": "vite build",
+    "start": "node dist/server/index.js",
+    "typecheck": "tsc -p tsconfig.server.json --noEmit && tsc -p tsconfig.web.json --noEmit && tsc -p tsconfig.tests.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:migrate": "prisma migrate dev",
+    "db:generate": "prisma generate",
+    "db:up": "docker compose up -d db",
+    "db:down": "docker compose down"
+  },
+  "dependencies": {
+    "@prisma/client": "^6",
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1",
+    "dotenv": "^16",
+    "express": "^5",
+    "prisma": "^6",
+    "react": "^19",
+    "react-dom": "^19"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "^10",
+    "@testing-library/react": "^16",
+    "@types/bcryptjs": "^2",
+    "@types/cookie-parser": "^1",
+    "@types/express": "^5",
+    "@types/node": "^24",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/supertest": "^6",
+    "@vitejs/plugin-react": "^4",
+    "jsdom": "^26",
+    "supertest": "^7",
+    "tsx": "^4",
+    "typescript": "^5",
+    "vite": "^6",
+    "vitest": "^3"
+  }
+}

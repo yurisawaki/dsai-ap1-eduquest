@@ -1,0 +1,45 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: eduquest
+      POSTGRES_PASSWORD: eduquest
+      POSTGRES_DB: eduquest
+    ports:
+      - "5434:5432"
+    volumes:
+      - dados-db:/var/lib/postgresql/data
+      - ./infra/initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U eduquest -d eduquest"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://eduquest:eduquest@db:5432/eduquest
+      SESSION_EXPIRATION_MINUTES: ${SESSION_EXPIRATION_MINUTES}
+      RESET_TOKEN_EXPIRATION_MINUTES: ${RESET_TOKEN_EXPIRATION_MINUTES}
+      BCRYPT_COST: ${BCRYPT_COST}
+      PORT: 3000
+    ports:
+      - "3000:3000"
+
+  caddy:
+    image: caddy:2-alpine
+    depends_on:
+      - app
+    volumes:
+      - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-dados:/data
+    ports:
+      - "443:443"
+
+volumes:
+  dados-db:
+  caddy-dados:
