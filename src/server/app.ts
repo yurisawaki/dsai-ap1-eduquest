@@ -6,6 +6,7 @@ import { diretorioWeb } from './config'
 import { manipularErro } from './erros'
 import { carregarSessao } from './middlewares/sessao'
 import { rotasAuth } from './rotas/auth'
+import { rotasCatalogo } from './rotas/catalogo'
 import { rotasPerfis } from './rotas/perfis'
 
 export function criarApp() {
@@ -17,6 +18,7 @@ export function criarApp() {
 
   app.use('/api/v1/auth', rotasAuth)
   app.use('/api/v1/perfis', rotasPerfis)
+  app.use('/api/v1', rotasCatalogo)
   app.use('/api', (_req, res) => {
     res.status(404).json({ erro: { codigo: 'nao_encontrado', mensagem: 'rota nao encontrada' } })
   })

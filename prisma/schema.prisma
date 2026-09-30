@@ -13,6 +13,12 @@ enum Papel {
   administrador
 }
 
+enum TipoConteudo {
+  texto
+  midia_embedada
+  material_anexo
+}
+
 model Usuario {
   id            String   @id @db.Uuid
   email         String   @unique @db.VarChar(255)
@@ -27,6 +33,8 @@ model Usuario {
   preferencias       Preferencia[]
   visibilidades      Visibilidade[]
   tokens_recuperacao TokenRecuperacao[]
+  cursos             Curso[]
+  conclusoes         ConclusaoAula[]
 
   @@map("usuario")
 }
@@ -96,6 +104,83 @@ model Visibilidade {
 
   @@id([usuario_id, chave])
   @@map("visibilidade")
+}
+
+model Curso {
+  id            String   @id @db.Uuid
+  titulo        String   @db.Text
+  dono_id       String   @db.Uuid
+  publicado     Boolean  @default(false)
+  criado_em     DateTime @default(now())
+  atualizado_em DateTime @updatedAt
+
+  dono    Usuario  @relation(fields: [dono_id], references: [id], onDelete: Cascade)
+  modulos Modulo[]
+
+  @@index([dono_id])
+  @@map("curso")
+}
+
+model Modulo {
+  id            String   @id @db.Uuid
+  curso_id      String   @db.Uuid
+  titulo        String   @db.Text
+  publicado     Boolean  @default(false)
+  criado_em     DateTime @default(now())
+  atualizado_em DateTime @updatedAt
+
+  curso Curso @relation(fields: [curso_id], references: [id], onDelete: Cascade)
+  aulas Aula[]
+
+  @@index([curso_id])
+  @@map("modulo")
+}
+
+model Aula {
+  id            String   @id @db.Uuid
+  modulo_id     String   @db.Uuid
+  titulo        String   @db.Text
+  publicado     Boolean  @default(false)
+  criado_em     DateTime @default(now())
+  atualizado_em DateTime @updatedAt
+
+  modulo     Modulo         @relation(fields: [modulo_id], references: [id], onDelete: Cascade)
+  conteudos  ConteudoAula[]
+  conclusoes ConclusaoAula[]
+
+  @@index([modulo_id])
+  @@map("aula")
+}
+
+model ConteudoAula {
+  id            String       @id @db.Uuid
+  aula_id       String       @db.Uuid
+  tipo          TipoConteudo
+  dados         Json
+  criado_em     DateTime     @default(now())
+  atualizado_em DateTime     @updatedAt
+
+  aula Aula @relation(fields: [aula_id], references: [id], onDelete: Cascade)
+
+  @@index([aula_id])
+  @@map("conteudo_aula")
+}
+
+model ConclusaoAula {
+  id            String   @id @db.Uuid
+  aula_id       String   @db.Uuid
+  usuario_id    String   @db.Uuid
+  concluida_em  DateTime
+  criado_em     DateTime @default(now())
+  atualizado_em DateTime @updatedAt
+
+  aula    Aula    @relation(fields: [aula_id], references: [id], onDelete: Cascade)
+  usuario Usuario @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+
+  @@index([aula_id])
+  @@index([usuario_id])
+  @@index([aula_id, usuario_id])
+  @@map("conclusao_aula")
 }
 
 model TokenRecuperacao {

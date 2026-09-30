@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api, mensagemDeErro } from './cliente'
 import { PaginaCadastro } from './paginas/Cadastro'
+import { PaginaCatalogo } from './paginas/Catalogo'
 import { PaginaLogin } from './paginas/Login'
 import { PaginaPerfil } from './paginas/Perfil'
 import { PaginaRecuperacao } from './paginas/Recuperacao'
@@ -11,7 +12,7 @@ export interface Sessao {
   expiraEm: string
 }
 
-type Vista = 'login' | 'cadastro' | 'perfil' | 'recuperacao'
+type Vista = 'login' | 'cadastro' | 'perfil' | 'recuperacao' | 'catalogo'
 
 export function App() {
   const [sessao, setSessao] = useState<Sessao | null | 'carregando'>('carregando')
@@ -57,6 +58,9 @@ export function App() {
               <button type="button" onClick={() => setVista('perfil')}>
                 Perfil
               </button>
+              <button type="button" onClick={() => setVista('catalogo')}>
+                Catálogo
+              </button>
               <button type="button" onClick={() => void sair()}>
                 Sair
               </button>
@@ -89,6 +93,8 @@ export function App() {
         </main>
       ) : sessaoAtual && vista === 'perfil' ? (
         <PaginaPerfil sessao={sessaoAtual} />
+      ) : sessaoAtual && vista === 'catalogo' ? (
+        <PaginaCatalogo sessao={sessaoAtual} />
       ) : vista === 'cadastro' ? (
         <PaginaCadastro aoIrParaLogin={() => setVista('login')} />
       ) : vista === 'recuperacao' ? (
