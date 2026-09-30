@@ -3,7 +3,7 @@
 | Campo | Valor |
 |---|---|
 | Artefato | `SPEC/2026-09-30-identidade-acesso-credenciais.md` (T1.1 — SPEC do domínio D1) |
-| Status | **Redigida — aguardando revisão** |
+| Status | **Revisada — correções da auditoria F-01–F-06 aplicadas; aguardando re-auditoria** |
 | Data | 2026-09-30 |
 | Domínio / Fase | **D1 — Identidade e acesso** · Fase **F1** (`PLAN.md` §7) |
 | Tarefa de origem | **T1.1** (`TASKS.md` — "Elaborar SPEC do domínio D1") |
@@ -86,12 +86,14 @@ Registradas aqui apenas como base de execução — **não são redecididas nem 
 
 Todos os fluxos são o detalhamento dos passos 1–2 da SPEC visão §4 e das tarefas T1.2/T1.3. As respostas HTTP são as já definidas na SPEC técnica §2.3.3 (contratos 1–6) — aqui se descrevem passos, decisões do usuário e contrafluxos.
 
+Os **nomes exatos das chaves JSON** de requisição/resposta não estão fixados em nenhuma fonte e não são requisito funcional: esta SPEC os **delega à implementação técnica** (escolha técnica, não de produto), mantendo vinculados os campos de sucesso já fixados na técnica §2.3.3 (ex.: `201 {usuarioId, papel}` do contrato 1, `200 {usuarioId, papel, expiraEm}` do contrato 4) e o formato de erro `{"erro": {...}}` (técnica §2.3.1).
+
 ### 3.1 Fluxo A — Cadastro (passo 1; contrato 1; T1.2)
 
 **Ator:** visitante (sem sessão — rota pública, técnica §2.3.4).
 
 1. Visitante informa **e-mail**, **senha** e **papel** desejado. *A política de atribuição de papel (quem pode se cadastrar como professor/administrador) não está especificada nas fontes → **P-01** (§10).*
-2. O servidor **valida** os dados: unicidade de e-mail é obrigatória (R-01); formato e tamanho mínimo de e-mail/senha **não estão especificados** nas fontes → **P-02** (§10).
+2. O servidor **valida** os dados: unicidade de e-mail é obrigatória (R-01); formato e tamanho mínimo de e-mail/senha **não estão especificados** nas fontes → **P-02** (§10); a **normalização/caixa** do e-mail aplicada à unicidade e à comparação no login também **não está especificada** → **P-02** (§10).
 3. Em **transação**, o servidor cria: registro em `usuario` (id opaco, e-mail, papel, timestamps); registro em `credencial` com **apenas hash** da senha (R-02); a **linha de perfil correspondente** ao papel (SPEC visão §4 passo 1: "sistema valida e cria o perfil") — `perfil_estudante` ou `perfil_professor` conforme técnica §2.2.3 regra 2. *O papel administrador não possui tabela de perfil no modelo aprovado (nenhuma fonte declara perfil de administrador — técnica §2.2.2); nenhuma decisão nova é criada aqui.*
 4. **Sucesso:** `201 {usuarioId, papel}` — **sem sessão automática**: os passos 1 e 2 do fluxo principal são distintos (SPEC visão §4; técnica §2.3.3 contrato 1).
 5. O usuário segue para o **login** (Fluxo B).
@@ -138,7 +140,7 @@ Todos os fluxos são o detalhamento dos passos 1–2 da SPEC visão §4 e das ta
 
 1. Usuário informa o e-mail da conta em `POST /api/v1/auth/recuperacao-senha`.
 2. O servidor responde **`202` com resposta única e neutra** — a mesma para e-mail existente e inexistente, **não revelando existência da conta** (decisão registrada na técnica §2.3.3 contrato 5).
-3. **Entrega e validade do token** de recuperação: **não especificadas** nas fontes (o e-mail é integração externa, **DP-11** pendente) → **P-04** (§10). Nesta SPEC, o fluxo só declara que um **token** liga a solicitação à redefinição (contrato 6), sem definir canal, formato ou prazo.
+3. **Entrega, prazo e número de usos (reutilização)** do token de recuperação: **não especificados** nas fontes (o e-mail é integração externa, **DP-11** pendente) → **P-04** (§10). Nesta SPEC, o fluxo só declara que um **token** liga a solicitação à redefinição (contrato 6), sem definir canal, formato ou prazo. **Enquanto P-04/DP-11 estiverem abertas, T1.3 permanece desbloqueada para os contratos 5 e 6:** a geração e a validação do token acontecem no servidor (comportamento do contrato 6); canal de entrega de e-mail não é exigível nem implementável nesta fase (§8).
 4. Usuário envia token + nova senha em `POST /api/v1/auth/redefinicao-senha`.
 5. Token válido → o servidor **substitui o hash** da senha (apenas hash, R-02) e responde `204`. Token inválido/expirado → `400` (validade depende de P-04).
 6. **Efeito sobre sessões ativas após a redefinição** (encerrar ou não sessões existentes): **não especificado** em nenhuma fonte → **P-13** (§10).
@@ -157,7 +159,7 @@ Toda regra tem rastreabilidade obrigatória. As 5 primeiras são literalmente as
 | R-02 | **Senha protegida** | A senha **nunca** é armazenada nem exposta: persiste **apenas hash bcrypt** (custo por variável de ambiente); a senha em claro só existe no transporte da requisição de login/recuperação e não é devolvida em nenhuma resposta | SPEC visão §5 D1 ("senha protegida"); técnica §2.2.2 (`hash_senha`), §2.3.2 (bcrypt); `PLAN.md` §5.1 |
 | R-03 | **Sessão expira** | Toda sessão tem `expira_em`; validada a cada requisição autenticada; expirada → `401`. Valor da duração: parâmetro configurável, **não fixado** → P-03 | SPEC visão §5 D1; técnica §2.2.2, §2.3.2; `PLAN.md` §5.1 |
 | R-04 | **Acesso determinado por papel** | Todo usuário tem exatamente um dos 3 papéis fixos (ENUM: estudante, professor, administrador); rota protegida sem sessão → `401`; sessão com papel não permitido → `403`; papéis determinam o que é visível/acessível nos demais domínios | SPEC visão §5 D1, §6 ("Papéis fixos"), §4 passo 2; técnica §2.2.2, §2.3.2, §2.3.1; `PLAN.md` §5.1 |
-| R-05 | **Sem login não há ação de estudante** | Operações sobre perfis (leitura/edição) exigem sessão autenticada (`401` sem); as rotas públicas de D1 são apenas cadastro, login, recuperação e redefinição de senha (matriz §4.2) | SPEC visão §5 D1; técnica §2.3.2, §2.3.4; `PLAN.md` §6 item 1 |
+| R-05 | **Sem login não há ação de estudante** | Operações sobre perfis (leitura/edição) exigem sessão autenticada (`401` sem); as rotas de D1 são as de autenticação (contratos 1–6, públicas na matriz §4.2; logout e consulta de sessão retornam `401` sem sessão pelos contratos 3 e 4 — reconciliação §4.2) | SPEC visão §5 D1; técnica §2.3.2, §2.3.4; `PLAN.md` §6 item 1 |
 | R-06 | **Sessão é no servidor** (meio decidido) | Identidade autenticada vive no registro `sessao` + cookie `eduquest_session` (HttpOnly, SameSite=Lax; Secure quando HTTPS); cliente não decide autenticação (regra de ouro) | técnica §2.3.2; SPEC visão §4 (regra de ouro); `PLAN.md` §4 princípio 2 |
 | R-07 | **Logout revoga a sessão** | Define `revogada_em` e descarta o cookie; operação idempotente (`204`) | `TASKS.md` T1.3; técnica §2.2.2, §2.3.2, §2.3.3 contrato 3 |
 | R-08 | **Recuperação de senha com resposta neutra** | Solicitação responde `202` única e neutra (não revela existência do e-mail); conclusão por token com `204`/`400` | SPEC visão §5 D1 (escopo "recuperação de senha"); técnica §2.3.3 contratos 5 e 6 |
@@ -165,14 +167,15 @@ Toda regra tem rastreabilidade obrigatória. As 5 primeiras são literalmente as
 | R-10 | **Papel restrito aos 3 valores** | Fora de `{estudante, professor, administrador}` não existe conta; ENUM no banco (também cobre integridade dos futuros testes de T1.4) | SPEC visão §6; técnica §2.2.2, §2.2.3 regra 3 |
 | R-11 | **Sessão pertence ao usuário; revogação explícita** | `sessao.usuario_id` com FK; encerramento é evento explícito (`revogada_em`), nunca inferido | técnica §2.2.2 (`sessao`); `TASKS.md` T1.3 |
 
-### 4.2 Matriz de sessão e papel por rota (transcrição vinculante — técnica §2.3.4)
+### 4.2 Matriz de sessão e papel por rota (transcrição literal da técnica §2.3.4 + reconciliação declarada)
 
 | Rotas | Sessão exigida | Papel exigido | Base |
 |---|---|---|---|
-| Contratos 1–6 (`/api/v1/auth/*`) — cadastro, login, logout*, sessão*, recuperação, redefinição | **Não** (público, exceto as marcadas) | nenhum | visitante executa os passos 1–2 (SPEC visão §4); sem sessão prévia possível por circularidade |
-| *logout e consulta de sessão (contratos 3 e 4)* | **Sim** (operação de quem tem sessão; `401` sem) | qualquer papel | técnica §2.3.3 contratos 3 e 4 |
+| Contratos 1–6 (`/api/v1/auth/*`) — cadastro, login, logout, sessão, recuperação, redefinição | **Não** (acesso público) | nenhum | técnica §2.3.4 (linha transcrita literalmente); visitante executa os passos 1–2 (SPEC visão §4); sem sessão prévia possível por circularidade |
 | `GET /perfis/{id}` (contrato 7 — fronteira D2) | **Sim** | qualquer papel autenticado | D1: "sem login não há ação de estudante" |
 | `PATCH /perfis/{id}` (contrato 8 — fronteira D2) | **Sim** | **titular do perfil** | regra de D2 (SPEC visão §5 D2) — aplicada por D1 via `401`/`403` |
+
+**Reconciliação declarada (não altera a matriz):** os contratos 3 (logout) e 4 (consulta de sessão) respondem `401` quando não há sessão válida — comportamento de negócio fixado na técnica §2.3.3. Isso **não muda** a coluna "Sessão exigida" da matriz, que permanece "**Não** (acesso público)", idêntica à técnica §2.3.4: a rota pode ser invocada sem sessão e é o próprio contrato quem a rejeita com `401`. Esta formulação substitui a anterior ("público, exceto as marcadas" / "logout e consulta de sessão: Sim"), que divergia da transcrição literal.
 
 **Notas herdadas (técnica §2.3.4, preservadas):** (a) nenhuma rota de F1 exige um papel específico (estudante vs. professor vs. administrador) — a mecânica de `403` por papel existe (R-04) mas nenhum domínio de F1 a dispara; (b) a política de papéis no cadastro permanece P-01; (c) permissões detalhadas por persona (SPEC visão §3 P1/P2/P3) tornam-se restritos por rota quando os domínios correspondentes existirem — em D1, "papel" é o mecanismo, não o catálogo de permissões.
 
@@ -240,14 +243,14 @@ Atributos de perfil (bio, nome, campos editáveis → D2/P-05), preferências (`
 | AC-01 | O arquivo existe e contém as 10 seções numeradas: 1 Objetivo, 2 Escopo de D1, 3 Fluxos, 4 Regras de autenticação e autorização, 5 Dados de credenciais e identidade, 6 Critérios de aceitação, 7 Casos de erro e estados, 8 Fora de escopo, 9 Dependências e rastreabilidade, 10 Pendências | `ls` + leitura das seções `## 1.` a `## 10.` |
 | AC-02 | O escopo cobre as **6 áreas de D1** da visão (cadastro, login, logout, sessão, recuperação de senha, papéis e permissões), cada uma ligada a tarefa e contrato (§2.1) | cruzamento §2.1 × SPEC visão §5 D1 × `TASKS.md` T1.2–T1.4 |
 | AC-03 | Os **5 fluxos** (A–E) detalham os passos 1–2 do fluxo da SPEC visão §4, incluindo contrafluxos e contrato correspondente; cadastro e login são passos distintos (sem sessão automática) | leitura de §3 × SPEC visão §4 × técnica §2.3.3 |
-| AC-04 | Toda decisão técnica consumida é citada com a seção da SPEC técnica; **nenhuma decisão técnica é reaberta ou contradita** (cookie, bcrypt, rotas, códigos, matriz idênticos) | revisão cruzada §2.4/§4.2 × técnica §2.1–§2.3 |
+| AC-04 | Toda decisão técnica consumida é citada com a seção da SPEC técnica; **nenhuma decisão técnica é reaberta ou contradita** (cookie, bcrypt, rotas, códigos; matriz **transcrita literalmente**, com a reconciliação dos contratos 3/4 declarada em §4.2) | revisão cruzada §2.4/§4.2 × técnica §2.1–§2.3, comparando a matriz linha a linha |
 | AC-05 | **Unicidade:** um segundo cadastro com e-mail já existente é rejeitado (`409`) e não gera conta duplicada; cada usuário tem exatamente uma credencial | teste em T1.2 (unicidade); técnica §2.2.3 regra 1 |
 | AC-06 | **Unicidade persistida:** a restrição UNIQUE existe no modelo físico de `usuario.email` e a criação de usuário+credencial+perfil ocorre em transação única | leitura do modelo (técnica §2.2.2/§2.2.3) + teste de integração em T1.2 |
 | AC-07 | **Senha protegida:** nenhuma senha em claro é persistida (apenas `hash_senha`) nem devolvida em qualquer resposta; login válido só com verificação de hash | teste em T1.2 (armazenamento) e T1.3 (login); leitura de §5.2 |
 | AC-08 | **Sessão expira (mecanismo):** sessão com `expira_em` no passado é rejeitada (`401`) em requisição autenticada e em `GET /auth/sessao` | teste de expiração em T1.3 (critério de T1.3) |
 | AC-09 | **Sessão expira (parâmetro):** a duração é configurável por variável de ambiente; **nenhum valor padrão é fixado nesta SPEC** (permanece P-03) | leitura de §3.3 e §10; conferência de ausência de valor numérico de duração |
 | AC-10 | **Acesso por papel:** toda conta tem um e só um dos 3 papéis fixos; rota protegida sem sessão → `401`; a distinção `401` (sem sessão) / `403` (sessão sem permissão) existe conforme técnica §2.3.2; nenhuma rota de F1 exige papel específico (matriz) | teste em T1.4 (negação de acesso); leitura de §4.2 |
-| AC-11 | **Sem login não há ação de estudante:** leitura/edição de perfil exige sessão (`401` sem); as únicas rotas públicas de F1 são as de autenticação (contratos 1, 2, 5, 6) | teste de rota protegida sem sessão (T1.4); matriz §4.2 × técnica §2.3.4 |
+| AC-11 | **Sem login não há ação de estudante:** leitura/edição de perfil exige sessão (`401` sem); as únicas rotas públicas de F1 são as de autenticação (contratos 1–6, matriz §4.2 transcrita da técnica §2.3.4), observada a reconciliação §4.2: logout e consulta de sessão respondem `401` sem sessão (contratos 3 e 4) | teste de rota protegida sem sessão (T1.4); matriz §4.2 × técnica §2.3.4 |
 | AC-12 | **Fluxo passos 1–2 executável:** cadastro cria conta e perfil sem sessão automática; login em seguida cria sessão; os dois passos são verificáveis sequencialmente | percurso do fluxo em T1.7; contratos 1 e 2 |
 | AC-13 | **Logout e recuperação:** logout revoga a sessão e descarta o cookie (idempotente `204`; sessão antiga → `401`); recuperação responde `202` neutra igual para e-mail existente/inexistente; redefinição com token válido → `204`, inválido/expirado → `400` | teste em T1.3 (expiração e recuperação — critério de T1.3) |
 | AC-14 | Os casos de erro E-01–E-13 (§7) estão todos contemplados, cada um com resposta já definida na técnica §2.3.3 | cruzamento §7 × técnica §2.3.3 |
@@ -273,7 +276,7 @@ Atributos de perfil (bio, nome, campos editáveis → D2/P-05), preferências (`
 | Estado | Condição | Efeito |
 |---|---|---|
 | **Conta criada, sem sessão** | após `201` do cadastro (passos 1 e 2 distintos) | login necessário para qualquer ação autenticada |
-| **Com credencial ativa** | `credencial` com hash vigente | login possível; alteração de hash ocorre só na redefinição (efeito em sessões: P-13) |
+| **Com credencial ativa** | `credencial` com hash vigente | login possível; **nos fluxos de D1 (F1)**, alteração de hash ocorre apenas na redefinição (efeito em sessões: P-13) |
 
 ### 7.3 Casos de erro (respostas conforme técnica §2.3.1–§2.3.3 — nenhuma resposta nova é inventada)
 
@@ -335,7 +338,7 @@ Atributos de perfil (bio, nome, campos editáveis → D2/P-05), preferências (`
 | Tarefa | Seções principais | Critérios |
 |---|---|---|
 | T1.2 | §3.1, §3.2, §5.1–§5.2, E-01–E-05 | AC-05, AC-06, AC-07, AC-12 |
-| T1.3 | §3.2–§3.5, §5.3, §7.1, E-04, E-07–E-12 | AC-07, AC-08, AC-09, AC-13 |
+| T1.3 | §3.2–§3.5, §5.3, §7.1, E-04, E-07–E-12 (recuperação validável nos contratos 5–6 sem canal de entrega — §3.5) | AC-07, AC-08, AC-09, AC-13 |
 | T1.4 | §4 (R-04, R-05, R-10), §4.2, E-06, E-13 | AC-10, AC-11 |
 | T1.7 | §3 (fluxos), §6.1 (mapa regra→AC) | AC-01–AC-14 |
 
@@ -356,9 +359,9 @@ A técnica §6.4 designou esta SPEC como "artefato responsável" por P-01–P-04
 | ID | Pendência | Por que permanece aberta | Condição para fechar |
 |---|---|---|---|
 | **P-01** | Política de atribuição de **papel** no cadastro (quem pode se cadastrar como professor/administrador) | visão §4 passo 1 só descreve perfil de estudante; T1.2 exige cadastro dos 3 papéis; a **política** (aberto a todos vs. convite/aprovação) não está em nenhuma fonte | decisão de produto registrada na SPEC de D1 (quando houver fonte/decisão) |
-| **P-02** | Validação de **e-mail e senha** (formato, tamanho mínimo) | "senha protegida/credencial única" não define política de formato | decisão registrada nesta SPEC com rastreabilidade; a implementação de T1.2 cobre desde já a unicidade (R-01), que está especificada |
+| **P-02** | Validação de **e-mail e senha** (formato, tamanho mínimo) **e normalização/caixa do e-mail** aplicada à unicidade e à comparação no login | "senha protegida/credencial única" não define política de formato; o `email UNIQUE` da técnica §2.2.2 é literal no banco e nenhuma fonte define caixa/normalização — adotar caixa-sensível ou normalizar seria decisão de produto sem fonte | decisão registrada nesta SPEC com rastreabilidade; a implementação de T1.2 cobre desde já a unicidade (R-01), enquanto a respeito de caixa/normalização nenhum comportamento é assumido enquanto a pendência estiver aberta |
 | **P-03** | **Valor padrão** de expiração de sessão | D1 diz "sessão expira", sem valor; a técnica §2.3.2 explicitamente não o fixa | valor definido aqui; o **mecanismo** (configurável por variável de ambiente) já é decisão da técnica §2.1.3 — T1.3 pode implementar o mecanismo sem o valor |
-| **P-04** | **Entrega e validade do token** de recuperação de senha | mecanismo de canal depende de **DP-11** (e-mail é integração externa, ainda pendente); formato/prazo não especificados | SPEC de D1 com insumo de DP-11/SPEC de integrações |
+| **P-04** | **Entrega, prazo e número de usos (reutilização)** do token de recuperação de senha — escopo do texto "entrega e validade" da técnica §6.4, explicitado aqui | mecanismo de canal depende de **DP-11** (e-mail é integração externa, ainda pendente); formato, prazo e reutilização não especificados | SPEC de D1 com insumo de DP-11/SPEC de integrações |
 
 ### 10.2 Pendências novas abertas por esta SPEC
 
@@ -378,4 +381,4 @@ A técnica §6.4 designou esta SPEC como "artefato responsável" por P-01–P-04
 
 - **DP-04–DP-19: nenhuma é resolvida por este documento** — ocorrências apenas como lista de não-resolução (§8, §10.3).
 - **DP-01, DP-02, DP-03:** resolvidas pela SPEC técnica (aprovada) — aqui são apenas **consumidas** (§2.4); nenhuma é reaberta nem alterada.
-- **Nenhum valor arbitrário foi escolhido:** não há nesta SPEC duração de sessão, tamanho mínimo de senha, formato de e-mail, prazo/entrega de token, limite de tentativas ou política de sessões simultâneas — todos registrados como pendência acima (AC-17).
+- **Nenhum valor arbitrário foi escolhido:** não há nesta SPEC duração de sessão, tamanho mínimo de senha, formato de e-mail, normalização/caixa de e-mail, prazo/entrega/reutilização de token, limite de tentativas ou política de sessões simultâneas — todos registrados como pendência acima (AC-17).
