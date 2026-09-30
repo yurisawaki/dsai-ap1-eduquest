@@ -29,7 +29,7 @@ async function publicarCadeia(agente: Agente, ids: { cursoId: string; moduloId: 
 }
 
 describe('T2.3 — conteúdo de aula (F2-12/F2-13, E-24, R-18/AC-10)', () => {
-  it('PUT aceita os 3 tipos declarados e devolve 204; GET devolve a lista preservada (F2-12/F2-13)', async () => {
+  it('PUT aceita os 3 tipos declarados e devolve 204; GET devolve os mesmos 3 blocos em qualquer ordem (F2-12/F2-13/DP-19)', async () => {
     const { professor, aulaId } = await criarAulaPropria()
     const blocos = [
       { tipo: 'texto', dados: { markdown: 'Bem-vindos' } },
@@ -45,16 +45,17 @@ describe('T2.3 — conteúdo de aula (F2-12/F2-13, E-24, R-18/AC-10)', () => {
 
     const leitura = await professor.agente.get(`/api/v1/aulas/${aulaId}`)
     expect(leitura.status).toBe(200)
-    expect(leitura.body).toEqual({
-      id: aulaId,
-      titulo: 'Aula',
-      publicado: false,
-      conteudo: [
+    expect(leitura.body.id).toBe(aulaId)
+    expect(leitura.body.titulo).toBe('Aula')
+    expect(leitura.body.publicado).toBe(false)
+    expect(leitura.body.conteudo).toHaveLength(3)
+    expect(leitura.body.conteudo).toEqual(
+      expect.arrayContaining([
         { id: expect.any(String), tipo: 'texto', dados: { markdown: 'Bem-vindos' } },
         { id: expect.any(String), tipo: 'midia_embedada', dados: { url: 'https://provedor.example/v/abc' } },
         { id: expect.any(String), tipo: 'material_anexo', dados: { nome: 'lista.pdf' } },
-      ],
-    })
+      ])
+    )
     const ids = leitura.body.conteudo.map((bloco: { id: string }) => bloco.id)
     expect(new Set(ids).size).toBe(3)
   })
@@ -130,9 +131,10 @@ describe('T2.3 — conteúdo de aula (F2-12/F2-13, E-24, R-18/AC-10)', () => {
     expect(leitura.body.conteudo).toEqual([])
   })
 
-  it('dono lê o próprio rascunho (preview 200); leitor comum vê só após publicar a cadeia (E-20/R-14)', async () => {
+  it('dono e admin leem o rascunho (preview 200); leitor comum vê só após publicar a cadeia (E-20/R-14)', async () => {
     const { professor, cursoId, moduloId, aulaId } = await criarAulaPropria()
     const estudante = await criarUsuarioComSessao('estudante')
+    const admin = await criarUsuarioComSessao('administrador')
     await professor.agente
       .put(`/api/v1/aulas/${aulaId}/conteudo`)
       .send({ tipo: 'texto', dados: { texto: 'rascunho' } })
@@ -140,6 +142,11 @@ describe('T2.3 — conteúdo de aula (F2-12/F2-13, E-24, R-18/AC-10)', () => {
     const rascunho = await professor.agente.get(`/api/v1/aulas/${aulaId}`)
     expect(rascunho.status).toBe(200)
     expect(rascunho.body.conteudo).toHaveLength(1)
+
+    const previewAdmin = await admin.agente.get(`/api/v1/aulas/${aulaId}`)
+    expect(previewAdmin.status).toBe(200)
+    expect(previewAdmin.body.conteudo).toHaveLength(1)
+    expect(previewAdmin.body.conteudo[0].dados).toEqual({ texto: 'rascunho' })
 
     const bloqueio = await estudante.agente.get(`/api/v1/aulas/${aulaId}`)
     expect(bloqueio.status).toBe(404)

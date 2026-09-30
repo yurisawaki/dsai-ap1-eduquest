@@ -65,6 +65,21 @@ describe('T2.5 — consumo e conclusão de aula (F2-14, E-21–E-23)', () => {
     expect(sucesso.status).toBe(201)
   })
 
+  it('corpo malformado responde 400 (F2-14)', async () => {
+    const estudante = await criarUsuarioComSessao('estudante')
+    const { professor, cursoId, moduloId, aulaId } = await criarCadeiaPublicada()
+    await professor.agente.patch(`/api/v1/cursos/${cursoId}`).send({ publicado: true })
+    await professor.agente.patch(`/api/v1/modulos/${moduloId}`).send({ publicado: true })
+    await professor.agente.patch(`/api/v1/aulas/${aulaId}`).send({ publicado: true })
+
+    const malformado = await estudante.agente
+      .post(`/api/v1/aulas/${aulaId}/conclusao`)
+      .set('Content-Type', 'application/json')
+      .send('{invalido')
+    expect(malformado.status).toBe(400)
+    expect(malformado.body.erro.codigo).toBe('validacao')
+  })
+
   it('sucesso devolve 201 {aulaId, concluidaEm} com data ISO (F2-14/AC-08)', async () => {
     const estudante = await criarUsuarioComSessao('estudante')
     const { professor, cursoId, moduloId, aulaId } = await criarCadeiaPublicada()

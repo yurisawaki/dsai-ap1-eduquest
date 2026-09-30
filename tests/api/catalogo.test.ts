@@ -96,10 +96,14 @@ describe('T2.2/T2.4 — hierarquia, publicação e autoria (F2-01–F2-11)', () 
         .status
     ).toBe(404)
 
-    const { cursoId } = await criarHierarquia(professor.agente)
+    const { cursoId, moduloId } = await criarHierarquia(professor.agente)
     const semTitulo = await professor.agente.post(`/api/v1/cursos/${cursoId}/modulos`).send({})
     expect(semTitulo.status).toBe(400)
     expect(semTitulo.body.erro.codigo).toBe('validacao')
+
+    const semTituloAula = await professor.agente.post(`/api/v1/modulos/${moduloId}/aulas`).send({})
+    expect(semTituloAula.status).toBe(400)
+    expect(semTituloAula.body.erro.codigo).toBe('validacao')
 
     const malformado = await professor.agente
       .post(`/api/v1/cursos/${cursoId}/modulos`)
@@ -120,6 +124,7 @@ describe('T2.2/T2.4 — hierarquia, publicação e autoria (F2-01–F2-11)', () 
       await estudante.agente.delete(`/api/v1/cursos/${cursoId}`),
       await outro.agente.post(`/api/v1/cursos/${cursoId}/modulos`).send({ titulo: 'M' }),
       await estudante.agente.patch(`/api/v1/modulos/${moduloId}`).send({ publicado: true }),
+      await estudante.agente.delete(`/api/v1/modulos/${moduloId}`),
       await outro.agente.post(`/api/v1/modulos/${moduloId}/aulas`).send({ titulo: 'A' }),
       await estudante.agente.patch(`/api/v1/aulas/${aulaId}`).send({ titulo: 'A2' }),
       await outro.agente
@@ -283,12 +288,19 @@ describe('T2.2/T2.4 — hierarquia, publicação e autoria (F2-01–F2-11)', () 
       expect(resposta.body.erro.codigo).toBe('validacao')
     }
 
-    const { cursoId } = await criarHierarquia(professor.agente)
+    const { cursoId, moduloId, aulaId } = await criarHierarquia(professor.agente)
     const patchesInvalidos: object[] = [{}, { descricao: 'x' }, { publicado: 'sim' }]
-    for (const corpo of patchesInvalidos) {
-      const resposta = await professor.agente.patch(`/api/v1/cursos/${cursoId}`).send(corpo)
-      expect(resposta.status, JSON.stringify(corpo)).toBe(400)
-      expect(resposta.body.erro.codigo).toBe('validacao')
+    const rotasPatch = [
+      `/api/v1/cursos/${cursoId}`,
+      `/api/v1/modulos/${moduloId}`,
+      `/api/v1/aulas/${aulaId}`,
+    ]
+    for (const rota of rotasPatch) {
+      for (const corpo of patchesInvalidos) {
+        const resposta = await professor.agente.patch(rota).send(corpo)
+        expect(resposta.status, `${rota} ${JSON.stringify(corpo)}`).toBe(400)
+        expect(resposta.body.erro.codigo).toBe('validacao')
+      }
     }
 
     const editado = await professor.agente
