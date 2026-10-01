@@ -159,6 +159,10 @@ section {
   font-size: 0.95rem;
 }
 
+.conteudo-anexo {
+  margin: 0;
+}
+
 .lista-blocos {
   display: flex;
   flex-direction: column;

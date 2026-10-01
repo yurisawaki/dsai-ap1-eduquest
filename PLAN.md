@@ -178,7 +178,7 @@ Cada subseção declara: **escopo de implementação**, **entidades** (herdadas 
 - **Entidades:** curso, módulo, aula, conteúdo de aula, publicação.
 - **Regras a preservar:** hierarquia fixa curso > módulo > aula; apenas professor dono (ou admin) edita; aula só é consumível quando publicada; conclusão de aula registrada por estudante.
 - **Dependências:** D1/D2 (autor e consumo autenticado); conclusão de aula alimenta D6 e D7.
-- **Pendências:** formato exato de conteúdo/mídia e limites de upload — SPEC de conteúdo; embed de vídeo externo é limite fixo (SPEC §6).
+- **Pendências:** ~~formato exato de conteúdo/mídia e limites de upload — SPEC de conteúdo~~ **resolvida (DP-19, 2026-09-30 — `SPEC/2026-09-30-conteudo-aula.md`)**; embed de vídeo externo é limite fixo (SPEC §6); pendências derivadas P-18–P-21 (provedores de embed, expurgo de órfãos, texto enriquecido, revisão de limites) seguem abertas naquela SPEC.
 
 ### 5.4 Exercícios e questões (D4)
 
@@ -186,7 +186,7 @@ Cada subseção declara: **escopo de implementação**, **entidades** (herdadas 
 - **Entidades:** questão (tipos **a confirmar em SPEC própria**), alternativa, tentativa, resposta, feedback.
 - **Regras a preservar:** questão pertence a um curso/módulo; tentativa registrada com resposta e acerto; gabarito não exposto antes do envio; feedback emitido conforme regra da questão.
 - **Dependências:** D3 (questão vive em curso/módulo); alimenta D6 (progresso) e D7 (XP por acerto).
-- **Pendências (explícitas na SPEC):** conjunto definitivo de tipos de questão está "a confirmar em SPEC própria" (SPEC D4); tipos citados na SPEC são exemplos, não requisito fechado.
+- **Pendências (explícitas na SPEC):** ~~conjunto definitivo de tipos de questão~~ **resolvido (DP-08, 2026-10-01 — `SPEC/2026-10-01-questoes-exercicios.md`)**: múltipla escolha, verdadeiro/falso, numérica e dissertativa; questão pertence ao módulo. Pendências derivadas P-22–P-29 abertas naquela SPEC.
 
 ### 5.5 Avaliações (D5)
 
@@ -365,7 +365,7 @@ Ordem lógica derivada das dependências da Seção 6. Cada fase: objetivo, dom�
 - **Resultado esperado:** hierarquia curso > módulo > aula com publicação; conteúdo de aula (texto, mídia embedada, material anexo); edição restrita a professor dono ou admin; registro de conclusão de aula por estudante.
 - **Validação:** regras de D3 (hierarquia, dono, publicação, conclusão registrada); passos 3–4 do fluxo.
 - **Rastreabilidade:** SPEC §5 D3; §4 passos 3–4; funcionalidades 3–5.
-- **Pendência vinculada:** formato de conteúdo/mídia (SPEC de conteúdo).
+- **Pendência vinculada:** formato de conteúdo/mídia (SPEC de conteúdo) — **resolvida** (DP-19, `SPEC/2026-09-30-conteudo-aula.md`, 2026-09-30).
 
 ### Fase 3 — Exercícios, questões e avaliações
 
@@ -375,7 +375,7 @@ Ordem lógica derivada das dependências da Seção 6. Cada fase: objetivo, dom�
 - **Resultado esperado:** questões com gabarito protegido; tentativas com resposta, acerto e feedback imediato; avaliações com número de tentativas e janela definidos pelo professor; nota calculada no servidor; resultado disponível para progresso.
 - **Validação:** regras de D4/D5 (gabarito não exposto antes do envio; tentativa registrada; nota servidor); passo 5–6 do fluxo.
 - **Rastreabilidade:** SPEC §5 D4/D5; §4 passos 5–6; funcionalidades 6–8.
-- **Pendências vinculadas (bloqueiam detalhe):** tipos definitivos de questão (D4, "a confirmar"); correção manual de dissertativas (D5, "a confirmar").
+- **Pendências vinculadas (bloqueiam detalhe):** ~~tipos definitivos de questão (D4)~~ — **resolvida** (DP-08, `SPEC/2026-10-01-questoes-exercicios.md`, 2026-10-01); correção manual de dissertativas (D5, "a confirmar") — segue aberta (DP-09).
 
 ### Fase 4 — Progresso acadêmico
 
@@ -500,7 +500,7 @@ Ordem lógica derivada das dependências da Seção 6. Cada fase: objetivo, dom�
 | DP-05 | Design de UI/UX (wireframes, paleta, componentes) | SPEC §7.5 | SPEC de UI/UX própria |
 | DP-06 | Acessibilidade e internacionalização (níveis, idiomas, fuso) | SPEC §7.6 | SPEC própria |
 | DP-07 | Fórmula exata de XP, fórmula/tabela de níveis | SPEC §7.7 (D7) | SPEC de D7 antes do detalhe de F5 |
-| DP-08 | Conjunto definitivo de tipos de questão | SPEC D4 — "a confirmar em SPEC própria" | SPEC de D4 antes do detalhe de F3 |
+| DP-08 | Conjunto definitivo de tipos de questão | SPEC D4 — "a confirmar em SPEC própria" | SPEC de D4 antes do detalhe de F3 — **Resolvida em 2026-10-01** (ver `SPEC/2026-10-01-questoes-exercicios.md`, aprovada) |
 | DP-09 | Correção manual de dissertativas | SPEC D5 — "a confirmar em SPEC própria"; SPEC §6 | SPEC de D5 antes do detalhe de F3 |
 | DP-10 | Regras detalhadas de ranking (empate, privacidade fina) | SPEC §7.7 (D11) | SPEC de D11 antes do detalhe de F7 |
 | DP-11 | Integrações externas (LTI/SCORM, OAuth social, e-mail transacional, CDN, vídeo, analytics de terceiros) | SPEC §7.9 | SPEC de integrações; e-mail opcional — D13 |
@@ -511,7 +511,7 @@ Ordem lógica derivada das dependências da Seção 6. Cada fase: objetivo, dom�
 | DP-16 | Aspectos legais (termos de uso, LGPD/GDPR, consentimentos) | SPEC §7.14 | Consideração futura própria |
 | DP-17 | Persona P4 (observador/analista) e relatórios de analytics | SPEC §3 P4 | SPEC de analytics antes/F11 |
 | DP-18 | Catálogos e tabelas de gamificação (conquistas, missões, itens/preços, desafios) | SPEC D8, D9, D10, D12 (escopos citados sem catálogo) | SPECs de cada domínio correspondente |
-| DP-19 | Formato de conteúdo de aula, limites de upload, embeds | SPEC D3 (entidades citadas sem detalhe) | SPEC de conteúdo |
+| DP-19 | Formato de conteúdo de aula, limites de upload, embeds | SPEC D3 (entidades citadas sem detalhe) | SPEC de conteúdo — **Resolvida em 2026-09-30** (ver `SPEC/2026-09-30-conteudo-aula.md`, aprovada; pendências derivadas P-18–P-21 abertas) |
 
 **Regra:** se uma tarefa futura exigir uma decisão listada acima, ela deve ser resolvida pela SPEC correspondente **antes** da execução detalhada da fase vinculada — nunca improvisada na tarefa.
 
@@ -572,7 +572,7 @@ O PLAN pode ser considerado concluído (e apto a gerar `TASKS.md`) quando:
 6. Fórmulas de XP/níveis, tipos definitivos de questão, regras detalhadas de ranking (DP-07, DP-08, DP-10).
 7. Correção manual de dissertativas (DP-09).
 8. Integrações externas (DP-11), pagamentos/moedas reais (DP-12), IA/LLM (DP-13), multi-tenancy (DP-14), aspectos legais (DP-16).
-9. Catálogos de gamificação e detalhes finos de conteúdo (DP-17, DP-18, DP-19).
+9. Catálogos de gamificação e detalhes finos de conteúdo (DP-17, DP-18, DP-19). *Revisão 2026-09-30:* DP-19 resolvida por `SPEC/2026-09-30-conteudo-aula.md`; permanecem não definidos aqui os itens P-18–P-21 daquela SPEC.
 10. Estimativas de esforço, duração e alocação de pessoas (não são requisitos da SPEC).
 
 **Limites de produto herdados e mantidos (SPEC §6):** apenas web responsiva; papéis fixos; conteúdo autoral; correção automática de questões (dissertativas conforme SPEC própria); gamificação server-side; economia fechada; persistência própria; analytics dos próprios eventos; certificados verificáveis por código próprio; **não** é host de vídeo, sistema de pagamento, LMS institucional, app nativo, videoconferência, rede social livre, autor de conteúdo nem jogo.

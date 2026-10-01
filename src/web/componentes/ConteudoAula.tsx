@@ -19,6 +19,26 @@ function ConteudoIndisponivel({ tipo }: { tipo: string }) {
   )
 }
 
+function tamanhoLegivel(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+function ConteudoAnexo({ dados }: { dados: Record<string, unknown> }) {
+  const { arquivoId, nome, tamanho } = dados
+  if (typeof arquivoId !== 'string' || typeof nome !== 'string') {
+    return <ConteudoIndisponivel tipo="material_anexo" />
+  }
+  const espacoTamanho = typeof tamanho === 'number' ? ` (${tamanhoLegivel(tamanho)})` : ''
+  return (
+    <p className="conteudo-anexo">
+      <a href={`/api/v1/arquivos/${arquivoId}`}>Baixar {nome}</a>
+      {espacoTamanho}
+    </p>
+  )
+}
+
 function Bloco({ bloco }: { bloco: BlocoConteudo }) {
   const dados =
     bloco.dados !== null && typeof bloco.dados === 'object'
@@ -39,6 +59,10 @@ function Bloco({ bloco }: { bloco: BlocoConteudo }) {
     ) : (
       <ConteudoIndisponivel tipo={bloco.tipo} />
     )
+  }
+
+  if (bloco.tipo === 'material_anexo') {
+    return <ConteudoAnexo dados={dados ?? {}} />
   }
 
   return <ConteudoIndisponivel tipo={bloco.tipo} />

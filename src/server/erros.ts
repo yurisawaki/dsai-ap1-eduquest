@@ -36,6 +36,13 @@ export function manipularErro(
       .json({ erro: { codigo: 'validacao', mensagem: 'JSON malformado' } })
     return
   }
+  // R-C6f (SPEC de conteúdo): corpo acima do limite é 400 — 413 não pertence ao contrato (técnica §2.3.1)
+  if (erro instanceof Error && 'type' in erro && erro.type === 'entity.too.large') {
+    res
+      .status(400)
+      .json({ erro: { codigo: 'validacao', mensagem: 'corpo excede o limite permitido' } })
+    return
+  }
   if (erro instanceof Prisma.PrismaClientKnownRequestError) {
     if (erro.code === 'P2002') {
       res

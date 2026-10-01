@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { exigirPapel, exigirSessao } from '../middlewares/sessao'
 import {
   concluirAula,
+  criarArquivo,
   criarAula,
   criarCurso,
   criarModulo,
@@ -11,6 +12,7 @@ import {
   excluirAula,
   excluirCurso,
   excluirModulo,
+  lerArquivo,
   lerAula,
   lerCurso,
   listarCursos,
@@ -82,6 +84,19 @@ rotasCatalogo.put('/aulas/:id/conteudo', exigirSessao, async (req, res) => {
 rotasCatalogo.get('/aulas/:id', exigirSessao, async (req, res) => {
   const aula = await lerAula(req.usuario!, req.params.id)
   res.status(200).json(aula)
+})
+
+rotasCatalogo.post('/aulas/:id/arquivos', exigirSessao, async (req, res) => {
+  const arquivo = await criarArquivo(req.usuario!, req.params.id, req.body)
+  res.status(201).json(arquivo)
+})
+
+rotasCatalogo.get('/arquivos/:id', exigirSessao, async (req, res) => {
+  const arquivo = await lerArquivo(req.usuario!, req.params.id)
+  res.attachment(arquivo.nome)
+  res.type(arquivo.mime)
+  res.set('X-Content-Type-Options', 'nosniff')
+  res.status(200).send(Buffer.from(arquivo.conteudo))
 })
 
 rotasCatalogo.post(

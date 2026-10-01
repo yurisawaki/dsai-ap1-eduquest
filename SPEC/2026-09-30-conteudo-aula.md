@@ -3,15 +3,15 @@
 | Campo | Valor |
 |---|---|
 | Artefato | `SPEC/2026-09-30-conteudo-aula.md` (veículo de resolução de **DP-19** — "SPEC de conteúdo", `PLAN.md` §8) |
-| Status | **Proposta — aguardando aprovação.** DP-19 só passa a ser considerada resolvida após (a) aprovação com status "Aprovada" no cabeçalho e (b) revisão formal posterior de `PLAN.md` §8, `decisoes-pendentes.md` e `TASKS.md` (critério em `decisoes-pendentes.md` §6; ver §10.2) |
+| Status | **Aprovada — auditoria concluída; correções A-1–A-4 e M-1–M-6 aplicadas (2026-09-30; registro em §13).** Revisões formais de §10.2 executadas na mesma data (`PLAN.md` §8, `decisoes-pendentes.md`, `TASKS.md` T2.3, SPEC D3) — DP-19 **resolvida** |
 | Data | 2026-09-30 |
 | Domínio / Fase | **D3 — Catálogo de aprendizagem**, parcela conteúdo de aula · Fase **F2** (`PLAN.md` §7) |
 | Tarefa relacionada | **T2.3** (`TASKS.md` — "Implementar conteúdo de aula"), hoje `[Bloqueada: DP-19]` para formato/limites; origem da pendência: T0.1/T2.1 |
 | Fontes de verdade | `SPEC/2026-09-30-visao-geral.md` → `PLAN.md` → `TASKS.md` → `SPEC/2026-09-30-decisoes-pendentes.md`; decisões técnicas vinculantes: `SPEC/2026-09-30-tecnica-fundacoes.md`; baseline funcional: `SPEC/2026-09-30-catalogo-aprendizagem.md` (D3) |
 | Desbloqueia (conteúdo) | Formato/limites/embed/cardinalidade de T2.3; a forma definitiva de `conteudo` de F2-13; condições de teste de T2.3 e da leitura de T2.5 |
 | Não resolve | DP-04–DP-18 e DP-20+ (nenhuma); P-14–P-17 da SPEC D3 (nenhuma); nada pertencente a D2, D4–D17; progresso/XP/avaliações/certificados/matrícula/notificações (fronteiras §2.3) |
-| Restrições desta etapa | Sem código; sem alterar `PLAN.md`, `TASKS.md`, SPECs existentes (`decisoes-pendentes.md`, D3, visão, técnica); sem commit; sem escolha de tecnologia externa arbitrária (§3); informação não determinável vira pendência (§11) |
-| Alterações a outros artefatos | **Nenhuma nesta etapa** — revisões necessárias são listadas, não executadas (§10.2) |
+| Restrições da etapa de proposta | Sem código; sem alterar `PLAN.md`, `TASKS.md`, SPECs existentes (`decisoes-pendentes.md`, D3, visão, técnica); sem commit; sem escolha de tecnologia externa arbitrária (§3); informação não determinável vira pendência (§11) |
+| Alterações a outros artefatos | Na proposta: nenhuma. **Após aprovação:** revisões de §10.2 executadas (`PLAN.md`, `TASKS.md`, `decisoes-pendentes.md`, SPEC D3); SPEC técnica e visão inalteradas |
 
 ---
 
@@ -21,7 +21,7 @@ DP-19 (**"Formato de conteúdo de aula, limites de upload, embeds"**) está regi
 
 Este documento **resolve a decisão** (formato, limites, regras de embed, cardinalidade, ordem, upload/download de anexos — cada item marcado como **Decisão DP-19** em §4) e **não cria requisitos funcionais além do que as fontes já declaram**: "conteúdo de aula (texto, mídia embedada, material anexo)" é entidade da visão §5 D3 e item do escopo de F2 (`PLAN.md` §5.3/§7); detalhar formato/limites é exatamente o que o `PLAN.md` §8 designa a esta SPEC. Onde as fontes não determinam algo e a decisão é indecidível sem inventar produto, o item vira **pendência** (§11), nunca valor arbitrário silencioso.
 
-Condições documentais de fechamento (espelho de `decisoes-pendentes.md` §6): (1) artefato existe ✓; (2) decisão inequívoca ✓ (§4–§7); (3) status "Aprovada" — **pendente de aprovação**; (4) rastreabilidade às fontes ✓ (§3, colunas de §4/§6); (5) registro em `PLAN.md` §8/`decisoes-pendentes.md` — pós-requisito (§10.2); (6) remoção do bloqueio de T2.3 no `TASKS.md` — pós-requisito (§10.2).
+Condições documentais de fechamento (espelho de `decisoes-pendentes.md` §6): (1) artefato existe ✓; (2) decisão inequívoca ✓ (§4–§7); (3) status "Aprovada" ✓ (2026-09-30, após auditoria — §13); (4) rastreabilidade às fontes ✓ (§3, colunas de §4/§6); (5) registro em `PLAN.md` §8/`decisoes-pendentes.md` ✓ (§10.2); (6) remoção do bloqueio de T2.3 no `TASKS.md` ✓ (§10.2).
 
 ---
 
@@ -49,6 +49,10 @@ A visão §5 D3 declara a entidade "conteúdo de aula (**texto, mídia embedada,
 | **MEDIA** | `midia_embedada` | `{ "url": "<https URL>" }` | idem (espelho) |
 | **ANEXO** | `material_anexo` | `{ "arquivoId": "<UUID>" }` | `{ "arquivoId", "nome", "mime", "tamanho" }` (enriquecido pelo servidor — R-C7) |
 
+**Reenvio de anexo (correção A-3):** o PUT aceita para `material_anexo` **somente** `{arquivoId}`; os campos enriquecidos do GET (`nome`, `mime`, `tamanho`) são rejeitados como chaves extras (R-C10). Ao reenviar a lista (substituição total — R-C8), o cliente **projeta** cada bloco de anexo para `{arquivoId}`.
+
+**Contagem de caracteres (correção A-4):** todo limite em "caracteres" desta SPEC (texto, `nome`, `url`) é medido em **pontos de código Unicode** (não em bytes nem em unidades UTF-16).
+
 Nenhum tipo além dos três é aceito; renomear valores do ENUM exigiria migração e contraria a convenção de minúsculas da técnica §2.2.2 — **não é feito aqui**.
 
 ### 2.3 Fora de escopo
@@ -57,7 +61,7 @@ Nenhum tipo além dos três é aceito; renomear valores do ENUM exigiria migraç
 - **Matrícula/vínculo, notificações, ranking, gamificação** — não existem em D3 (fronteiras da SPEC D3 §2.3, preservadas).
 - **Armazenamento/transmissão de vídeo próprio** — proibido pela visão §6 (limite fixo; R-C9).
 - **DP-04–DP-18, P-14–P-17** — nenhuma resolvida; os limites numéricos desta SPEC são revisáveis pela futura SPEC de NFRs (§11, nota).
-- **Provedor de embed nomeado, serviço de armazenamento externo (CDN/arquivo em nuvem), proxy de mídia** — nenhum é escolhido: provedores são pendência P-18; armazenamento é local (§7.2), coerente com "persistência própria" (visão §6) e sem integração externa (DP-11 permanece aberta).
+- **Provedor de embed nomeado, serviço de armazenamento externo (CDN/arquivo em nuvem), proxy de mídia** — nenhum é escolhido: provedores são pendência P-18; o binário do anexo fica no **próprio banco PostgreSQL** (§7.2 — correção A-1), coerente com "persistência própria" (visão §6) e sem integração externa (DP-11 permanece aberta).
 - **Código, migrações, seeders executáveis** — §10.3/§10.4 listam impacto e requisitos; nada é implementado nesta etapa.
 - **Alterações em qualquer artefato existente** — apenas revisões listadas em §10.2.
 
@@ -71,7 +75,7 @@ Nenhum tipo além dos três é aceito; renomear valores do ENUM exigiria migraç
 | `PLAN.md` | §5.3 (escopo; pendência "formato exato de conteúdo/mídia e limites de upload — SPEC de conteúdo"); §7 F2; §8 linha DP-19 ("SPEC de conteúdo"); §11 item 9 | §1, §2.1, §10.1 |
 | `TASKS.md` | T2.1, **T2.3** (descrição, validação, bloqueio `[Bloqueada: DP-19]`), T2.5, T2.6 | §1, §10.1, §12 |
 | `SPEC/2026-09-30-decisoes-pendentes.md` | §2/§3 entrada DP-19; §4 Categoria B; §6 (critério de decisão resolvida) | §1, §10.2, §12 |
-| `SPEC/2026-09-30-tecnica-fundacoes.md` | §2.1.3 (volume persistente), §2.2.1/§2.2.2 (convenções: UUID, timestamps, ENUM minúscula), §2.2.3 regra 4 (FKs CASCADE, transação), §2.3.1 (JSON sobre HTTP; códigos 400/401/403/404/409/500; `/api/v1`), §2.3.2 (sessão, `401`/`403`), §6.4 (P-08/P-09) | §4, §6, §7, §9; justificativa da recusa de multipart (R-C6a) |
+| `SPEC/2026-09-30-tecnica-fundacoes.md` | §2.1.3 (volume persistente **do contêiner PostgreSQL** — único volume de dados previsto), §2.2.1/§2.2.2 (convenções: UUID, timestamps, ENUM minúscula), §2.2.3 regra 4 (FKs CASCADE, transação), §2.3.1 (JSON sobre HTTP; códigos 400/401/403/404/409/500; `/api/v1`), §2.3.2 (sessão, `401`/`403`), §6.4 (P-08/P-09) | §4, §6, §7, §9; justificativa da recusa de multipart (R-C6a) |
 | `SPEC/2026-09-30-catalogo-aprendizagem.md` (D3) | §3.1 passo 3, §3.3, §3.5 (F2-12/F2-13; "14 contratos"), §4 (R-14/R-17/R-18), §4.2 (matriz de rota), §5.4 (modelo; "estrutura fina → DP-19"), §7.3 (E-14–E-27, E-24), §10.1 (DP-19), §10.2 (P-14–P-17) | §4, §5, §6, §7, §9, §12 |
 | Estado atual da implementação | `prisma/schema.prisma`, `src/server/servicos/catalogo.ts`, `src/server/rotas/catalogo.ts`, `src/web/paginas/Catalogo.tsx`, `tests/api/conteudo.test.ts` | §6 (compatibilidade), §10.3 (impacto) |
 
@@ -86,13 +90,13 @@ Nenhum tipo além dos três é aceito; renomear valores do ENUM exigiria migraç
 | R-C1 | **Conjunto fechado de 3 tipos** | **Herdada.** Todo bloco tem exatamente um `tipo` ∈ {`texto`, `midia_embedada`, `material_anexo`}; qualquer outro valor → `400`. Valores minúsculos preservados (ENUM da técnica §2.2.2; D3 §5.4) — sem rename. | visão §5 D3; técnica §2.2.2; D3 §5.4 |
 | R-C2 | **Blocos ordenados com posição formal determinística** | **Decisão DP-19.** Aula contém **lista ordenada** de blocos; cada bloco persiste `posicao` inteira **0-based contígua** (0…n−1, sem lacunas, sem repetição na aula). O servidor **deriva a posição do índice do array** no PUT e devolve os blocos **ordenados por `posicao` ascendente** no GET, com o campo `posicao` na resposta. A ordenação por `criado_em` deixa de ser usada (empates de timestamp eram indeterminados). Justificativa: a visão trata a aula como sequência "lê/assiste" (§4 passo 4); ordem de exibição é requisito observável de consumo e o índice do array é a única fonte de verdade não ambígua. | visão §4 passo 4; D3 §5.4 ("estrutura fina → DP-19"); achado de auditoria F-02 |
 | R-C3 | **Substituição total com cardinalidade definida** | **Herdada** (substituição total: D3 §3.1 passo 3) + **Decisão DP-19** (cardinalidade): corpo do PUT é **sempre um array** de **0 a 50 blocos**; `[]` limpa o conteúdo; objeto único, string, número ou array com >50 → `400`. Aceitar também objeto único (comportamento atual) é **retirado**: um contrato definitivo admite uma única forma de corpo. | D3 §3.1/§5.4; decisão DP-19 (limites) |
-| R-C4 | **TEXTO: formato, limite e vazio** | **Decisão DP-19.** `dados` é objeto **exatamente** `{"texto": string}` (chaves extras/ausentes → `400`). Formato: **texto simples** com quebras de linha (`\n`), **não interpretado como HTML nem markdown** na exibição (R-C8) — justificativa: nenhum formato de apresentação está especificado nas fontes e apresentação é fronteira de DP-05/DP-06 (visão §7.5–§7.6); texto simples não introduz tecnologia de renderização nem vetor de injeção. **Vazio:** `string` com ≥1 caractere após `trim()` (só espaços/quebras → `400`). **Limite:** ≤ **20.000 caracteres** (exceder → `400`). | visão §5 D3 ("texto"); decisão DP-19; fronteira DP-05 (§11 P-20) |
+| R-C4 | **TEXTO: formato, limite e vazio** | **Decisão DP-19.** `dados` é objeto **exatamente** `{"texto": string}` (chaves extras/ausentes → `400`); a string é armazenada **como enviada** (sem `trim` nem normalização). Formato: **texto simples** com quebras de linha (`\n`), **não interpretado como HTML nem markdown** na exibição (R-C8) — justificativa: nenhum formato de apresentação está especificado nas fontes e apresentação é fronteira de DP-05/DP-06 (visão §7.5–§7.6); texto simples não introduz tecnologia de renderização nem vetor de injeção. **Vazio:** `string` com ≥1 caractere após `trim()` (só espaços/quebras → `400`). **Limite:** ≤ **20.000 caracteres** (exceder → `400`). | visão §5 D3 ("texto"); decisão DP-19; fronteira DP-05 (§11 P-20) |
 | R-C5 | **MEDIA: URL de referência e regras de embed** | **Decisão DP-19** sobre base **Herdada** (D3 R-18: "o EduQuest guarda apenas a referência"; visão §6: embed de provedor externo). `dados` é objeto **exatamente** `{"url": string}`. Validação **apenas de forma** — o servidor **não busca** a URL remota (fetch externo seria integração = DP-11): esquema **`https:`**; hostname presente; **sem credenciais** (`user:pass@`); ≤ **2.048 caracteres**; URL absoluta parseável. Violação → `400` (`http:`, `javascript:`, `data:` etc. são rejeitados). **Geração de embed:** o servidor **não gera nem reescreve** URL de player (nenhum provedor é nomeado em nenhuma fonte); armazena e devolve a URL como está; exibição é `<iframe sandbox>` no cliente (R-C8). **Lista fechada de provedores/transformação para player → P-18** (§11). | visão §6; D3 R-18; técnica §2.3.1; decisão DP-19 |
-| R-C6 | **ANEXO: envio, tipos, limites e armazenamento** | **Decisão DP-19.** (a) **Envio:** rota própria F2-15 (§6.3) com corpo **JSON** `{nome, mime, base64}` — **multipart é recusado em todas as rotas**, pois a técnica §2.3.1 fixa "JSON sobre HTTP" como transporte (multipart seria quebra de decisão vinculante; nenhum parser externo é introduzido). (b) **Tipos aceitos** (MIME **e** extensão obrigatoriamente coerentes): `application/pdf` (`.pdf`), `image/png` (`.png`), `image/jpeg` (`.jpg`/`.jpeg`), `image/gif` (`.gif`), `application/zip` (`.zip`) — lista **fechada**; qualquer outro MIME (inclusive `video/*`, `audio/*`, `text/html`, `image/svg+xml`) → `400`. **Vídeo é rejeitado por regra**, não por lacuna de lista (R-C9). (c) **Validação de conteúdo:** o servidor **decodifica o base64** e confere a **assinatura binária** do formato declarado (`%PDF`, `\x89PNG`, `\xFF\xD8\xFF`, `GIF8`, `PK`) e a coerência do `mime`; divergência, base64 inválido ou corpo vazio → `400`. O **tamanho é medido após decodificar** (fonte da verdade = bytes decodificados). (d) **Limites:** ≤ **5.242.880 bytes (5 MB)** por arquivo; ≤ **25 arquivos** por aula; `nome` obrigatório, sem separadores de caminho (`/`, `\`) nem caracteres de controle, ≤ **255 caracteres**. Exceder → `400` (**não `413`**: a técnica §2.3.1 fixa o conjunto de códigos e `413` não faz parte dele). (e) **Armazenamento:** binário no **sistema de arquivos da aplicação** (diretório de dados do contêiner, volume persistente — técnica §2.1.3), **nunca** em banco e **nunca** em serviço externo (visão §6 "persistência própria"; serviço externo seria DP-11); caminho derivado do UUID do arquivo, **jamais de entrada do cliente**; metadados na tabela `arquivo` (§7.2). | visão §5 D3 ("material anexo"), §6; técnica §2.1.3/§2.3.1; decisão DP-19 |
-| R-C7 | **Referência e download/exibição de anexo** | **Derivação** (autorização) + **Decisão DP-19** (mecânica). O PUT referencia o anexo **apenas** por `arquivoId`; o arquivo deve existir e **pertencer à mesma aula** (senão → `400`). Ao aceitar o PUT, o servidor **enriquece e persiste** `dados` com `{arquivoId, nome, mime, tamanho}` copiados da linha de `arquivo` (metadados imutáveis após upload → sem divergência). Download/exibição: F2-16 (§6.4) devolve o binário com `Content-Type` armazenado, `Content-Disposition` com o nome original e `X-Content-Type-Options: nosniff`. **Autorização de leitura idêntica à de F2-13:** dono/admin sempre; demais papéis somente com cadeia aula→módulo→curso publicada (R-14/R-17) — falha de visibilidade responde **`404`** (não revela rascunho, E-19); sem sessão → `401`. | D3 §4 (R-14/R-17), §4.2, E-19/E-20; decisão DP-19 |
-| R-C8 | **Renderização e edição no cliente** | **Decisão DP-19** (detalhe de consumo exigido por T2.3: "editor/exibição dos três tipos"). O cliente **exibe os blocos exatamente na ordem recebida** (posição ascendente do servidor), por tipo: **texto** → bloco de texto preservando quebras de linha, sem interpretar marcação; **média** → `<iframe loading="lazy" sandbox="allow-scripts allow-same-origin allow-popups allow-presentation" src=<url>>` + link "abrir em nova aba" (`rel="noopener"`) como recurso quando o provedor recusa iframe (X-Frame-Options; sem proxy server-side, que seria integração — DP-11); **anexo** → link de download para F2-16 exibindo `nome` e tamanho. **Edição** (somente dono/admin, mesma matriz da D3 §4.2): formulário por tipo — área de texto; campo de URL com validação `https` no cliente; campo de arquivo que lê o arquivo e envia base64 na F2-15, com `accept` restrito aos 5 MIMEs —, além de remoção de bloco; o cliente reenvia a **lista completa** no PUT (substituição total), preservando a ordem relativa dos remanescentes. **Reordenação explícita (arrasto) não é criada**: não é requisito de nenhuma fonte (D3 §8 → P-17); a API já aceita outra ordem se o array for enviado em outra ordem. | TASKS T2.3; D3 §3.1/§4.2/§8; visão §6; decisão DP-19 |
+| R-C6 | **ANEXO: envio, tipos, limites e armazenamento** | **Decisão DP-19.** (a) **Envio:** rota própria F2-15 (§6.3) com corpo **JSON** `{nome, mime, base64}` — **multipart é recusado nas rotas de conteúdo (F2-12 e F2-15)** (correção M-5), pois a técnica §2.3.1 fixa "JSON sobre HTTP" como transporte (multipart seria quebra de decisão vinculante; nenhum parser externo é introduzido). (b) **Tipos aceitos** (MIME **e** extensão obrigatoriamente coerentes; extensão = sufixo do `nome` após o último `.`, comparada **sem diferenciar maiúsculas**; `nome` sem extensão → `400` — correção A-4): `application/pdf` (`.pdf`), `image/png` (`.png`), `image/jpeg` (`.jpg`/`.jpeg`), `image/gif` (`.gif`), `application/zip` (`.zip`) — lista **fechada**; qualquer outro MIME (inclusive `video/*`, `audio/*`, `text/html`, `image/svg+xml`) → `400`. **Vídeo é rejeitado por regra**, não por lacuna de lista (R-C9). (c) **Validação de conteúdo:** o servidor **decodifica o base64** e confere a **assinatura binária** do formato declarado (`%PDF`, `\x89PNG`, `\xFF\xD8\xFF`, `GIF8`, `PK`) e a coerência do `mime`; divergência, base64 inválido ou corpo vazio → `400`. O **tamanho é medido após decodificar** (fonte da verdade = bytes decodificados). (d) **Limites:** ≤ **5.242.880 bytes (5 MB)** por arquivo; ≤ **25 arquivos** por aula; `nome` obrigatório, sem separadores de caminho (`/`, `\`) nem caracteres de controle, ≤ **255 caracteres**. Exceder → `400` (**não `413`**: a técnica §2.3.1 fixa o conjunto de códigos e `413` não faz parte dele). (e) **Armazenamento (correção A-1):** binário na coluna `conteudo BYTEA` da própria linha de `arquivo` (§7.2), no **PostgreSQL** — único armazenamento persistente previsto pela técnica §2.1.3 (volume do contêiner `db`); **nunca** no sistema de arquivos do contêiner `app` (não tem volume: o binário se perderia a cada rebuild) e **nunca** em serviço externo (visão §6 "persistência própria"; serviço externo seria DP-11). Linha e binário são gravados na **mesma instrução** (atomicidade — DC-12) e removidos juntos pelo `ON DELETE CASCADE` (§7.3). Nenhum caminho de disco deriva de entrada do cliente (não há caminho de disco). (f) **Limite do corpo HTTP (correção A-2):** F2-12 e F2-15 aceitam corpo JSON de até **8 MiB (8.388.608 bytes)** — suficiente para 5 MB em base64 (≈ 6,7 MB) e para 50 blocos de texto no limite; as demais rotas mantêm o limite padrão do servidor. Corpo acima do limite de **qualquer** rota → `400` (nunca `413` nem `500`). | visão §5 D3 ("material anexo"), §6; técnica §2.1.3/§2.3.1; decisão DP-19 |
+| R-C7 | **Referência e download/exibição de anexo** | **Derivação** (autorização) + **Decisão DP-19** (mecânica). O PUT referencia o anexo **apenas** por `arquivoId`; o arquivo deve existir e **pertencer à mesma aula** (senão → `400`). Ao aceitar o PUT, o servidor **enriquece e persiste** `dados` com `{arquivoId, nome, mime, tamanho}` copiados da linha de `arquivo` (metadados imutáveis após upload → sem divergência). Download/exibição: F2-16 (§6.4) devolve o binário com `Content-Type` armazenado, **`Content-Disposition: attachment`** com o nome original (correção A-4 — sempre download; nenhum anexo é renderizado pelo navegador na origem do EduQuest) e `X-Content-Type-Options: nosniff`. **Autorização de leitura idêntica à de F2-13:** dono/admin sempre; demais papéis somente com cadeia aula→módulo→curso publicada (R-14/R-17) — falha de visibilidade responde **`404`** (não revela rascunho, E-19); sem sessão → `401`. | D3 §4 (R-14/R-17), §4.2, E-19/E-20; decisão DP-19 |
+| R-C8 | **Renderização e edição no cliente** | **Decisão DP-19** (detalhe de consumo exigido por T2.3: "editor/exibição dos três tipos"). O cliente **exibe os blocos exatamente na ordem recebida** (posição ascendente do servidor), por tipo: **texto** → bloco de texto preservando quebras de linha, sem interpretar marcação; **média** → `<iframe loading="lazy" sandbox="allow-scripts allow-same-origin allow-popups allow-presentation" src=<url>>` + link "abrir em nova aba" (`rel="noopener"`) como recurso quando o provedor recusa iframe (X-Frame-Options; sem proxy server-side, que seria integração — DP-11); **anexo** → link de download para F2-16 exibindo `nome` e tamanho. **Edição** (somente dono/admin, mesma matriz da D3 §4.2): formulário por tipo — área de texto; campo de URL com validação `https` no cliente; campo de arquivo que lê o arquivo e envia base64 na F2-15, com `accept` restrito aos 5 MIMEs —, além de remoção de bloco; o cliente reenvia a **lista completa** no PUT (substituição total), preservando a ordem relativa dos remanescentes e projetando blocos de anexo para `{arquivoId}` (§2.2, correção A-3). **Reordenação explícita (arrasto) não é criada**: não é requisito de nenhuma fonte (D3 §8 → P-17); a API já aceita outra ordem se o array for enviado em outra ordem. | TASKS T2.3; D3 §3.1/§4.2/§8; visão §6; decisão DP-19 |
 | R-C9 | **Fronteira de vídeo (limite fixo)** | **Herdada.** Nenhum caminho armazena ou transmite vídeo: F2-15 rejeita `video/*`; F2-12 não aceita binário; mídia de aula é somente URL externa (R-C5). Verificação obrigatória em T2.6. | visão §6; D3 R-18/AC-10; TASKS T2.3/T2.6 |
-| R-C10 | **Validação estrita de corpo e ordem de avaliação** | **Decisão DP-19.** Chaves do objeto `dados` são **fechadas por tipo** (extras ou ausentes → `400`); a chave `posicao` **não é aceita** no corpo do PUT (posição deriva do índice — R-C2); `dados` não-nulo obrigatório (já fixado pela D3/E-24). **Ordem de avaliação das respostas** (preserva comportamento já implementado e testado): `401` (sessão, middleware) → `404` (aula inexistente) → `403` (não-dono/não-admin, E-16) → `400` (corpo). | D3 §4.2, E-14/E-16/E-18/E-24; comportamento atual de `substituirConteudo`; decisão DP-19 |
+| R-C10 | **Validação estrita de corpo e ordem de avaliação** | **Decisão DP-19.** Chaves do objeto `dados` são **fechadas por tipo** (extras ou ausentes → `400`); a chave `posicao` **não é aceita** no corpo do PUT (posição deriva do índice — R-C2); `dados` não-nulo obrigatório (já fixado pela D3/E-24). **Ordem de avaliação das respostas** (preserva comportamento já implementado e testado): `401` (sessão, middleware) → `404` (aula inexistente) → `403` (não-dono/não-admin, E-16) → `400` (corpo) — vale para **F2-12 e F2-15** (correção M-4); F2-16 avalia `401` → `404` (inexistente ou não visível). Exceção inevitável: corpo acima do limite de R-C6f ou JSON malformado é rejeitado (`400`) pelo leitor de corpo **antes** da checagem de aula/papel. | D3 §4.2, E-14/E-16/E-18/E-24; comportamento atual de `substituirConteudo`; decisão DP-19 |
 
 ---
 
@@ -128,7 +132,7 @@ Todos sob `/api/v1`, JSON sobre HTTP, erro `{"erro": {"codigo", "mensagem"}}` e 
 
 | Campo | Definição |
 |---|---|
-| Conteúdo | `Content-Type: application/json` **obrigatório** (multipart ou outro tipo → `400`) |
+| Conteúdo | `Content-Type: application/json` **obrigatório** (multipart ou outro tipo → `400`); corpo ≤ 8 MiB (R-C6f) |
 | Corpo | **array** de 0–50 blocos; bloco = `{"tipo": <3 valores>, "dados": <objeto fechado por tipo — §2.2>}`; **sem** campo `posicao` |
 | Substituição | total: blocos anteriores da aula são apagados e o array é gravado na ordem dada (posições 0…n−1) |
 | Sucesso | `204` sem corpo |
@@ -159,7 +163,8 @@ Exemplo de corpo:
 | Campo | Definição |
 |---|---|
 | Propósito | Enviar um arquivo de material anexo antes de referenciá-lo no F2-12 |
-| Corpo | JSON: `{"nome": string, "mime": string, "base64": string}` — exatamente essas 3 chaves (extras/faltantes → `400`) |
+| Corpo | JSON: `{"nome": string, "mime": string, "base64": string}` — exatamente essas 3 chaves (extras/faltantes → `400`); corpo ≤ 8 MiB (R-C6f); `base64` no alfabeto padrão (RFC 4648 §4, com `=` de preenchimento) |
+| Ordem de avaliação | `401` → `404` → `403` → `400` (R-C10) |
 | Autorização | professor dono do curso ou administrador (mesma matriz da D3 §4.2 para F2-04–F2-12); violação → `403` |
 | Sucesso | `201` `{"arquivoId", "nome", "mime", "tamanho"}` — `tamanho` = bytes **decodificados** |
 | Erros | `401` · `404` (aula) · `403` · `400`: base64 inválido/vazio, `>5 MB`, MIME fora da lista, extensão incoerente, assinatura divergente, `nome` inválido/`>255`, 25 arquivos já existentes na aula, **`Content-Type` não-JSON (inclusive multipart)** |
@@ -171,8 +176,9 @@ Exemplo de corpo:
 |---|---|
 | Propósito | Download/exibição do material anexo |
 | Autorização | qualquer papel autenticado **com visibilidade da aula** (R-C7 — idêntica à F2-13); dono/admin sempre |
-| Sucesso | `200` binário: `Content-Type` = mime armazenado; `Content-Disposition` com nome original; `X-Content-Type-Options: nosniff` |
+| Sucesso | `200` binário: `Content-Type` = mime armazenado; `Content-Disposition: attachment` com nome original; `X-Content-Type-Options: nosniff` |
 | Erros | `401` sem sessão · `404` arquivo inexistente **ou** aula não visível (não revela rascunho, E-19) |
+| Ordem de avaliação | `401` → `404` |
 | Não faz | não redireciona para URL externa; não há streaming de vídeo (anexo é material, mídia de aula é R-C5) |
 
 ### 6.5 Cardinalidade e ordem (resumo)
@@ -194,7 +200,7 @@ Convenções herdaadas da técnica §2.2.1/§2.2.2 (PostgreSQL; PK UUID gerado p
 
 | Dado | Mudança | Motivo / rastreabilidade |
 |---|---|---|
-| `posicao` | **NOVA coluna** `INTEGER NOT NULL` | R-C2: ordem determinística substitui a ordenação por `criado_em` (indeterminada em empates) |
+| `posicao` | **NOVA coluna** `INTEGER NOT NULL` | R-C2: ordem determinística substitui a ordenação por `criado_em` (indeterminada em empates). **Backfill da migração (correção M-6):** linhas existentes recebem `ROW_NUMBER() OVER (PARTITION BY aula_id ORDER BY criado_em, id) - 1` — determinístico, preserva a ordem de leitura anterior e produz 0…n−1 contíguo |
 | `tipo` | inalterado — ENUM(`texto`, `midia_embedada`, `material_anexo`) NOT NULL | R-C1 (sem rename) |
 | `dados` | inalterado — `JSONB NOT NULL`; **forma interna agora fixada** (§2.2/§6) — era "DP-19 não definida" na D3 §5.4 | R-C4–R-C7 |
 | índice | `@@index([aula_id])` → **`@@unique([aula_id, posicao])`** | ordenação é o acesso dominante do F2-13 e a unicidade por aula materializa "contíguo sem repetição" (R-C2) |
@@ -209,16 +215,17 @@ Convenções herdaadas da técnica §2.2.1/§2.2.2 (PostgreSQL; PK UUID gerado p
 | `nome` | VARCHAR(255) NOT NULL | nome original saneado (R-C6d), exibido no download |
 | `mime` | VARCHAR(100) NOT NULL | um dos 5 MIMEs de R-C6b; `Content-Type` do download |
 | `tamanho` | INTEGER NOT NULL | bytes decodificados (≤ 5 MB) |
+| `conteudo` | BYTEA NOT NULL | binário decodificado (R-C6e — correção A-1); **nunca** devolvido em listagens nem no F2-13, apenas no F2-16 |
 | `criado_em` / `atualizado_em` | TIMESTAMP NOT NULL | técnica §2.2.1 |
 
-Binário **fora do banco** — arquivo no sistema de arquivos do contêiner (R-C6e). A exclusão física do binário acompanha a exclusão da linha (regra de implementação); expurgo de arquivos não referenciados → §11 P-19.
+Binário **no banco**, na mesma linha dos metadados (R-C6e): gravação e exclusão são atômicas por construção; o `ON DELETE CASCADE` de `aula_id` remove binário e metadados juntos. Expurgo de arquivos não referenciados por blocos → §11 P-19.
 
 ### 7.3 Substituição e ciclo de vida
 
 1. **PUT (F2-12):** validação completa **antes** de qualquer escrita → transação única [`DELETE` de todos os blocos da aula + `INSERT` dos novos com `posicao` = índice]; array vazio → apenas `DELETE`. Ou falha tudo, ou grava tudo (técnicas §2.2.3 regra 4).
 2. **PUT não toca em `arquivo`:** remover bloco `material_anexo` deixa o arquivo referencialmente órfão (registro e binário permanecem até a exclusão da aula; §11 P-19).
-3. **F2-15** insere linha + binário; a contagem de 25 por aula consulta `arquivo.aula_id`.
-4. **Exclusão de aula** (F2-11) apaga blocos e arquivos por CASCADE, e o binário acompanha a linha — efeitos sobre progresso/certificados continuam sob **P-16 da D3** (não tratados aqui).
+3. **F2-15** insere linha + binário numa única instrução; a contagem de 25 por aula consulta `arquivo.aula_id`.
+4. **Exclusão de aula** (F2-11) — e, por cascata, de módulo/curso (F2-08/F2-05) — apaga blocos e arquivos (binário incluso) por CASCADE — efeitos sobre progresso/certificados continuam sob **P-16 da D3** (não tratados aqui).
 5. **Nenhuma coluna nova em `aula`, `modulo` ou `curso`**; nenhum outro domínio é modelado.
 
 ---
@@ -237,16 +244,16 @@ Critérios **documentais** (AC) e **testáveis** (TC). TCs são objetivos para T
 | AC-04 | TEXTO: formato exato, texto simples, 1–20.000 chars (R-C4) |
 | AC-05 | MEDIA: só `https`, URL forma-validada, servidor não busca a URL (R-C5) |
 | AC-06 | ANEXO: só 5 MIMEs+extensões coerentes, assinatura binária conferida, ≤5 MB, ≤25/aula, nome saneado (R-C6) |
-| AC-07 | Upload é JSON+base64; **multipart → 400** em todas as rotas (R-C6a; técnica §2.3.1) |
+| AC-07 | Upload é JSON+base64; **multipart → 400** em F2-12 e F2-15 (R-C6a; técnica §2.3.1); corpo acima do limite → 400, nunca 413/500 (R-C6f) |
 | AC-08 | GET de anexo replica a autorização da aula (dono/admin sempre; outros só publicado; falha → 404) (R-C7) |
 | AC-09 | Cliente exibe na ordem do servidor com 3 renderizações distintas, sem interpretar marcação (R-C8) |
 | AC-10 | Nenhum caminho armazena/transmite vídeo; `video/*` → 400 (R-C9; visão §6) |
 | AC-11 | Ordem de avaliação 401→404→403→400 preservada; nenhum código HTTP novo (R-C10; técnica §2.3.1) |
-| AC-12 | `dados` do GET tem forma idempotente ao PUT (espelho), exceto anexo enriquecido (§6.1/§6.2) |
+| AC-12 | `dados` do GET espelha o PUT para texto e mídia; anexo volta enriquecido e o reenvio exige projeção para `{arquivoId}` (§2.2, §6.1/§6.2) |
 | AC-13 | Substituição total em transação única; array vazio limpa (§7.3) |
 | AC-14 | Novo contrato F2-15/F2-16 rastreável a decisão DP-19 e não conflita com regra existente (§12) |
 | AC-15 | Nenhuma alteração em F2-14, D4–D7, D13, D16, D17, P-14–P-17 (§2.3) |
-| AC-16 | Nenhum artefato existente é alterado nesta etapa (§10.2/§10.5) |
+| AC-16 | Na etapa de proposta nenhum artefato existente foi alterado; após a aprovação, apenas as revisões listadas em §10.2 foram executadas (§10.5) |
 
 ### 8.2 Testáveis
 
@@ -267,6 +274,11 @@ Critérios **documentais** (AC) e **testáveis** (TC). TCs são objetivos para T
 | TC-13 | PUT com `dados: null` → 400 (E-24); corpo malformado → 400 |
 | TC-14 | Verificação de limite de vídeo: rota F2-15 não aceita `video/*` (coberto por TC-07) e F2-12 não tem caminho de upload (sem multipart) |
 | TC-15 | GET/F2-13 devolve `conteudo` sempre como array (nunca `null`) para aula sem blocos |
+| TC-16 | PUT de anexo com `dados` enriquecido (`{arquivoId, nome, mime, tamanho}`) → 400; o mesmo bloco projetado para `{arquivoId}` → 204 (A-3) |
+| TC-17 | Corpo acima de 8 MiB em F2-12/F2-15 → 400 (não 413/500); PUT com 50 blocos de texto de 20.000 caracteres → 204 (A-2) |
+| TC-18 | F2-16 de dono → `Content-Disposition: attachment` com o nome original (A-4); `nome` com extensão maiúscula (`LISTA.PDF`) → 201; `nome` sem extensão → 400 |
+| TC-19 | Texto de 20.000 pontos de código fora do BMP (ex.: emoji) → 204; 20.001 → 400 (A-4) |
+| TC-20 | Excluir o curso remove as linhas de `arquivo` da aula (binário incluso — CASCADE, A-1); F2-16 do arquivo → 404 |
 
 ---
 
@@ -279,15 +291,15 @@ Critérios **documentais** (AC) e **testáveis** (TC). TCs são objetivos para T
 | DC-01 | Corpo do F2-12 não é array / >50 / bloco malformado / `tipo` inválido / `dados` ausente ou chaves erradas / `posicao` no corpo | 400 | validação pré-escrita; nada gravado |
 | DC-02 | `texto` vazio após trim ou >20.000 chars | 400 | idem |
 | DC-03 | `url` fora de R-C5 (`http`, `javascript`, `data`, sem host, sem `https`, >2.048, com credencial) | 400 | idem |
-| DC-04 | F2-15: corpo não-JSON (multipart/form-data, text/plain…) | 400 | rejeição por middleware de JSON — regra da técnica §2.3.1 |
-| DC-05 | F2-15: MIME fora dos 5 / extensão incoerente / assinatura divergente / base64 inválido ou vazio / >5 MB / nome inválido / 25 arquivos já presentes | 400 | validação antes de gravar disco |
-| DC-06 | F2-15: `arquivoId` desconhecido ou de outra aula no PUT | 400 | validação cruzada aula↔arquivo |
+| DC-04 | F2-12/F2-15: corpo não-JSON (multipart/form-data, text/plain…) ou acima de 8 MiB | 400 | rejeição na leitura do corpo — regra da técnica §2.3.1 (sem 413) |
+| DC-05 | F2-15: MIME fora dos 5 / extensão incoerente ou ausente / assinatura divergente / base64 inválido ou vazio / >5 MB / nome inválido / 25 arquivos já presentes | 400 | validação antes de gravar |
+| DC-06 | F2-12: `arquivoId` desconhecido (inexistente na tabela `arquivo`) ou de outra aula | 400 | validação cruzada aula↔arquivo (correção M-1: rótulo era F2-15; absorve a antiga DC-11) |
 | DC-07 | Sem sessão (qualquer rota nova) | 401 | `nao_autenticado` |
 | DC-08 | Aula inexistente | 404 | antes da checagem de papel |
 | DC-09 | Dono/admin ausente e papel insuficiente | 403 | E-16 — não-admin/não-dono em escrita |
 | DC-10 | Aula não publicada lida por não-dono/admin (F2-13 e F2-16) | 404 | E-19 — não revela existência |
-| DC-11 | Arquivo referenciado no PUT não existe na tabela `arquivo` | 400 | hoje "conteúdo bloqueado" (E-24); passa a ser regra explícita |
-| DC-12 | Falha interna (disco cheio, exceção de transação) | 500 | transação revertida; binário não gravado sem linha, linha não gravada sem binário |
+| DC-11 | *(fundida na DC-06 — correção M-1; ID preservado para não renumerar)* | — | — |
+| DC-12 | Falha interna (banco indisponível, exceção de transação) | 500 | transação revertida; binário e linha vivem na mesma linha de `arquivo` (A-1), logo nunca existe um sem o outro |
 
 **Contrafluxos não listados permanecem com a definição da D3 §7.3** (E-14…E-27) — esta tabela não substitui aquela; sobrepõe apenas E-24.
 
@@ -304,7 +316,7 @@ Critérios **documentais** (AC) e **testáveis** (TC). TCs são objetivos para T
 | **T0.1/T2.1** | Origem da pendência: após revisão formal (§10.2), `TASKS.md` T2.3 perde o rótulo de bloqueio |
 | **F2-14** | Não afetada (§2.3) |
 
-### 10.2 Revisões formais exigidas (não executadas nesta etapa — ACP)
+### 10.2 Revisões formais exigidas (executadas em 2026-09-30, após a aprovação)
 
 | Artefato | Revisão necessária |
 |---|---|
@@ -312,24 +324,25 @@ Critérios **documentais** (AC) e **testáveis** (TC). TCs são objetivos para T
 | `decisoes-pendentes.md` | §2/§3: DP-19 → "Resolvida"; §6: checar os 6 critérios (status "Aprovada" é pré-condição) |
 | `TASKS.md` | T2.3: remove `[Bloqueada: DP-19]`; adiciona F2-15/F2-16 aos passos; T2.6 mantém R-C9 |
 | `SPEC/2026-09-30-catalogo-aprendizagem.md` (D3) | §3.5: "corpo remetido a DP-19" → corpo de §6.1; "14 contratos" → 16 (F2-15/F2-16); §5.4: `dados` "DP-19 não definida" → §2.2; nota em §10.1 (DP-19 resolvida) e §10.2 (novas pendências P-18…P-21 apontadas para a SPEC de conteúdo) |
-| `SPEC/2026-09-30-tecnica-fundacoes.md` | §2.3.1: regra de multipart já está coerente (JSON único) — **nenhuma alteração necessária**; apenas validar que a nova tabela `arquivo` e o `posicao` de `conteudo_aula` são registrados na revisão de P-08 |
+| `SPEC/2026-09-30-tecnica-fundacoes.md` | §2.3.1: regra de multipart já está coerente (JSON único); §2.1.3: com o binário no PostgreSQL (A-1) nenhum volume novo é necessário — **nenhuma alteração necessária**; a nova tabela `arquivo` e o `posicao` de `conteudo_aula` entram na revisão geral de P-08, ainda pendente (D3 §9.4 item 2) |
 | `SPEC/2026-09-30-visao-geral.md` | **Nenhuma** — §5/§6 já contêm os três tipos e o limite de vídeo (rastreabilidade §3) |
 
-Nenhuma dessas revisões é executada agora (restrição: não alterar artefatos existentes).
+Estado: revisões de `PLAN.md`, `decisoes-pendentes.md`, `TASKS.md` e SPEC D3 **executadas** em 2026-09-30; técnica e visão sem alteração (conforme a tabela).
 
 ### 10.3 Impacto na implementação (quando T2.3 for executada)
 
 | Arquivo | Mudança |
 |---|---|
-| `prisma/schema.prisma` | `conteudo_aula`: +`posicao INT NOT NULL`, `@@unique([aula_id, posicao])` (substitui o índice simples); nova `arquivo` (§7.2); migração Prisma nova (backfill de `posicao` = `criado_em` ordenado ou reset de conteúdo existente — ver nota) |
-| `src/server/servicos/catalogo.ts` | `blocosConteudo`/`lerAula`: ordenar por `posicao` + validar posição contígua; `substituirConteudo`: validação estrita por tipo (R-C3–R-C7, R-C10), transação renumerando 0…n−1; novos serviços: `criarArquivo` (decode/validação/assinatura/limites) e `lerArquivo` (autorização + streaming do disco) |
+| `prisma/schema.prisma` | `conteudo_aula`: +`posicao INT NOT NULL`, `@@unique([aula_id, posicao])` (substitui o índice simples); nova `arquivo` com `conteudo BYTEA` (§7.2); migração Prisma nova com backfill de `posicao` por `ROW_NUMBER` (§7.1, M-6) |
+| `src/server/servicos/catalogo.ts` | `lerAula`: ordenar por `posicao`; `substituirConteudo`: validação estrita por tipo (R-C3–R-C7, R-C10), transação renumerando 0…n−1; novos serviços: `criarArquivo` (decode/validação/assinatura/limites) e `lerArquivo` (autorização + binário do banco) |
 | `src/server/rotas/catalogo.ts` | F2-12 (corpo array-only); **novas rotas F2-15/F2-16** com mesma cadeia de sessão/papel |
+| `src/server/app.ts` / `erros.ts` | leitor JSON com limite de 8 MiB em F2-12/F2-15 (R-C6f); corpo acima do limite em qualquer rota → `400` (hoje cai em `500`) |
 | `src/web/paginas/Catalogo.tsx` | Substituir a edição JSON livre por **formulário por tipo** (texto/URL/arquivo → base64) + lista renderizada na ordem do servidor com as 3 renderizações (R-C8); remoção de bloco preserva ordem relativa |
 | `tests/api/conteudo.test.ts` | Ajustar asserções atuais de "objeto único → 204" para TC-02 (400) e "não existe caminho de upload" para TC-07/TC-14; adicionar TC-01…TC-15 |
 | `tests/api/catalogo.test.ts` / `conclusao.test.ts` | Nenhuma mudança esperada (F2-14 e visibilidade intocadas) |
 | Seeders | Apenas requisitos — §10.4 (seeders em si pertencem a F13) |
 
-**Nota de backfill (pendência de dado existente):** se houver conteúdo de aula gravado em produção/anterior à migração, o `posicao` precisa ser derivado — opções são ordem de `criado_em` (ambígua em empates) ou reset de conteúdo; como o ambiente é pré-lançamento e seeders ainda não existem (F13), a decisão de migração de dado fica registrada como detalhe de implementação de T2.3 e, se produzir dúvida, vira pendência (§11, nota P-21).
+**Nota de backfill (resolvida pela correção M-6):** conteúdo gravado antes da migração recebe `posicao` por `ROW_NUMBER() OVER (PARTITION BY aula_id ORDER BY criado_em, id) - 1` — o desempate por `id` torna a ordem determinística e nenhum conteúdo é apagado. `dados` legados fora do formato de §2.2 **não** são reescritos pela migração (continuam legíveis no F2-13); o próximo PUT da aula passa pela validação estrita.
 
 ### 10.4 Seeders — requisitos (sem executar)
 
@@ -337,7 +350,7 @@ Quando F13 criar seeders de conteúdo de aula, devem satisfazer: (a) cobrir os *
 
 ### 10.5 Fora do impacto (confirmado)
 
-Nenhum arquivo de código, migração ou teste é alterado nesta etapa; único artefato criado é esta SPEC (ver §12/relatório final).
+Na etapa de proposta nenhum arquivo de código, migração ou teste foi alterado; o único artefato criado foi esta SPEC. A implementação ocorre em T2.3, após a aprovação e as revisões de §10.2.
 
 ---
 
@@ -348,10 +361,10 @@ Itens que as fontes **não determinam** e que não podem ser decididos sem inven
 | ID | Pendência | Origem / motivo |
 |---|---|---|
 | **P-18** | **Lista fechada de provedores de mídia embedada** e transformação de URL de página → URL de player (sempre `https`, sem proxy). R-C5 armazena/devolve a URL crua e o cliente usa iframe+link; a escolha de provedores concretos (e quais aceitam `sandbox`) não consta de nenhuma fonte e nomear provedor agora seria escolha arbitrária de integração | visão §6 (embed de "provedor externo" — sem nomes); DP-11 segue aberta para qualquer coisa que exija rede |
-| **P-19** | **Política de expurgo de arquivos órfãos**: PUT não toca `arquivo` (§7.3); remover todos os blocos `material_anexo` deixa linhas+binário sem referência até a exclusão da aula. Opções (reaproveitar com contador, expurgo em cascata, lixeira) têm custo/perfis distintos e não são requeridas por nenhuma fonte | decisão DP-19 optou por não depurar no PUT (deixaria upload impossível se reordenar sem reenviar — ver DC-11) para manter substituição total simples; política é produto |
+| **P-19** | **Política de expurgo de arquivos órfãos**: PUT não toca `arquivo` (§7.3); remover todos os blocos `material_anexo` deixa linhas+binário sem referência até a exclusão da aula. Opções (reaproveitar com contador, expurgo em cascata, lixeira) têm custo/perfis distintos e não são requeridas por nenhuma fonte | a decisão DP-19 não expurga no PUT para manter a substituição total simples: se o PUT apagasse arquivos não referenciados, um PUT intermediário que omitisse um anexo (ex.: edição em duas etapas) destruiria o arquivo e exigiria novo upload. Qual política adotar é decisão de produto (correção M-2: justificativa reescrita) |
 | **P-20** | **Texto enriquecido (HTML restrito ou markdown)**: R-C4 fixa texto simples por segurança e por fronteira; se produto quiser formatação, exige definir subconjunto, sanitização e política CSP — DP-05/DP-06 não estão resolvidas | visão §7.5–§7.6 (fronteira de design); segurança (SVG/HTML proibidos — R-C6b) |
 | **P-21** | **Revisão dos limites numéricos** (20.000 chars, 5 MB, 25 arquivos, 50 blocos, 2.048 chars de URL): valores adotados como pontos de partida consistentes com "nenhum NFR em escopo" (visão §7); a SPEC de NFRs (**DP-04**) pode fixá-los formalmente | visão §7.1 (NFRs fora do escopo); DP-04 pendente |
-| Nota | **Backfill de `posicao`** (§10.3) pode gerar decisão de migração se houver dado existente — hoje não há (pré-lançamento, seeders F13 ausentes); se materializar, abrir pendência em vez de decidir silenciosamente | ambiente de dados atuais |
+| Nota | **Backfill de `posicao`** — resolvido pela correção M-6 (§7.1/§10.3); não é mais pendência | auditoria §13 |
 
 Não resolvidas por esta SPEC (apenas listadas para rastreabilidade, sem novidade): **DP-04, DP-05, DP-06, DP-11, DP-13, DP-16, DP-17** e todas as demais de `decisoes-pendentes.md`; **P-14–P-17** da D3.
 
@@ -394,15 +407,17 @@ Nenhum conflito permanece sem resolução definida; todos têm caminho de revis�
 | P-14–P-17 (D3) | intactas (§2.3) |
 | Persistência própria, sem vídeo, sem provedor nomeado, sem serviço externo, sem proxy de mídia | cumprido (R-C5/R-C6/R-C9, §2.3, P-18) |
 | JSON sobre HTTP; códigos 400/401/403/404 (nenhum novo) | cumprido (R-C6a, §6, §9) |
-| Nenhum artefato existente alterado; nenhum código; nenhum commit | cumprido (§10.2/§10.5) |
+| Nenhum artefato existente alterado; nenhum código; nenhum commit (etapa de proposta) | cumprido (§10.2/§10.5); após aprovação, só as revisões de §10.2 |
 | Sem inventar progresso/XP/avaliação/certificado/matrícula/notificação | cumprido |
 | Informação não determinável → pendência | P-18…P-21 + nota backfill (§11) |
 
-### 12.4 Comandos de validação executados nesta etapa
+### 12.4 Comandos de validação executados na etapa de proposta
+
+Registro histórico da etapa de proposta (correção M-3: o estado do `git status` abaixo não vale mais — a proposta foi commitada em `a0cf15c`).
 
 | Comando | Resultado |
 |---|---|
-| `git status --porcelain` | único artefato novo da SPEC + 3 arquivos de teste já modificados (F-01/F-02 da etapa anterior) |
+| `git status --porcelain` | (na proposta) único artefato novo da SPEC + 3 arquivos de teste já modificados (F-01/F-02 da etapa anterior) |
 | Verificação de 12 seções obrigatórias (`grep -c '^## '`) | 12 |
 | IDs de série completos | AC-01…AC-16, TC-01…TC-15, DC-01…DC-12 |
 | Cobertura dos 7 itens de DP-19 | §12.1 |
@@ -410,5 +425,28 @@ Nenhum conflito permanece sem resolução definida; todos têm caminho de revis�
 
 ---
 
-*Documento gerado em 2026-09-30 como resolução de DP-19. Somente após aprovação (status "Aprovada" no cabeçalho) e execução das revisões de §10.2, a DP-19 passa a constar como resolvida em `PLAN.md` e `decisoes-pendentes.md`, e T2.3 deixa o bloqueio.*
+## 13. Registro de auditoria e aprovação (2026-09-30)
+
+Auditoria da proposta (commit `a0cf15c`) contra visão geral, `PLAN.md`, `TASKS.md`, `decisoes-pendentes.md`, técnica, D3 e o estado do código. Nenhum conflito com a visão geral ou com o `PLAN.md` quanto ao escopo (nada de D4+ foi tocado; F2-14 intacto). Achados e correções:
+
+| ID | Achado | Correção aplicada | Decisão |
+|---|---|---|---|
+| A-1 | R-C6e gravava o binário no sistema de arquivos do contêiner `app` citando "volume persistente" da técnica §2.1.3 — mas a §2.1.3 e o `docker-compose.yml` só preveem volume para o PostgreSQL; o binário se perderia a cada rebuild, e o CASCADE de curso/módulo não removeria os binários do disco. §10.2 afirmava falsamente "técnica: nenhuma alteração" | Binário em `arquivo.conteudo BYTEA` (R-C6e, §7.2, §7.3, DC-12); técnica §2.1.3 segue válida sem alteração | **Usuário** (decisão de arquitetura): PostgreSQL/bytea |
+| A-2 | Limites da SPEC (50×20.000 caracteres; 5 MB em base64) excedem o limite padrão do leitor JSON (100 kB); o excesso hoje produz `500` em vez de `400` | R-C6f: corpo ≤ 8 MiB em F2-12/F2-15; excesso em qualquer rota → `400`; TC-17 | Auditoria (detalhe exigido por DP-19 "limites de upload") |
+| A-3 | GET devolve anexo enriquecido, R-C10 rejeita chaves extras e R-C8 manda reenviar a lista → reenvio literal falhava; AC-12 ("espelho") era inconsistente | PUT aceita só `{arquivoId}`; cliente projeta (§2.2, R-C8, AC-12); TC-16 | Auditoria |
+| A-4 | `Content-Disposition` sem tipo; unidade de "caracteres" indefinida; extensão maiúscula/ausente indefinida | `attachment` sempre (R-C7, §6.4); pontos de código Unicode (§2.2); extensão sem diferenciar maiúsculas e ausente → 400 (R-C6b); TC-18/TC-19 | **Usuário** (`attachment`); demais: auditoria |
+| M-1 | DC-06 rotulada "F2-15" tratando do PUT; DC-11 duplicava DC-06 | DC-06 corrigida; DC-11 fundida (ID preservado) | — |
+| M-2 | Justificativa de P-19 ininteligível | Reescrita | — |
+| M-3 | §12.4 descrevia `git status` já obsoleto | Marcado como histórico | — |
+| M-4 | Ordem de avaliação só explícita para F2-12 | Estendida a F2-15/F2-16 (R-C10, §6.3, §6.4) | — |
+| M-5 | "Multipart → 400 em todas as rotas" amplo demais | Restrito a F2-12/F2-15 (R-C6a, AC-07) | — |
+| M-6 | Backfill de `posicao` indefinido | `ROW_NUMBER() … ORDER BY criado_em, id` (§7.1, §10.3) | — |
+
+**Observação fora do escopo (registrada, não corrigida aqui):** `PLAN.md` §8 e `decisoes-pendentes.md` §2 ainda exibem DP-01–DP-03 como "Pendente", embora a técnica aprovada as resolva — a revisão formal prevista na técnica §5 segue em aberto e não pertence a DP-19.
+
+**Veredito:** com as correções acima, a SPEC está consistente com as fontes → **Aprovada**. DP-19 resolvida; pendências P-18–P-21 permanecem abertas.
+
+---
+
+*Documento gerado em 2026-09-30 como resolução de DP-19; aprovado na mesma data após a auditoria de §13, com as revisões de §10.2 executadas.*
 

@@ -150,21 +150,49 @@ describe('T2.6 — superfície web do catálogo (F2-01, F2-13, F2-14)', () => {
     expect(JSON.parse(init?.body ?? '{}')).toEqual({ titulo: 'Curso novo' })
   })
 
-  it('estudante lê o conteúdo como texto legível (não JSON) e conclui a aula (F2-13/F2-14)', async () => {
+  it('estudante consome texto, mídia e anexo na ordem do servidor, sem JSON, e conclui (F2-13/F2-14/R-C8)', async () => {
     const fetchMock = fetchDeAula(sessaoEstudante, [
+      { id: 'bloco-1', tipo: 'texto', posicao: 0, dados: { texto: 'x + y = z\n<b>nao e html</b>' } },
       {
-        id: 'bloco-1',
-        tipo: 'texto',
-        dados: { texto: 'Resolva a equacao x + y = z para encontrar y.' },
+        id: 'bloco-2',
+        tipo: 'midia_embedada',
+        posicao: 1,
+        dados: { url: 'https://provedor.example/embed/abc' },
+      },
+      {
+        id: 'bloco-3',
+        tipo: 'material_anexo',
+        posicao: 2,
+        dados: { arquivoId: 'arq-1', nome: 'lista.pdf', mime: 'application/pdf', tamanho: 2048 },
       },
     ])
     vi.stubGlobal('fetch', fetchMock)
 
     await abrirAula()
 
-    expect(await screen.findByText(/x \+ y = z/)).toBeTruthy()
+    const texto = await screen.findByText(/x \+ y = z/)
+    expect(texto.textContent).toBe('x + y = z\n<b>nao e html</b>')
+    expect(texto.querySelector('b')).toBeNull()
     expect(screen.queryByText(/"texto"/)).toBeNull()
     expect(document.querySelector('pre')).toBeNull()
+
+    const iframe = screen.getByTitle('Mídia da aula')
+    expect(iframe.getAttribute('src')).toBe('https://provedor.example/embed/abc')
+    expect(iframe.getAttribute('sandbox')).toBe(
+      'allow-scripts allow-same-origin allow-popups allow-presentation'
+    )
+    expect(screen.getByText('Abrir em nova aba').getAttribute('rel')).toContain('noopener')
+
+    expect(screen.getByText('Baixar lista.pdf').getAttribute('href')).toBe(
+      '/api/v1/arquivos/arq-1'
+    )
+
+    const blocos = Array.from(document.querySelectorAll('.conteudo-aula > *'))
+    expect(blocos).toHaveLength(3)
+    expect(blocos[0].textContent).toContain('x + y = z')
+    expect(blocos[1].querySelector('iframe')).toBeTruthy()
+    expect(blocos[2].textContent).toContain('Baixar lista.pdf')
+
     expect(screen.queryByLabelText('Tipo do bloco')).toBeNull()
 
     expect(screen.getByText('Marcar como concluída')).toBeTruthy()
@@ -218,18 +246,14 @@ describe('T2.6 — superfície web do catálogo (F2-01, F2-13, F2-14)', () => {
 
   it('tipo de conteúdo não suportado mostra aviso amigável, sem JSON bruto', async () => {
     const fetchMock = fetchDeAula(sessaoEstudante, [
-      {
-        id: 'bloco-3',
-        tipo: 'material_anexo',
-        dados: { arquivoId: '3f1c2b4a-0000-4000-8000-000000000001', nome: 'texto.pdf' },
-      },
+      { id: 'bloco-3', tipo: 'video', dados: { url: 'https://exemplo.example/v' } },
     ])
     vi.stubGlobal('fetch', fetchMock)
 
     await abrirAula()
 
     expect(await screen.findByText(/ainda não é exibido nesta versão/)).toBeTruthy()
-    expect(screen.queryByText(/arquivoId/)).toBeNull()
+    expect(screen.queryByText(/exemplo\.example/)).toBeNull()
     expect(document.querySelector('pre')).toBeNull()
   })
 
@@ -249,5 +273,95 @@ describe('T2.6 — superfície web do catálogo (F2-01, F2-13, F2-14)', () => {
     expect(screen.queryByText('✓ Aula concluída')).toBeNull()
     const botao = screen.getByText('Marcar como concluída')
     expect((botao as HTMLButtonElement).disabled).toBe(false)
+  })
+
+  it('professor dono edita por formulário: texto, mídia https e anexo via F2-15, reenviando anexo como {arquivoId} (R-C8/A-3)', async () => {
+    const cursoId = '88888888-8888-4888-8888-888888888888'
+    const aulaId = '99999999-9999-4999-9999-999999999999'
+    const base = mockDeSessao(sessaoProfessor)
+    let conteudo: unknown[] = [
+      {
+        id: 'bloco-1',
+        tipo: 'material_anexo',
+        posicao: 0,
+        dados: { arquivoId: 'arq-1', nome: 'antigo.pdf', mime: 'application/pdf', tamanho: 10 },
+      },
+    ]
+    const envios: unknown[] = []
+    const uploads: { nome: string; mime: string; base64: string }[] = []
+    const fetchMock = vi.fn(async (url: unknown, init?: { method?: string; body?: string }) => {
+      const alvo = String(url)
+      const metodo = init?.method ?? 'GET'
+      if (alvo.endsWith('/api/v1/cursos') && metodo === 'GET') {
+        return respostaJson([
+          { id: cursoId, titulo: 'Fisica', publicado: false, donoId: sessaoProfessor.usuarioId },
+        ])
+      }
+      if (alvo === `/api/v1/cursos/${cursoId}`) {
+        return respostaJson({
+          id: cursoId,
+          titulo: 'Fisica',
+          publicado: false,
+          donoId: sessaoProfessor.usuarioId,
+          modulos: [
+            { id: 'mod-1', titulo: 'Cinematica', publicado: false, aulas: [{ id: aulaId, titulo: 'MRU', publicado: false }] },
+          ],
+        })
+      }
+      if (alvo === `/api/v1/aulas/${aulaId}` && metodo === 'GET') {
+        return respostaJson({ id: aulaId, titulo: 'MRU', publicado: false, conteudo })
+      }
+      if (alvo === `/api/v1/aulas/${aulaId}/arquivos` && metodo === 'POST') {
+        const corpo = JSON.parse(init?.body ?? '{}')
+        uploads.push(corpo)
+        return respostaJson({ arquivoId: 'arq-2', nome: corpo.nome, mime: corpo.mime, tamanho: 4 }, 201)
+      }
+      if (alvo === `/api/v1/aulas/${aulaId}/conteudo` && metodo === 'PUT') {
+        const corpo = JSON.parse(init?.body ?? '[]') as { tipo: string; dados: unknown }[]
+        envios.push(corpo)
+        conteudo = corpo.map((bloco, posicao) => ({ id: `novo-${posicao}`, posicao, ...bloco }))
+        return { ok: true, status: 204, text: async () => '' }
+      }
+      return base(url, init)
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    render(<App />)
+    fireEvent.click(await screen.findByText('Catálogo'))
+    fireEvent.click(await screen.findByText('Abrir'))
+    fireEvent.click(await screen.findByText('Abrir aula'))
+    await screen.findByText('Baixar antigo.pdf')
+    expect(screen.queryByLabelText(/JSON/)).toBeNull()
+
+    const texto = screen.getByLabelText('Texto')
+    fireEvent.change(texto, { target: { value: 'Velocidade constante.' } })
+    fireEvent.submit(texto.closest('form')!)
+    await waitFor(() => expect(envios).toHaveLength(1))
+    expect(envios[0]).toEqual([
+      { tipo: 'material_anexo', dados: { arquivoId: 'arq-1' } },
+      { tipo: 'texto', dados: { texto: 'Velocidade constante.' } },
+    ])
+    await screen.findByText('Velocidade constante.')
+
+    fireEvent.change(screen.getByLabelText('Tipo do bloco'), { target: { value: 'midia_embedada' } })
+    const url = screen.getByLabelText('URL da midia (https)')
+    fireEvent.change(url, { target: { value: 'http://inseguro.example/v' } })
+    fireEvent.submit(url.closest('form')!)
+    await screen.findByText('A URL da midia precisa comecar com https://.')
+    expect(envios).toHaveLength(1)
+
+    fireEvent.change(screen.getByLabelText('Tipo do bloco'), { target: { value: 'material_anexo' } })
+    const campoArquivo = screen.getByLabelText(/Arquivo \(PDF/)
+    expect(campoArquivo.getAttribute('accept')).toContain('application/pdf')
+    const arquivo = new File(['%PDF'], 'nova.pdf', { type: 'application/pdf' })
+    fireEvent.change(campoArquivo, { target: { files: [arquivo] } })
+    fireEvent.submit(campoArquivo.closest('form')!)
+    await waitFor(() => expect(envios).toHaveLength(2))
+    expect(uploads).toEqual([{ nome: 'nova.pdf', mime: 'application/pdf', base64: 'JVBERg==' }])
+    expect(envios[1]).toEqual([
+      { tipo: 'material_anexo', dados: { arquivoId: 'arq-1' } },
+      { tipo: 'texto', dados: { texto: 'Velocidade constante.' } },
+      { tipo: 'material_anexo', dados: { arquivoId: 'arq-2' } },
+    ])
   })
 })

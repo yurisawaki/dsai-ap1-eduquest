@@ -109,14 +109,14 @@ npx tsx scripts/gerar-token-recuperacao.ts <email>   # imprime token de reset (d
 ## 6. Testes
 
 ```bash
-npm test            # 56 testes, 11 arquivos — deve passar 100%
+npm test            # 68 testes, 11 arquivos — deve passar 100%
 npm run test:watch  # modo watch
 ```
 
 - **Banco de teste:** `eduquest_test` (mesma instância do compose, porta 5434). Ele é criado automaticamente pelo init do container (`infra/initdb/01-init.sql`) quando você roda `npm run db:up` pela primeira vez; a URL vem de `TEST_DATABASE_URL`.
 - **Migrations de teste:** rodam sozinhas — `tests/configuracao/global.ts` executa `npx prisma migrate deploy` contra o banco de teste antes da suíte. Não é preciso migrar na mão.
-- **Verde:** a saída final deve ser `Test Files 11 passed (11)` / `Tests 56 passed (56)` e `npm run typecheck` sem erros.
-- Cobertura atual: API (auth, perfis, catálogo, conteúdo, conclusão), web (React) e unidade (autorização).
+- **Verde:** a saída final deve ser `Test Files 11 passed (11)` / `Tests 68 passed (68)` e `npm run typecheck` sem erros.
+- Cobertura atual: API (auth, perfis, catálogo, conteúdo e anexos — TC-01–TC-20 da SPEC de conteúdo —, conclusão), web (React) e unidade (autorização).
 
 ## 7. Estrutura do projeto
 
@@ -134,6 +134,7 @@ tests/               api/ · web/ · unidade/ · configuracao/ · utilidades/
 prisma/              schema.prisma + migrations/ (versionadas)
 SPEC/                especificações (fonte de requisitos — ver §10)
 PLAN.md, TASKS.md    planejamento e tarefas (processo SDD)
+docs/validacao/      relatórios de validação de fase (ex.: F2.md — T2.6)
 prompts/             prompts usados no processo SDD (histórico)
 scripts/             utilitários (ex.: token de recuperação)
 infra/               initdb (cria eduquest_test) e caddy/Caddyfile
@@ -145,21 +146,23 @@ Não existe pasta `diario/` neste repositório.
 ## 8. Arquitetura atual
 
 - **Backend:** Express 5 + TypeScript, API versionada em **`/api/v1`**:
-  - `/api/v1/auth` (registro, login, logout, recuperação), `/api/v1/perfis`, `/api/v1` (catálogo: cursos/módulos/aulas/conteúdo/conclusão).
+  - `/api/v1/auth` (registro, login, logout, recuperação), `/api/v1/perfis`, `/api/v1` (catálogo: cursos/módulos/aulas/conteúdo/anexos/conclusão).
+  - Limite de corpo JSON: 8 MiB em `PUT /aulas/{id}/conteudo` e `POST /aulas/{id}/arquivos`; padrão nas demais. Corpo acima do limite → `400`.
   - Erros no padrão `{"erro": {"codigo", "mensagem"}}` com códigos `400/401/403/404` (`src/server/erros.ts`).
   - Organização: **rotas** (HTTP/validação) → **serviços** (regra de negócio) → **Prisma**.
 - **Autenticação:** sessão por **cookie** (`eduquest_session`) com ID de sessão persistido em `sessao`; `middlewares/sessao.ts` carrega a sessão e há guards `exigirSessao`/`exigirPapel` (estudante, professor, administrador).
-- **Dados:** Prisma ORM + PostgreSQL; schema em `prisma/schema.prisma`; migrations versionadas em `prisma/migrations/`; integridade com `ON DELETE CASCADE`.
+- **Dados:** Prisma ORM + PostgreSQL; schema em `prisma/schema.prisma`; migrations versionadas em `prisma/migrations/`; integridade com `ON DELETE CASCADE`. Binários de material anexo ficam no próprio Postgres (`arquivo.conteudo BYTEA`) — nenhum volume extra além do `dados-db`.
 - **Frontend:** SPA React 19 servida em dev pelo Vite (proxy `/api`) e em produção pelo próprio Express (`dist/web`).
 - **Decisões técnicas vinculantes:** `SPEC/2026-09-30-tecnica-fundacoes.md` (stack, convenções de modelo, contrato de erro, versionamento, sessão). Não reabrir sem revisão formal.
 
 ## 9. Estado atual
 
 - **F1 — Identidade, acesso e perfis (D1, D2): implementada** (cadastro, login/logout/sessão, recuperação de senha, papéis, perfis).
-- **F2 — Catálogo de aprendizagem (D3): implementada** (hierarquia curso > módulo > aula, publicação, autoria, conteúdo de aula com os 3 tipos, consumo e conclusão de aula).
-- **Suíte: 56 testes passando** (`npm test`); **`npm run typecheck` passando** (ambos verificados em 2026-09-30).
-- **SPEC de conteúdo de aula (DP-19):** `SPEC/2026-09-30-conteudo-aula.md` está em estado de **Proposta — aguardando aprovação**; a DP-19 **não** está resolvida até ser aprovada e `PLAN.md`/`decisoes-pendentes.md`/`TASKS.md` serem revisados formalmente.
-- Outras SPECs: visão geral, técnica de fundações e D3 (catálogo) **aprovadas**; D1 revisada, aguardando re-auditoria.
+- **F2 — Catálogo de aprendizagem (D3): implementada** (hierarquia curso > módulo > aula, publicação, autoria, consumo e conclusão de aula; **conteúdo de aula conforme DP-19**: lista ordenada de 0–50 blocos texto/mídia/anexo, upload de anexo JSON+base64 e download).
+- **Suíte: 68 testes passando** (`npm test`); **`npm run typecheck` passando** (ambos verificados em 2026-09-30).
+- **DP-19 resolvida:** `SPEC/2026-09-30-conteudo-aula.md` **aprovada** após auditoria (§13 da SPEC); `PLAN.md`, `TASKS.md` (T2.3), `decisoes-pendentes.md` e SPEC D3 revisados formalmente. Pendências derivadas abertas: P-18–P-21.
+- **DP-08 resolvida:** SPEC de D4 `SPEC/2026-10-01-questoes-exercicios.md` **aprovada** (4 tipos de questão; questão pertence ao módulo); `PLAN.md`, `TASKS.md` e `decisoes-pendentes.md` revisados. Ainda **sem código** de F3.
+- Outras SPECs: visão geral, técnica de fundações, D3 (catálogo) e conteúdo de aula **aprovadas**; D1 revisada, aguardando re-auditoria.
 - **Próximas fases (F3 em diante)** seguem bloqueadas por suas pendências (ex.: DP-08 tipos de questão, DP-09 dissertativas) — ver `PLAN.md` §8.
 
 ## 10. SDD / regra de desenvolvimento
@@ -189,11 +192,12 @@ Antes de implementar qualquer funcionalidade:
 
 ## 12. Como continuar o trabalho
 
-1. **Aprovar a SPEC de DP-19:** `SPEC/2026-09-30-conteudo-aula.md` está em **Proposta**. Revisar/auditar e, se aprovada, mudar o status no cabeçalho para "Aprovada" — e só então fazer as revisões formais previstas na própria SPEC (§10.2: `PLAN.md` §8, `decisoes-pendentes.md`, `TASKS.md` T2.3, contagens da SPEC D3). Enquanto isso, DP-19 segue pendente.
-2. **Implementar conteúdo de aula (T2.3):** após aprovação, o restante de T2.3 (formato/limites/embed/anexos) fica especificado naquela SPEC — contratos F2-12/F2-13 definitivos + F2-15/F2-16, modelo (`posicao`, tabela `arquivo`), frontend e seeders conforme §10.3/§10.4.
-3. **Testar:** adicionar os testes previstos (TC-01–TC-15) e manter a suíte verde.
-4. **Concluir F2:** T2.5/T2.6 já cobertos em grande parte; validar a fase (T2.6) após o conteúdo.
-5. **Depois:** F3 (D4/D5) começa pela SPEC de D4 — que resolve DP-08; nada antes disso.
+1. ~~Aprovar a SPEC de DP-19~~ — feito (2026-09-30).
+2. ~~Implementar conteúdo de aula (T2.3)~~ — feito: F2-12/F2-13 definitivos, F2-15/F2-16, migração `f2_conteudo_aula`, editor por tipo; TC-01–TC-20 automatizados.
+3. ~~Concluir F2 (T2.6)~~ — feito: `docs/validacao/F2.md` (F2 validada, com ressalvas de ambiente).
+4. **Pendências de processo abertas:** revisão formal de DP-01–DP-03 em `PLAN.md` §8/`decisoes-pendentes.md` (técnica §5); re-auditoria da SPEC D1.
+5. ~~SPEC de D4 (T3.1, DP-08)~~ — feito (2026-10-01).
+6. **Próximo:** implementar T3.2 (questões e gabarito protegido) e T3.3 (tentativas e feedback) conforme a SPEC de D4. Avaliações (T3.4/T3.5) dependem da SPEC de D5 e de DP-09.
 
 ## 13. Git
 

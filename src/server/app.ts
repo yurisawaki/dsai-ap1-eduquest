@@ -8,10 +8,16 @@ import { carregarSessao } from './middlewares/sessao'
 import { rotasAuth } from './rotas/auth'
 import { rotasCatalogo } from './rotas/catalogo'
 import { rotasPerfis } from './rotas/perfis'
+import { LIMITE_CORPO_CONTEUDO } from './servicos/conteudo'
 
 export function criarApp() {
   const app = express()
   app.set('trust proxy', true)
+  // R-C6f (SPEC de conteúdo): F2-12 e F2-15 aceitam corpo maior; demais rotas mantêm o padrão
+  app.use(
+    ['/api/v1/aulas/:id/conteudo', '/api/v1/aulas/:id/arquivos'],
+    express.json({ limit: LIMITE_CORPO_CONTEUDO })
+  )
   app.use(express.json())
   app.use(cookieParser())
   app.use(carregarSessao)

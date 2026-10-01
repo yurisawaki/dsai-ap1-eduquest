@@ -218,12 +218,12 @@
 #### T2.3 — Implementar conteúdo de aula (texto, mídia embedada, material anexo)
 
 - **Fase / Domínio:** F2 / D3
-- **Descrição:** Implementar os tipos de conteúdo de aula declarados na visão geral: texto, mídia incorporada de provedor externo e material anexo.
+- **Descrição:** Implementar os tipos de conteúdo de aula declarados na visão geral: texto, mídia incorporada de provedor externo e material anexo — no formato e com os limites de `SPEC/2026-09-30-conteudo-aula.md` (DP-19): lista ordenada de 0–50 blocos com `posicao` (F2-12/F2-13 definitivos), upload de anexo em JSON+base64 (F2-15) e download (F2-16).
 - **Pré-requisitos:** T2.2.
-- **Artefatos esperados:** editor/exibição dos três tipos de conteúdo; suporte a embed externo sem armazenamento de vídeo próprio.
-- **Validação:** nenhum armazenamento/transmissão de vídeo próprio (limite da visão); formato detalhado e limites de upload permanecem pendentes (DP-19).
-- **Rastreabilidade:** `PLAN.md` §5.3, §7 F2, §11 item 9; SPEC §5 D3, §6 (não é host de vídeo).
-- **Bloqueios:** `[Bloqueada: DP-19]` para formato/limites; execução parcial (estrutura) é `[Livre]` + global DP-01–DP-03
+- **Artefatos esperados:** editor/exibição dos três tipos de conteúdo (formulário por tipo, sem JSON livre); suporte a embed externo sem armazenamento de vídeo próprio; migração (`posicao` em `conteudo_aula`, tabela `arquivo` com binário `BYTEA`); rotas F2-15/F2-16; testes TC-01–TC-20 da SPEC de conteúdo.
+- **Validação:** nenhum armazenamento/transmissão de vídeo próprio (limite da visão; R-C9); critérios AC-01–AC-16 e TC-01–TC-20 de `SPEC/2026-09-30-conteudo-aula.md`.
+- **Rastreabilidade:** `PLAN.md` §5.3, §7 F2, §8 DP-19, §11 item 9; SPEC §5 D3, §6 (não é host de vídeo); `SPEC/2026-09-30-conteudo-aula.md` §4–§8.
+- **Bloqueios:** `[Livre]` — DP-19 resolvida em 2026-09-30 (`SPEC/2026-09-30-conteudo-aula.md`, aprovada); bloqueio removido nesta revisão formal. Pendências derivadas P-18–P-21 não bloqueiam (o que depende delas não é implementado) + global DP-01–DP-03
 
 #### T2.4 — Implementar restrição de autoria (professor dono ou admin)
 
@@ -251,8 +251,8 @@
 - **Descrição:** Executar a validação da fase: regras de D3 e passos 3–4 do fluxo, incluindo verificação de fronteira de vídeo.
 - **Pré-requisitos:** T2.2–T2.5.
 - **Artefatos esperados:** relatório de validação da fase F2.
-- **Validação:** hierarquia, publicação, autoria e conclusão cobertas; nenhum recurso de vídeo próprio presente.
-- **Rastreabilidade:** `PLAN.md` §7 F2, §9.
+- **Validação:** hierarquia, publicação, autoria e conclusão cobertas; nenhum recurso de vídeo próprio presente (R-C9 de `SPEC/2026-09-30-conteudo-aula.md`: F2-15 rejeita `video/*`, F2-12 não aceita binário).
+- **Rastreabilidade:** `PLAN.md` §7 F2, §9; `SPEC/2026-09-30-conteudo-aula.md` §8 (TC-01–TC-20).
 - **Bloqueios:** `[Livre]`
 
 ---
@@ -267,7 +267,7 @@
 - **Artefatos esperados:** `SPEC/` de D4 com critérios de aceitação e tipos de questão definidos.
 - **Validação:** regras de D4 da visão cobertas; tipos de questão presentes apenas na SPEC D4, ausentes deste TASKS.
 - **Rastreabilidade:** `PLAN.md` §5.4, §7 F3, §8 DP-08; SPEC §5 D4 ("a confirmar em SPEC própria").
-- **Bloqueios:** `[Bloqueada: DP-08]` — a SPEC D4 é o veículo de resolução; DP-08 não pode ser resolvida aqui
+- **Bloqueios:** **Concluída em 2026-10-01** — `SPEC/2026-10-01-questoes-exercicios.md` aprovada; DP-08 resolvida (revisão formal desta data)
 
 #### T3.2 — Implementar questões e gabarito protegido
 
@@ -277,7 +277,7 @@
 - **Artefatos esperados:** questões publicadas em curso/módulo; testes de não exposição do gabarito antes do envio.
 - **Validação:** "gabarito não exposto antes do envio" verificado; questão pertence a curso/módulo; funcionalidades 6–7 verificáveis.
 - **Rastreabilidade:** `PLAN.md` §5.4, §7 F3; SPEC §5 D4; funcionalidades 6, 7.
-- **Bloqueios:** `[Bloqueada: DP-08]` + global DP-01–DP-03
+- **Bloqueios:** `[Livre]` — DP-08 resolvida e SPEC D4 aprovada (`SPEC/2026-10-01-questoes-exercicios.md`: R-Q1–R-Q5, F3-01–F3-05, TQ-01–TQ-07, TQ-15, TQ-16) + global DP-01–DP-03
 
 #### T3.3 — Implementar tentativas de exercício e feedback imediato
 
@@ -287,7 +287,7 @@
 - **Artefatos esperados:** tentativas persistidas com acerto; feedback emitido após envio; testes de fluxo de tentativa.
 - **Validação:** "tentativa registrada com resposta e acerto"; passo 5 do fluxo executável; evento alimenta F4 e F5.
 - **Rastreabilidade:** `PLAN.md` §5.4, §6 item 5, §7 F3; SPEC §5 D4, §4 passo 5.
-- **Bloqueios:** `[Bloqueada: DP-08]` (correção depende dos tipos) + global DP-01–DP-03
+- **Bloqueios:** `[Livre]` — DP-08 resolvida (`SPEC/2026-10-01-questoes-exercicios.md`: R-Q6–R-Q11, F3-06, TQ-08–TQ-14); dissertativa gravada sem correção até DP-09 + global DP-01–DP-03
 
 #### T3.4 — Elaborar SPEC do domínio D5 (avaliações)
 
@@ -307,7 +307,7 @@
 - **Artefatos esperados:** avaliação publicável; tentativa respeitando janela/limite; nota calculada servidor; testes de janela e limite de tentativas.
 - **Validação:** "nota calculada servidor"; "professor define tentativas e janela"; passo 6 do fluxo executável; funcionalidade 8 verificável.
 - **Rastreabilidade:** `PLAN.md` §5.5, §7 F3; SPEC §5 D5, §4 passo 6; funcionalidade 8.
-- **Bloqueios:** `[Bloqueada: DP-08]` (composição/nota por tipo) e `[Bloqueada: DP-09]` (só para dissertativas) + global DP-01–DP-03
+- **Bloqueios:** `[Depende de SPEC D5]` (T3.4) e `[Bloqueada: DP-09]` (só para dissertativas) — DP-08 resolvida em 2026-10-01 + global DP-01–DP-03
 
 #### T3.6 — Validar F3 (D4 e D5)
 
