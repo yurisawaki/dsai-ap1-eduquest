@@ -213,7 +213,7 @@ model ConclusaoAula {
 
   @@index([aula_id])
   @@index([usuario_id])
-  @@index([aula_id, usuario_id])
+  @@unique([aula_id, usuario_id])
   @@map("conclusao_aula")
 }
 

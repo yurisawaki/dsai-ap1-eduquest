@@ -834,6 +834,50 @@ button.concluida:hover {
   border-color: var(--sucesso);
 }
 
+/* ============================ progresso (D6) ============================ */
+
+.bloco-progresso {
+  margin-bottom: var(--esp-6);
+}
+
+.bloco-progresso h2 {
+  margin-bottom: var(--esp-3);
+}
+
+.progresso-barra {
+  height: 0.75rem;
+  background: var(--superficie-alt);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-pill);
+  box-shadow: none;
+  padding: 0;
+  overflow: hidden;
+}
+
+.progresso-preenchimento {
+  height: 100%;
+  background: var(--sucesso);
+  border: none;
+  border-radius: var(--raio-pill);
+  box-shadow: none;
+  padding: 0;
+  transition: width 0.2s ease;
+}
+
+.progresso-texto {
+  margin-top: var(--esp-2);
+  color: var(--texto-sec);
+  font-size: var(--tam-sec);
+}
+
+.modulo-progresso {
+  color: var(--texto-sec);
+  font-size: var(--tam-sec);
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
 /* ============================ autenticacao ============================ */
 
 main.principal-estreito .titulo-pagina {

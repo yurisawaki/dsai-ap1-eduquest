@@ -82,7 +82,7 @@ function fetchDeAula(
       })
     }
     if (alvo === `/api/v1/aulas/${aulaId}` && metodo === 'GET') {
-      return respostaJson({ id: aulaId, titulo: 'Equacoes', publicado: true, conteudo })
+      return respostaJson({ id: aulaId, titulo: 'Equacoes', publicado: true, conteudo, concluida: false })
     }
     if (alvo === `/api/v1/aulas/${aulaId}/conclusao` && metodo === 'POST') {
       if (opcoes.falharConclusao) {

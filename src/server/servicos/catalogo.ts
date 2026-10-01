@@ -57,6 +57,21 @@ export interface CursoComEstrutura {
   publicado: boolean
   donoId: string
   modulos: ModuloCatalogo[]
+  progresso?: ProgressoCurso
+}
+
+export interface ProgressoModulo {
+  moduloId: string
+  aulasConcluidas: number
+  aulasTotal: number
+  percentual: number
+}
+
+export interface ProgressoCurso {
+  aulasConcluidas: number
+  aulasTotal: number
+  percentual: number
+  modulos: ProgressoModulo[]
 }
 
 export interface BlocoConteudo {
@@ -84,6 +99,7 @@ export interface AulaComConteudo {
   titulo: string
   publicado: boolean
   conteudo: BlocoConteudo[]
+  concluida: boolean
 }
 
 export interface ResultadoConclusao {
@@ -238,6 +254,48 @@ export async function listarCursos(usuario: UsuarioSessao): Promise<ResumoCurso[
   return cursos.map(montarResumo)
 }
 
+// R-D6-3 (SPEC de progresso): arredondamento para baixo; total zerado nunca divide por zero
+function percentualDe(concluidas: number, total: number): number {
+  if (total === 0) return 0
+  return Math.floor((concluidas * 100) / total)
+}
+
+async function progressoDoCurso(
+  usuarioId: string,
+  modulos: ModuloCatalogo[]
+): Promise<ProgressoCurso> {
+  const aulas = modulos.flatMap((modulo) => modulo.aulas)
+  const concluidas =
+    aulas.length === 0
+      ? new Set<string>()
+      : new Set(
+          (
+            await prisma.conclusaoAula.findMany({
+              where: { usuario_id: usuarioId, aula_id: { in: aulas.map((aula) => aula.id) } },
+              select: { aula_id: true },
+            })
+          ).map((registro) => registro.aula_id)
+        )
+  const porModulo: ProgressoModulo[] = modulos.map((modulo) => {
+    const aulasTotal = modulo.aulas.length
+    const aulasConcluidas = modulo.aulas.filter((aula) => concluidas.has(aula.id)).length
+    return {
+      moduloId: modulo.id,
+      aulasConcluidas,
+      aulasTotal,
+      percentual: percentualDe(aulasConcluidas, aulasTotal),
+    }
+  })
+  const aulasTotal = porModulo.reduce((total, modulo) => total + modulo.aulasTotal, 0)
+  const aulasConcluidas = porModulo.reduce((total, modulo) => total + modulo.aulasConcluidas, 0)
+  return {
+    aulasConcluidas,
+    aulasTotal,
+    percentual: percentualDe(aulasConcluidas, aulasTotal),
+    modulos: porModulo,
+  }
+}
+
 export async function lerCurso(usuario: UsuarioSessao, id: unknown): Promise<CursoComEstrutura> {
   const curso =
     typeof id === 'string' && uuidValido.test(id)
@@ -259,22 +317,28 @@ export async function lerCurso(usuario: UsuarioSessao, id: unknown): Promise<Cur
     throw erroNaoEncontrado('curso nao encontrado')
   }
   const modulos = autor ? curso.modulos : curso.modulos.filter((modulo) => modulo.publicado)
-  return {
+  const estrutura: ModuloCatalogo[] = modulos.map((modulo) => ({
+    id: modulo.id,
+    titulo: modulo.titulo,
+    publicado: modulo.publicado,
+    aulas: (autor ? modulo.aulas : modulo.aulas.filter((aula) => aula.publicado)).map((aula) => ({
+      id: aula.id,
+      titulo: aula.titulo,
+      publicado: aula.publicado,
+    })),
+  }))
+  const resultado: CursoComEstrutura = {
     id: curso.id,
     titulo: curso.titulo,
     publicado: curso.publicado,
     donoId: curso.dono_id,
-    modulos: modulos.map((modulo) => ({
-      id: modulo.id,
-      titulo: modulo.titulo,
-      publicado: modulo.publicado,
-      aulas: (autor ? modulo.aulas : modulo.aulas.filter((aula) => aula.publicado)).map((aula) => ({
-        id: aula.id,
-        titulo: aula.titulo,
-        publicado: aula.publicado,
-      })),
-    })),
+    modulos: estrutura,
   }
+  // R-D6-7: progresso só existe para o papel estudante (derivado das conclusões — R-D6-1)
+  if (usuario.papel === 'estudante') {
+    resultado.progresso = await progressoDoCurso(usuario.id, estrutura)
+  }
+  return resultado
 }
 
 export async function editarCurso(
@@ -469,6 +533,11 @@ export async function lerAula(usuario: UsuarioSessao, id: unknown): Promise<Aula
   if (!aulaVisivel(aula, usuario)) {
     throw erroNaoEncontrado('aula nao encontrada')
   }
+  // R-D6-1: o estado de conclusão vem do banco, sempre do usuário da sessão
+  const conclusao = await prisma.conclusaoAula.findFirst({
+    where: { aula_id: aula.id, usuario_id: usuario.id },
+    select: { id: true },
+  })
   return {
     id: aula.id,
     titulo: aula.titulo,
@@ -479,6 +548,7 @@ export async function lerAula(usuario: UsuarioSessao, id: unknown): Promise<Aula
       posicao: bloco.posicao,
       dados: bloco.dados,
     })),
+    concluida: conclusao !== null,
   }
 }
 
@@ -504,17 +574,29 @@ export async function concluirAula(
       repetida: true,
     }
   }
-  const registro = await prisma.conclusaoAula.create({
-    data: {
-      id: randomUUID(),
-      aula_id: aula.id,
-      usuario_id: usuario.id,
-      concluida_em: new Date(),
-    },
+  // R-D6-2: a unique de (aula_id, usuario_id) torna a escrita idempotente até em corrida;
+  // skipDuplicates não gera erro quando outra requisição criou o mesmo registro.
+  const criado = await prisma.conclusaoAula.createMany({
+    data: [
+      {
+        id: randomUUID(),
+        aula_id: aula.id,
+        usuario_id: usuario.id,
+        concluida_em: new Date(),
+      },
+    ],
+    skipDuplicates: true,
   })
+  const registro = await prisma.conclusaoAula.findFirst({
+    where: { aula_id: aula.id, usuario_id: usuario.id },
+    orderBy: [{ concluida_em: 'asc' }, { criado_em: 'asc' }],
+  })
+  if (!registro) {
+    throw erroNaoEncontrado('aula nao encontrada')
+  }
   return {
     aulaId: registro.aula_id,
     concluidaEm: registro.concluida_em.toISOString(),
-    repetida: false,
+    repetida: criado.count === 0,
   }
 }

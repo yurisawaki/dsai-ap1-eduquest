@@ -233,6 +233,14 @@ describe('T2.2/T2.4 — hierarquia, publicação e autoria (F2-01–F2-11)', () 
           ],
         },
       ],
+      progresso: {
+        aulasConcluidas: 0,
+        aulasTotal: 1,
+        percentual: 0,
+        modulos: [
+          { moduloId, aulasConcluidas: 0, aulasTotal: 1, percentual: 0 },
+        ],
+      },
     })
   })
 

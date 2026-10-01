@@ -25,8 +25,23 @@ interface ModuloItem {
   aulas: AulaItem[]
 }
 
+interface ProgressoModulo {
+  moduloId: string
+  aulasConcluidas: number
+  aulasTotal: number
+  percentual: number
+}
+
+interface ProgressoCurso {
+  aulasConcluidas: number
+  aulasTotal: number
+  percentual: number
+  modulos: ProgressoModulo[]
+}
+
 interface CursoDetalhe extends ResumoCurso {
   modulos: ModuloItem[]
+  progresso?: ProgressoCurso
 }
 
 interface AvaliacaoResumo {
@@ -50,6 +65,7 @@ interface AulaDetalhe {
   titulo: string
   publicado: boolean
   conteudo: BlocoConteudo[]
+  concluida?: boolean
 }
 
 interface Props {
@@ -326,6 +342,9 @@ function DetalheCurso({ sessao, cursoId, aoVoltar }: PropsCurso) {
 
   const podeEditar = sessao.papel === 'administrador' || curso.donoId === sessao.usuarioId
   const totalAulas = curso.modulos.reduce((total, modulo) => total + modulo.aulas.length, 0)
+  const progressoModulos = new Map(
+    (curso.progresso?.modulos ?? []).map((item) => [item.moduloId, item])
+  )
 
   async function executar(acao: () => Promise<unknown>, sucesso?: string) {
     setErro(null)
@@ -367,6 +386,16 @@ function DetalheCurso({ sessao, cursoId, aoVoltar }: PropsCurso) {
     )
   }
 
+  function contagemModulo(moduloId: string) {
+    const info = progressoModulos.get(moduloId)
+    if (!info) return null
+    return (
+      <span className="modulo-progresso">
+        {info.aulasConcluidas} de {info.aulasTotal} aulas concluídas
+      </span>
+    )
+  }
+
   return (
     <main className="principal principal-largo">
       <div className="cabecalho-pagina">
@@ -389,6 +418,37 @@ function DetalheCurso({ sessao, cursoId, aoVoltar }: PropsCurso) {
           {totalAulas} {totalAulas === 1 ? 'aula' : 'aulas'}
         </p>
       </div>
+
+      {sessao.papel === 'estudante' && curso.progresso && (
+        <section className="bloco-progresso" aria-label="Seu progresso">
+          <h2>Seu progresso</h2>
+          {curso.progresso.aulasTotal === 0 ? (
+            <p className="valor-vazio">Nenhuma aula publicada ainda.</p>
+          ) : (
+            <>
+              <div
+                className="progresso-barra"
+                role="progressbar"
+                aria-valuenow={curso.progresso.percentual}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label="Percentual do curso"
+              >
+                <div
+                  className="progresso-preenchimento"
+                  style={{ width: `${curso.progresso.percentual}%` }}
+                />
+              </div>
+              <p className="progresso-texto">
+                {curso.progresso.percentual}% — {curso.progresso.aulasConcluidas} de{' '}
+                {curso.progresso.aulasTotal} aula
+                {curso.progresso.aulasTotal === 1 ? '' : 's'} concluída
+                {curso.progresso.aulasTotal === 1 ? '' : 's'}
+              </p>
+            </>
+          )}
+        </section>
+      )}
 
       {erro && (
         <p role="alert" className="erro">
@@ -480,6 +540,7 @@ function DetalheCurso({ sessao, cursoId, aoVoltar }: PropsCurso) {
                     </span>
                     {modulo.titulo}
                   </h3>
+                  {contagemModulo(modulo.id)}
                   <span
                     className={`badge ${modulo.publicado ? 'badge-sucesso' : 'badge-aviso'}`}
                   >
@@ -694,6 +755,8 @@ function DetalheAula({
     try {
       const detalhe = await api<AulaDetalhe>(`/api/v1/aulas/${aulaId}`)
       setAula(detalhe)
+      // AC-D6-13: a API é a fonte de verdade — o estado vem do banco a cada carga
+      setConcluida(detalhe.concluida === true)
       setErro(null)
     } catch (erroCarga) {
       setErro(mensagemDeErro(erroCarga))
@@ -929,7 +992,11 @@ function DetalheAula({
             aria-busy={enviandoConclusao}
             className={concluida ? 'concluida' : undefined}
           >
-            {concluida ? '✓ Aula concluída' : 'Marcar como concluída'}
+            {enviandoConclusao
+              ? 'Salvando…'
+              : concluida
+                ? '✓ Aula concluída'
+                : 'Marcar como concluída'}
           </button>
         </p>
       )}
