@@ -1,19 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
-import request from 'supertest'
-import { api, app, emailUnico, senhaPadrao } from '../utilidades/aplicacao'
-
-type Papel = 'estudante' | 'professor' | 'administrador'
-
-async function criarUsuarioComSessao(papel: Papel) {
-  const email = emailUnico()
-  const registro = await api
-    .post('/api/v1/auth/registro')
-    .send({ email, senha: senhaPadrao, papel })
-  const agente = request.agent(app)
-  await agente.post('/api/v1/auth/login').send({ email, senha: senhaPadrao })
-  return { id: registro.body.usuarioId as string, agente }
-}
+import type request from 'supertest'
+import { api, criarUsuarioComSessao } from '../utilidades/aplicacao'
 
 describe('T1.5 — perfis (contratos 7 e 8)', () => {
   it('leitura e edição exigem sessão: 401 sem (E-06/R-05/AC-11)', async () => {

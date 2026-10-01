@@ -8,7 +8,6 @@ interface Props {
 export function PaginaCadastro({ aoIrParaLogin }: Props) {
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
-  const [papel, setPapel] = useState('estudante')
   const [erro, setErro] = useState<string | null>(null)
   const [criada, setCriada] = useState(false)
 
@@ -16,7 +15,7 @@ export function PaginaCadastro({ aoIrParaLogin }: Props) {
     evento.preventDefault()
     setErro(null)
     try {
-      await api('/api/v1/auth/registro', { metodo: 'POST', corpo: { email, senha, papel } })
+      await api('/api/v1/auth/registro', { metodo: 'POST', corpo: { email, senha } })
       setCriada(true)
     } catch (erroEnvio) {
       setErro(mensagemDeErro(erroEnvio))
@@ -58,14 +57,6 @@ export function PaginaCadastro({ aoIrParaLogin }: Props) {
             onChange={(evento) => setSenha(evento.target.value)}
             required
           />
-        </label>
-        <label>
-          Papel
-          <select value={papel} onChange={(evento) => setPapel(evento.target.value)}>
-            <option value="estudante">Estudante</option>
-            <option value="professor">Professor</option>
-            <option value="administrador">Administrador</option>
-          </select>
         </label>
         {erro && (
           <p role="alert" className="erro">

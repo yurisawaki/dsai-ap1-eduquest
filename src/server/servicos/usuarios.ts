@@ -5,7 +5,10 @@ import { erroValidacao, Erro } from '../erros'
 import { prisma } from '../prisma'
 import { conferirHash, gerarHash } from './senha'
 
-const papeisValidos: readonly string[] = ['estudante', 'professor', 'administrador']
+// R-12 (SPEC de D1): o cadastro público é do servidor, não do cliente.
+// Toda conta nova nasce como estudante; papel é provisionado pela
+// operação (seed), nunca escolhido na requisição.
+const PAPEL_PADRAO_CADASTRO: Papel = 'estudante'
 
 export function validarEmail(valor: unknown): string {
   if (typeof valor !== 'string' || valor.length === 0) {
@@ -24,26 +27,15 @@ export function validarSenha(valor: unknown): string {
   return valor
 }
 
-export function validarPapel(valor: unknown): Papel {
-  if (typeof valor !== 'string' || !papeisValidos.includes(valor)) {
-    throw erroValidacao('papel invalido')
-  }
-  return valor as Papel
-}
-
 export interface ContaCriada {
   usuarioId: string
   papel: Papel
 }
 
-export async function criarConta(dados: {
-  email?: unknown
-  senha?: unknown
-  papel?: unknown
-}): Promise<ContaCriada> {
+export async function criarConta(dados: { email?: unknown; senha?: unknown }): Promise<ContaCriada> {
   const email = validarEmail(dados.email)
   const senha = validarSenha(dados.senha)
-  const papel = validarPapel(dados.papel)
+  const papel = PAPEL_PADRAO_CADASTRO
   const hash = await gerarHash(senha)
   try {
     const usuario = await prisma.$transaction(async (tx) => {
@@ -53,11 +45,8 @@ export async function criarConta(dados: {
       await tx.credencial.create({
         data: { usuario_id: criado.id, hash_senha: hash },
       })
-      if (papel === 'estudante') {
-        await tx.perfilEstudante.create({ data: { usuario_id: criado.id } })
-      } else if (papel === 'professor') {
-        await tx.perfilProfessor.create({ data: { usuario_id: criado.id } })
-      }
+      // R-09/R-12: papel fixo do cadastro público → sempre perfil de estudante
+      await tx.perfilEstudante.create({ data: { usuario_id: criado.id } })
       return criado
     })
     return { usuarioId: usuario.id, papel: usuario.papel }

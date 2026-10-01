@@ -92,7 +92,7 @@ Os **nomes exatos das chaves JSON** de requisição/resposta não estão fixados
 
 **Ator:** visitante (sem sessão — rota pública, técnica §2.3.4).
 
-1. Visitante informa **e-mail**, **senha** e **papel** desejado. *A política de atribuição de papel (quem pode se cadastrar como professor/administrador) não está especificada nas fontes → **P-01** (§10).*
+1. Visitante informa **e-mail** e **senha**. O **papel não é escolha do cliente**: o servidor cria a conta sempre como `estudante` e **ignora** qualquer campo de privilégio enviado (`papel`, `perfil`, `role`, `isAdmin`…). Política de atribuição de papel: **P-01 resolvida** (§10.1) — regra **R-12**.
 2. O servidor **valida** os dados: unicidade de e-mail é obrigatória (R-01); formato e tamanho mínimo de e-mail/senha **não estão especificados** nas fontes → **P-02** (§10); a **normalização/caixa** do e-mail aplicada à unicidade e à comparação no login também **não está especificada** → **P-02** (§10).
 3. Em **transação**, o servidor cria: registro em `usuario` (id opaco, e-mail, papel, timestamps); registro em `credencial` com **apenas hash** da senha (R-02); a **linha de perfil correspondente** ao papel (SPEC visão §4 passo 1: "sistema valida e cria o perfil") — `perfil_estudante` ou `perfil_professor` conforme técnica §2.2.3 regra 2. *O papel administrador não possui tabela de perfil no modelo aprovado (nenhuma fonte declara perfil de administrador — técnica §2.2.2); nenhuma decisão nova é criada aqui.*
 4. **Sucesso:** `201 {usuarioId, papel}` — **sem sessão automática**: os passos 1 e 2 do fluxo principal são distintos (SPEC visão §4; técnica §2.3.3 contrato 1).
@@ -166,6 +166,7 @@ Toda regra tem rastreabilidade obrigatória. As 5 primeiras são literalmente as
 | R-09 | **Cadastro cria credencial e perfil em transação** | Usuário + credencial + linha de perfil correspondente ao papel são criados de forma atômica no cadastro | SPEC visão §4 passo 1; técnica §2.2.3 regra 2; `PLAN.md` §5.1 |
 | R-10 | **Papel restrito aos 3 valores** | Fora de `{estudante, professor, administrador}` não existe conta; ENUM no banco (também cobre integridade dos futuros testes de T1.4) | SPEC visão §6; técnica §2.2.2, §2.2.3 regra 3 |
 | R-11 | **Sessão pertence ao usuário; revogação explícita** | `sessao.usuario_id` com FK; encerramento é evento explícito (`revogada_em`), nunca inferido | técnica §2.2.2 (`sessao`); `TASKS.md` T1.3 |
+| R-12 | **Cadastro público sempre cria estudante** | O **papel é definido pelo servidor**: `POST /auth/registro` cria a conta sempre com `estudante` e **ignora** qualquer campo de privilégio enviado pelo cliente (`papel`, `perfil`, `role`, `isAdmin`, `administrador`, `tipo`…); professor e administrador são atribuídos pela operação (seed/provisionamento), nunca pelo cliente | decisão de produto registrada nesta SPEC (P-01, §10.1) em 2026-10-01 — correção de segurança da AP1 |
 
 ### 4.2 Matriz de sessão e papel por rota (transcrição literal da técnica §2.3.4 + reconciliação declarada)
 
@@ -352,13 +353,16 @@ O `TASKS.md` ainda marca T1.2–T1.4 como `[Depende de SPEC D1]` + pré-requisit
 
 Série **P-xx** iniciada na SPEC técnica (P-01–P-10 usados; P-10 já resolvida — técnica §2.1.3). Nenhuma informação abaixo é escolhida arbitrariamente: onde a fonte não define, o valor fica em aberto.
 
-### 10.1 Pendências herdadas da SPEC técnica, destinadas a D1 — permanecem abertas
+### 10.1 Pendências herdadas da SPEC técnica, destinadas a D1
 
-A técnica §6.4 designou esta SPEC como "artefato responsável" por P-01–P-04. **Nenhuma delas pôde ser decidida aqui sem inventar requisito**, pois nenhuma fonte (visão, PLAN, TASKS) contém a informação. Permanecem abertas:
+A técnica §6.4 designou esta SPEC como "artefato responsável" por P-01–P-04.
+
+> **P-01 — RESOLVIDA em 2026-10-01** (decisão de produto — correção de segurança da AP1): a política de atribuição de papel no cadastro é **"cadastro público sempre cria `estudante`"**. O servidor ignora qualquer campo de privilégio enviado pelo cliente; professor e administrador são atribuídos pela operação (seed/provisionamento), nunca pelo cadastro público. Registrada como **R-12** e no fluxo §3.1 passo 1.
+
+As demais (P-02–P-04) **não puderam ser decididas aqui sem inventar requisito**, pois nenhuma fonte (visão, PLAN, TASKS) contém a informação. Permanecem abertas:
 
 | ID | Pendência | Por que permanece aberta | Condição para fechar |
 |---|---|---|---|
-| **P-01** | Política de atribuição de **papel** no cadastro (quem pode se cadastrar como professor/administrador) | visão §4 passo 1 só descreve perfil de estudante; T1.2 exige cadastro dos 3 papéis; a **política** (aberto a todos vs. convite/aprovação) não está em nenhuma fonte | decisão de produto registrada na SPEC de D1 (quando houver fonte/decisão) |
 | **P-02** | Validação de **e-mail e senha** (formato, tamanho mínimo) **e normalização/caixa do e-mail** aplicada à unicidade e à comparação no login | "senha protegida/credencial única" não define política de formato; o `email UNIQUE` da técnica §2.2.2 é literal no banco e nenhuma fonte define caixa/normalização — adotar caixa-sensível ou normalizar seria decisão de produto sem fonte | decisão registrada nesta SPEC com rastreabilidade; a implementação de T1.2 cobre desde já a unicidade (R-01), enquanto a respeito de caixa/normalização nenhum comportamento é assumido enquanto a pendência estiver aberta |
 | **P-03** | **Valor padrão** de expiração de sessão | D1 diz "sessão expira", sem valor; a técnica §2.3.2 explicitamente não o fixa | valor definido aqui; o **mecanismo** (configurável por variável de ambiente) já é decisão da técnica §2.1.3 — T1.3 pode implementar o mecanismo sem o valor |
 | **P-04** | **Entrega, prazo e número de usos (reutilização)** do token de recuperação de senha — escopo do texto "entrega e validade" da técnica §6.4, explicitado aqui | mecanismo de canal depende de **DP-11** (e-mail é integração externa, ainda pendente); formato, prazo e reutilização não especificados | SPEC de D1 com insumo de DP-11/SPEC de integrações |

@@ -17,7 +17,7 @@ afterEach(() => {
 })
 
 describe('T1.2 — cadastro disponível na aplicação', () => {
-  it('formulário envia POST /api/v1/auth/registro com e-mail, senha e papel', async () => {
+  it('formulário envia POST /api/v1/auth/registro apenas com e-mail e senha (sem campo de papel)', async () => {
     const fetchMock = vi.fn(
       async (url: unknown, init?: { method?: string; body?: string }) => {
         const alvo = String(url)
@@ -29,7 +29,7 @@ describe('T1.2 — cadastro disponível na aplicação', () => {
         }
         if (alvo.includes('/auth/registro')) {
           return respostaJson(
-            { usuarioId: '22222222-2222-4222-8222-222222222222', papel: 'professor' },
+            { usuarioId: '22222222-2222-4222-8222-222222222222', papel: 'estudante' },
             201
           )
         }
@@ -44,7 +44,7 @@ describe('T1.2 — cadastro disponível na aplicação', () => {
     const campoEmail = await screen.findByLabelText('E-mail')
     fireEvent.change(campoEmail, { target: { value: 'novo@exemplo.test' } })
     fireEvent.change(screen.getByLabelText('Senha'), { target: { value: 'senha-larga-123' } })
-    fireEvent.change(screen.getByLabelText('Papel'), { target: { value: 'professor' } })
+    expect(screen.queryByLabelText('Papel')).toBeNull()
     const formulario = campoEmail.closest('form')!
     fireEvent.submit(formulario)
 
@@ -59,7 +59,6 @@ describe('T1.2 — cadastro disponível na aplicação', () => {
     expect(JSON.parse(init?.body ?? '{}')).toEqual({
       email: 'novo@exemplo.test',
       senha: 'senha-larga-123',
-      papel: 'professor',
     })
   })
 })
