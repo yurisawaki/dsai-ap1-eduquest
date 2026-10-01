@@ -1,6 +1,7 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react'
 import { api, mensagemDeErro } from '../cliente'
 import type { Sessao } from '../App'
+import { ConteudoAula, type BlocoConteudo } from '../componentes/ConteudoAula'
 
 interface ResumoCurso {
   id: string
@@ -24,12 +25,6 @@ interface ModuloItem {
 
 interface CursoDetalhe extends ResumoCurso {
   modulos: ModuloItem[]
-}
-
-interface BlocoConteudo {
-  id?: string
-  tipo: string
-  dados: unknown
 }
 
 interface AulaDetalhe {
@@ -195,11 +190,16 @@ function DetalheCurso({ sessao, cursoId, aoVoltar }: PropsCurso) {
   }
 
   if (aulaAberta) {
+    const moduloDaAula = curso.modulos.find((modulo) =>
+      modulo.aulas.some((aula) => aula.id === aulaAberta)
+    )
     return (
       <DetalheAula
         sessao={sessao}
         aulaId={aulaAberta}
         donoId={curso.donoId}
+        tituloCurso={curso.titulo}
+        tituloModulo={moduloDaAula?.titulo ?? ''}
         aoVoltar={() => setAulaAberta(null)}
       />
     )
@@ -459,15 +459,26 @@ interface PropsAula {
   sessao: Sessao
   aulaId: string
   donoId: string
+  tituloCurso: string
+  tituloModulo: string
   aoVoltar: () => void
 }
 
-function DetalheAula({ sessao, aulaId, donoId, aoVoltar }: PropsAula) {
+function DetalheAula({
+  sessao,
+  aulaId,
+  donoId,
+  tituloCurso,
+  tituloModulo,
+  aoVoltar,
+}: PropsAula) {
   const [aula, setAula] = useState<AulaDetalhe | null>(null)
   const [erro, setErro] = useState<string | null>(null)
   const [mensagem, setMensagem] = useState<string | null>(null)
   const [tipoNovo, setTipoNovo] = useState<string>(TIPOS_CONTEUDO[0])
   const [dadosNovos, setDadosNovos] = useState('{}')
+  const [concluida, setConcluida] = useState(false)
+  const [enviandoConclusao, setEnviandoConclusao] = useState(false)
 
   const carregar = useCallback(async () => {
     try {
@@ -512,13 +523,18 @@ function DetalheAula({ sessao, aulaId, donoId, aoVoltar }: PropsAula) {
   }
 
   async function concluir() {
+    if (concluida || enviandoConclusao) return
     setErro(null)
     setMensagem(null)
+    setEnviandoConclusao(true)
     try {
       await api(`/api/v1/aulas/${aulaId}/conclusao`, { metodo: 'POST', corpo: {} })
+      setConcluida(true)
       setMensagem('Conclusao registrada.')
     } catch (erroConclusao) {
       setErro(mensagemDeErro(erroConclusao))
+    } finally {
+      setEnviandoConclusao(false)
     }
   }
 
@@ -548,7 +564,12 @@ function DetalheAula({ sessao, aulaId, donoId, aoVoltar }: PropsAula) {
           Voltar ao curso
         </button>
       </p>
-      <h1>{aula.titulo}</h1>
+      {tituloCurso && tituloModulo && (
+        <p className="trilha">
+          {tituloCurso} › {tituloModulo} › Aula
+        </p>
+      )}
+      <h1 className="titulo-aula">{aula.titulo}</h1>
       <p>Estado: {estado(aula.publicado)}</p>
 
       {erro && (
@@ -563,12 +584,18 @@ function DetalheAula({ sessao, aulaId, donoId, aoVoltar }: PropsAula) {
         {aula.conteudo.length === 0 ? (
           <p>Sem conteudo.</p>
         ) : (
-          <ul>
-            {aula.conteudo.map((bloco, indice) => (
-              <li key={bloco.id ?? indice}>
-                <strong>{bloco.tipo}</strong>
-                <pre>{JSON.stringify(bloco.dados, null, 2)}</pre>
-                {podeEditar && (
+          <ConteudoAula conteudo={aula.conteudo} />
+        )}
+      </section>
+
+      {podeEditar && (
+        <section>
+          <h2>Editar conteudo</h2>
+          {aula.conteudo.length > 0 && (
+            <ul className="lista-blocos">
+              {aula.conteudo.map((bloco, indice) => (
+                <li key={bloco.id ?? indice}>
+                  Bloco {indice + 1} — {bloco.tipo}{' '}
                   <button
                     type="button"
                     onClick={() =>
@@ -579,42 +606,44 @@ function DetalheAula({ sessao, aulaId, donoId, aoVoltar }: PropsAula) {
                   >
                     Remover bloco
                   </button>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+                </li>
+              ))}
+            </ul>
+          )}
+          <form onSubmit={adicionarBloco}>
+            <label htmlFor="tipo-conteudo">Tipo do bloco</label>
+            <select
+              id="tipo-conteudo"
+              value={tipoNovo}
+              onChange={(evento) => setTipoNovo(evento.target.value)}
+            >
+              {TIPOS_CONTEUDO.map((tipo) => (
+                <option key={tipo} value={tipo}>
+                  {tipo}
+                </option>
+              ))}
+            </select>
 
-      {podeEditar && (
-        <form onSubmit={adicionarBloco}>
-          <label htmlFor="tipo-conteudo">Tipo do bloco</label>
-          <select
-            id="tipo-conteudo"
-            value={tipoNovo}
-            onChange={(evento) => setTipoNovo(evento.target.value)}
-          >
-            {TIPOS_CONTEUDO.map((tipo) => (
-              <option key={tipo} value={tipo}>
-                {tipo}
-              </option>
-            ))}
-          </select>
-
-          <label htmlFor="dados-conteudo">Dados do bloco (JSON)</label>
-          <textarea
-            id="dados-conteudo"
-            value={dadosNovos}
-            onChange={(evento) => setDadosNovos(evento.target.value)}
-          />
-          <button type="submit">Adicionar bloco</button>
-        </form>
+            <label htmlFor="dados-conteudo">Dados do bloco (JSON)</label>
+            <textarea
+              id="dados-conteudo"
+              value={dadosNovos}
+              onChange={(evento) => setDadosNovos(evento.target.value)}
+            />
+            <button type="submit">Adicionar bloco</button>
+          </form>
+        </section>
       )}
 
       {sessao.papel === 'estudante' && (
-        <p>
-          <button type="button" onClick={() => void concluir()}>
-            Marcar aula como concluida
+        <p className="acao-conclusao">
+          <button
+            type="button"
+            onClick={() => void concluir()}
+            disabled={concluida || enviandoConclusao}
+            className={concluida ? 'concluida' : undefined}
+          >
+            {concluida ? '✓ Aula concluída' : 'Marcar como concluída'}
           </button>
         </p>
       )}

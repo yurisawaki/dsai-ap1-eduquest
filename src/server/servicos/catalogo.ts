@@ -363,10 +363,11 @@ export async function substituirConteudo(
     return
   }
   const insercao = prisma.conteudoAula.createMany({
-    data: blocos.map((bloco) => ({
+    data: blocos.map((bloco, indice) => ({
       id: randomUUID(),
       aula_id: aula.id,
       tipo: bloco.tipo,
+      posicao: indice,
       dados: bloco.dados,
     })),
   })
