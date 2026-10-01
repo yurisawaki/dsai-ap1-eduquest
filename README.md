@@ -135,7 +135,7 @@ tests/               api/ · web/ · unidade/ · configuracao/ · utilidades/
 prisma/              schema.prisma + migrations/ (versionadas)
 SPEC/                especificações (fonte de requisitos — ver §10)
 PLAN.md, TASKS.md    planejamento e tarefas (processo SDD)
-docs/validacao/      relatórios de validação de fase (ex.: F2.md — T2.6)
+docs/validacao/      relatórios de validação de fase (F2.md — T2.6; F3.md — T3.6)
 prompts/             prompts usados no processo SDD (histórico)
 scripts/             utilitários (ex.: token de recuperação)
 infra/               initdb (cria eduquest_test) e caddy/Caddyfile
@@ -204,7 +204,8 @@ Antes de implementar qualquer funcionalidade:
 6. ~~T3.2/T3.3 (API de D4)~~ — feito (2026-10-01).
 7. ~~SPEC de D5 (T3.4, DP-09)~~ — feito (2026-10-01): `SPEC/2026-10-01-avaliacoes.md`.
 8. ~~T3.5 (API de D5)~~ — feito (2026-10-01).
-9. **Próximo:** validar a F3 (T3.6). Superfície web de D4/D5 segue pendente (P-30/P-37).
+9. ~~Validar a F3 (T3.6)~~ — feito: `docs/validacao/F3.md` (API validada; sem interface web — P-30/P-37).
+10. **Próximo:** F4 — Progresso acadêmico (D6), começando pela SPEC de D6 (T4.1).
 
 ## 13. Git
 
