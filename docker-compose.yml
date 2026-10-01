@@ -6,7 +6,7 @@ services:
       POSTGRES_PASSWORD: eduquest
       POSTGRES_DB: eduquest
     ports:
-      - "5434:5432"
+      - "127.0.0.1:5434:5432"
     volumes:
       - dados-db:/var/lib/postgresql/data
       - ./infra/initdb:/docker-entrypoint-initdb.d:ro
@@ -28,7 +28,7 @@ services:
       BCRYPT_COST: ${BCRYPT_COST}
       PORT: 3000
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
 
   caddy:
     image: caddy:2-alpine
@@ -38,7 +38,7 @@ services:
       - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-dados:/data
     ports:
-      - "443:443"
+      - "127.0.0.1:443:443"
 
 volumes:
   dados-db:
