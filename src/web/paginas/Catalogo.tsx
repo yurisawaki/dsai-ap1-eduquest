@@ -1,4 +1,5 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react'
+import { abrirCurso, irPara, useLocalizacao, voltar } from '../navegacao'
 import { api, mensagemDeErro } from '../cliente'
 import type { Sessao } from '../App'
 import { ConteudoAula, type BlocoConteudo } from '../componentes/ConteudoAula'
@@ -124,7 +125,7 @@ export function PaginaCatalogo({ sessao }: Props) {
   const [erro, setErro] = useState<string | null>(null)
   const [mensagem, setMensagem] = useState<string | null>(null)
   const [tituloNovo, setTituloNovo] = useState('')
-  const [cursoAberto, setCursoAberto] = useState<string | null>(null)
+  const { cursoAberto } = useLocalizacao()
 
   const carregar = useCallback(async () => {
     try {
@@ -155,9 +156,7 @@ export function PaginaCatalogo({ sessao }: Props) {
   }
 
   if (cursoAberto) {
-    return (
-      <DetalheCurso sessao={sessao} cursoId={cursoAberto} aoVoltar={() => setCursoAberto(null)} />
-    )
+    return <DetalheCurso sessao={sessao} cursoId={cursoAberto} aoVoltar={voltar} />
   }
 
   return (
@@ -217,7 +216,7 @@ export function PaginaCatalogo({ sessao }: Props) {
                     {estado(curso.publicado)}
                   </span>
                 </div>
-                <button type="button" onClick={() => setCursoAberto(curso.id)}>
+                <button type="button" onClick={() => abrirCurso(curso.id)}>
                   Abrir
                 </button>
               </li>
@@ -243,9 +242,7 @@ function DetalheCurso({ sessao, cursoId, aoVoltar }: PropsCurso) {
   const [tituloNovoModulo, setTituloNovoModulo] = useState('')
   const [titulos, setTitulos] = useState<Record<string, string>>({})
   const [aulasNovas, setAulasNovas] = useState<Record<string, string>>({})
-  const [aulaAberta, setAulaAberta] = useState<string | null>(null)
-  const [moduloQuestoesAberto, setModuloQuestoesAberto] = useState<string | null>(null)
-  const [avaliacaoAberta, setAvaliacaoAberta] = useState<string | null>(null)
+  const { aulaAberta, moduloQuestoesAberto, avaliacaoAberta } = useLocalizacao()
 
   const carregar = useCallback(async () => {
     try {
@@ -307,7 +304,7 @@ function DetalheCurso({ sessao, cursoId, aoVoltar }: PropsCurso) {
       <QuestoesModulo
         moduloId={moduloQuestoesAberto}
         tituloModulo={modulo?.titulo ?? ''}
-        aoVoltar={() => setModuloQuestoesAberto(null)}
+        aoVoltar={voltar}
         sessao={sessao}
       />
     )
@@ -318,7 +315,7 @@ function DetalheCurso({ sessao, cursoId, aoVoltar }: PropsCurso) {
       <AvaliacaoDetalhe
         avaliacaoId={avaliacaoAberta}
         tituloCurso={curso.titulo}
-        aoVoltar={() => setAvaliacaoAberta(null)}
+        aoVoltar={voltar}
         sessao={sessao}
       />
     )
@@ -335,7 +332,7 @@ function DetalheCurso({ sessao, cursoId, aoVoltar }: PropsCurso) {
         donoId={curso.donoId}
         tituloCurso={curso.titulo}
         tituloModulo={moduloDaAula?.titulo ?? ''}
-        aoVoltar={() => setAulaAberta(null)}
+        aoVoltar={voltar}
       />
     )
   }
@@ -628,7 +625,7 @@ function DetalheCurso({ sessao, cursoId, aoVoltar }: PropsCurso) {
                         >
                           {estado(aula.publicado)}
                         </span>
-                        <button type="button" onClick={() => setAulaAberta(aula.id)}>
+                        <button type="button" onClick={() => irPara({ aulaAberta: aula.id })}>
                           Abrir aula
                         </button>
                         {podeEditar && (
@@ -672,7 +669,7 @@ function DetalheCurso({ sessao, cursoId, aoVoltar }: PropsCurso) {
                   <button
                     type="button"
                     className="botao-secundario"
-                    onClick={() => setModuloQuestoesAberto(modulo.id)}
+                    onClick={() => irPara({ moduloQuestoesAberto: modulo.id })}
                   >
                     Ver questões
                   </button>
@@ -712,7 +709,7 @@ function DetalheCurso({ sessao, cursoId, aoVoltar }: PropsCurso) {
                   {avaliacao.tentativasMax}{' '}
                   {avaliacao.tentativasMax === 1 ? 'tentativa' : 'tentativas'}
                 </p>
-                <button type="button" onClick={() => setAvaliacaoAberta(avaliacao.id)}>
+                <button type="button" onClick={() => irPara({ avaliacaoAberta: avaliacao.id })}>
                   Abrir avaliação
                 </button>
               </li>

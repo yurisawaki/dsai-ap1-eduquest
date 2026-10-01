@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api, mensagemDeErro } from './cliente'
+import { navegarParaVista, substituirVista, useLocalizacao } from './navegacao'
 import { PaginaCadastro } from './paginas/Cadastro'
 import { PaginaCatalogo } from './paginas/Catalogo'
 import { PaginaLogin } from './paginas/Login'
@@ -12,21 +13,19 @@ export interface Sessao {
   expiraEm: string
 }
 
-type Vista = 'login' | 'cadastro' | 'perfil' | 'recuperacao' | 'catalogo'
-
 export function App() {
   const [sessao, setSessao] = useState<Sessao | null | 'carregando'>('carregando')
-  const [vista, setVista] = useState<Vista>('login')
+  const { vista } = useLocalizacao()
   const [erro, setErro] = useState<string | null>(null)
 
   const atualizarSessao = useCallback(async () => {
     try {
       const dados = await api<Sessao>('/api/v1/auth/sessao')
       setSessao(dados)
-      setVista('perfil')
+      substituirVista('perfil')
     } catch {
       setSessao(null)
-      setVista('login')
+      substituirVista('login')
     }
   }, [])
 
@@ -42,7 +41,7 @@ export function App() {
       setErro(mensagemDeErro(erroSaida))
     }
     setSessao(null)
-    setVista('login')
+    substituirVista('login')
   }
 
   const autenticado = Boolean(sessao && sessao !== 'carregando')
@@ -64,7 +63,7 @@ export function App() {
                 type="button"
                 className="nav-item"
                 aria-current={vista === 'perfil' ? 'page' : undefined}
-                onClick={() => setVista('perfil')}
+                onClick={() => navegarParaVista('perfil')}
               >
                 Perfil
               </button>
@@ -72,7 +71,7 @@ export function App() {
                 type="button"
                 className="nav-item"
                 aria-current={vista === 'catalogo' ? 'page' : undefined}
-                onClick={() => setVista('catalogo')}
+                onClick={() => navegarParaVista('catalogo')}
               >
                 Catálogo
               </button>
@@ -86,7 +85,7 @@ export function App() {
                 type="button"
                 className="nav-item"
                 aria-current={vista === 'login' ? 'page' : undefined}
-                onClick={() => setVista('login')}
+                onClick={() => navegarParaVista('login')}
               >
                 Entrar
               </button>
@@ -94,7 +93,7 @@ export function App() {
                 type="button"
                 className="nav-item"
                 aria-current={vista === 'cadastro' ? 'page' : undefined}
-                onClick={() => setVista('cadastro')}
+                onClick={() => navegarParaVista('cadastro')}
               >
                 Criar conta
               </button>
@@ -102,7 +101,7 @@ export function App() {
                 type="button"
                 className="nav-item"
                 aria-current={vista === 'recuperacao' ? 'page' : undefined}
-                onClick={() => setVista('recuperacao')}
+                onClick={() => navegarParaVista('recuperacao')}
               >
                 Recuperar senha
               </button>
@@ -128,9 +127,9 @@ export function App() {
       ) : sessaoAtual && vista === 'catalogo' ? (
         <PaginaCatalogo sessao={sessaoAtual} />
       ) : vista === 'cadastro' ? (
-        <PaginaCadastro aoIrParaLogin={() => setVista('login')} />
+        <PaginaCadastro aoIrParaLogin={() => navegarParaVista('login')} />
       ) : vista === 'recuperacao' ? (
-        <PaginaRecuperacao aoIrParaLogin={() => setVista('login')} />
+        <PaginaRecuperacao aoIrParaLogin={() => navegarParaVista('login')} />
       ) : (
         <PaginaLogin aoEntrar={() => void atualizarSessao()} />
       )}
