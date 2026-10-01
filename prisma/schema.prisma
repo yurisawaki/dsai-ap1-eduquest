@@ -19,6 +19,13 @@ enum TipoConteudo {
   material_anexo
 }
 
+enum TipoQuestao {
+  multipla_escolha
+  verdadeiro_falso
+  numerica
+  dissertativa
+}
+
 model Usuario {
   id            String   @id @db.Uuid
   email         String   @unique @db.VarChar(255)
@@ -35,6 +42,7 @@ model Usuario {
   tokens_recuperacao TokenRecuperacao[]
   cursos             Curso[]
   conclusoes         ConclusaoAula[]
+  tentativas         Tentativa[]
 
   @@map("usuario")
 }
@@ -129,8 +137,9 @@ model Modulo {
   criado_em     DateTime @default(now())
   atualizado_em DateTime @updatedAt
 
-  curso Curso @relation(fields: [curso_id], references: [id], onDelete: Cascade)
-  aulas Aula[]
+  curso    Curso     @relation(fields: [curso_id], references: [id], onDelete: Cascade)
+  aulas    Aula[]
+  questoes Questao[]
 
   @@index([curso_id])
   @@map("modulo")
@@ -212,4 +221,55 @@ model TokenRecuperacao {
 
   @@index([usuario_id])
   @@map("token_recuperacao")
+}
+
+model Questao {
+  id            String      @id @db.Uuid
+  modulo_id     String      @db.Uuid
+  tipo          TipoQuestao
+  enunciado     String      @db.Text
+  explicacao    String?     @db.Text
+  gabarito      Json?
+  publicado     Boolean     @default(false)
+  criado_em     DateTime    @default(now())
+  atualizado_em DateTime    @updatedAt
+
+  modulo       Modulo        @relation(fields: [modulo_id], references: [id], onDelete: Cascade)
+  alternativas Alternativa[]
+  tentativas   Tentativa[]
+
+  @@index([modulo_id])
+  @@map("questao")
+}
+
+model Alternativa {
+  id            String   @id @db.Uuid
+  questao_id    String   @db.Uuid
+  texto         String   @db.Text
+  correta       Boolean
+  posicao       Int
+  criado_em     DateTime @default(now())
+  atualizado_em DateTime @updatedAt
+
+  questao Questao @relation(fields: [questao_id], references: [id], onDelete: Cascade)
+
+  @@unique([questao_id, posicao])
+  @@map("alternativa")
+}
+
+model Tentativa {
+  id            String   @id @db.Uuid
+  questao_id    String   @db.Uuid
+  usuario_id    String   @db.Uuid
+  resposta      Json
+  acerto        Boolean?
+  criado_em     DateTime @default(now())
+  atualizado_em DateTime @updatedAt
+
+  questao Questao @relation(fields: [questao_id], references: [id], onDelete: Cascade)
+  usuario Usuario @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+
+  @@index([questao_id])
+  @@index([usuario_id])
+  @@map("tentativa")
 }

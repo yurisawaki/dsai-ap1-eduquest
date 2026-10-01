@@ -109,14 +109,14 @@ npx tsx scripts/gerar-token-recuperacao.ts <email>   # imprime token de reset (d
 ## 6. Testes
 
 ```bash
-npm test            # 68 testes, 11 arquivos — deve passar 100%
+npm test            # 82 testes, 12 arquivos — deve passar 100%
 npm run test:watch  # modo watch
 ```
 
 - **Banco de teste:** `eduquest_test` (mesma instância do compose, porta 5434). Ele é criado automaticamente pelo init do container (`infra/initdb/01-init.sql`) quando você roda `npm run db:up` pela primeira vez; a URL vem de `TEST_DATABASE_URL`.
 - **Migrations de teste:** rodam sozinhas — `tests/configuracao/global.ts` executa `npx prisma migrate deploy` contra o banco de teste antes da suíte. Não é preciso migrar na mão.
-- **Verde:** a saída final deve ser `Test Files 11 passed (11)` / `Tests 68 passed (68)` e `npm run typecheck` sem erros.
-- Cobertura atual: API (auth, perfis, catálogo, conteúdo e anexos — TC-01–TC-20 da SPEC de conteúdo —, conclusão), web (React) e unidade (autorização).
+- **Verde:** a saída final deve ser `Test Files 12 passed (12)` / `Tests 82 passed (82)` e `npm run typecheck` sem erros.
+- Cobertura atual: API (auth, perfis, catálogo, conteúdo e anexos — TC-01–TC-20 da SPEC de conteúdo —, conclusão, questões e tentativas — TQ-01–TQ-16 da SPEC de D4), web (React) e unidade (autorização).
 
 ## 7. Estrutura do projeto
 
@@ -125,7 +125,7 @@ src/server/          backend Express
   app.ts             cria a app (middlewares, rotas, static)
   index.ts           sobe o servidor na porta configurada
   config.ts          variáveis de ambiente (falha cedo se faltar)
-  rotas/             auth, perfis, catalogo (montadas em /api/v1)
+  rotas/             auth, perfis, catalogo, questoes (montadas em /api/v1)
   servicos/          regras de negócio (usuarios, sessoes, catalogo, …)
   middlewares/       sessão/papel
 src/web/             frontend React (Vite; root = src/web)
@@ -146,7 +146,7 @@ Não existe pasta `diario/` neste repositório.
 ## 8. Arquitetura atual
 
 - **Backend:** Express 5 + TypeScript, API versionada em **`/api/v1`**:
-  - `/api/v1/auth` (registro, login, logout, recuperação), `/api/v1/perfis`, `/api/v1` (catálogo: cursos/módulos/aulas/conteúdo/anexos/conclusão).
+  - `/api/v1/auth` (registro, login, logout, recuperação), `/api/v1/perfis`, `/api/v1` (catálogo: cursos/módulos/aulas/conteúdo/anexos/conclusão; questões e tentativas de D4).
   - Limite de corpo JSON: 8 MiB em `PUT /aulas/{id}/conteudo` e `POST /aulas/{id}/arquivos`; padrão nas demais. Corpo acima do limite → `400`.
   - Erros no padrão `{"erro": {"codigo", "mensagem"}}` com códigos `400/401/403/404` (`src/server/erros.ts`).
   - Organização: **rotas** (HTTP/validação) → **serviços** (regra de negócio) → **Prisma**.
@@ -161,7 +161,8 @@ Não existe pasta `diario/` neste repositório.
 - **F2 — Catálogo de aprendizagem (D3): implementada** (hierarquia curso > módulo > aula, publicação, autoria, consumo e conclusão de aula; **conteúdo de aula conforme DP-19**: lista ordenada de 0–50 blocos texto/mídia/anexo, upload de anexo JSON+base64 e download).
 - **Suíte: 68 testes passando** (`npm test`); **`npm run typecheck` passando** (ambos verificados em 2026-09-30).
 - **DP-19 resolvida:** `SPEC/2026-09-30-conteudo-aula.md` **aprovada** após auditoria (§13 da SPEC); `PLAN.md`, `TASKS.md` (T2.3), `decisoes-pendentes.md` e SPEC D3 revisados formalmente. Pendências derivadas abertas: P-18–P-21.
-- **DP-08 resolvida:** SPEC de D4 `SPEC/2026-10-01-questoes-exercicios.md` **aprovada** (4 tipos de questão; questão pertence ao módulo); `PLAN.md`, `TASKS.md` e `decisoes-pendentes.md` revisados. Ainda **sem código** de F3.
+- **DP-08 resolvida:** SPEC de D4 `SPEC/2026-10-01-questoes-exercicios.md` **aprovada** (4 tipos de questão; questão pertence ao módulo); `PLAN.md`, `TASKS.md` e `decisoes-pendentes.md` revisados.
+- **F3 — D4 (T3.2/T3.3): API implementada** — questões dos 4 tipos com gabarito protegido, tentativas corrigidas no servidor e feedback (F3-01–F3-06). **Sem interface web** (pendência P-30 da SPEC de D4). Avaliações (D5) ainda não começaram.
 - Outras SPECs: visão geral, técnica de fundações, D3 (catálogo) e conteúdo de aula **aprovadas**; D1 revisada, aguardando re-auditoria.
 - **Próximas fases (F3 em diante)** seguem bloqueadas por suas pendências (ex.: DP-08 tipos de questão, DP-09 dissertativas) — ver `PLAN.md` §8.
 
@@ -197,7 +198,8 @@ Antes de implementar qualquer funcionalidade:
 3. ~~Concluir F2 (T2.6)~~ — feito: `docs/validacao/F2.md` (F2 validada, com ressalvas de ambiente).
 4. **Pendências de processo abertas:** revisão formal de DP-01–DP-03 em `PLAN.md` §8/`decisoes-pendentes.md` (técnica §5); re-auditoria da SPEC D1.
 5. ~~SPEC de D4 (T3.1, DP-08)~~ — feito (2026-10-01).
-6. **Próximo:** implementar T3.2 (questões e gabarito protegido) e T3.3 (tentativas e feedback) conforme a SPEC de D4. Avaliações (T3.4/T3.5) dependem da SPEC de D5 e de DP-09.
+6. ~~T3.2/T3.3 (API de D4)~~ — feito (2026-10-01).
+7. **Próximo:** decidir a superfície web de D4 (P-30) e escrever a SPEC de D5 (T3.4), que trata DP-09; T3.5 depende dela.
 
 ## 13. Git
 
