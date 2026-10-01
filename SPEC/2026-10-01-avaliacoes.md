@@ -111,6 +111,7 @@ Convenções da técnica §2.2.1/§2.2.2.
 | `questao_id` | FK → `questao.id` (CASCADE) |
 | `peso` | NUMERIC(7,2) NOT NULL (> 0) |
 | `posicao` | INTEGER NOT NULL; UNIQUE (`avaliacao_id`, `posicao`) |
+| `criado_em` / `atualizado_em` | TIMESTAMP — *correção na implementação de T3.5 (2026-10-01): a técnica §2.2.1 (vinculante) exige timestamps em todas as tabelas; a tabela original os omitia* |
 
 ### 5.3 `tentativa_avaliacao`
 

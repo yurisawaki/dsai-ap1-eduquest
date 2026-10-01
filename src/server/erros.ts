@@ -17,6 +17,7 @@ export const erroNaoAutenticado = () =>
   new Erro(401, 'nao_autenticado', 'Sessao ausente ou invalida')
 export const erroProibido = (mensagem: string) => new Erro(403, 'proibido', mensagem)
 export const erroNaoEncontrado = (mensagem: string) => new Erro(404, 'nao_encontrado', mensagem)
+export const erroConflito = (mensagem: string) => new Erro(409, 'conflito', mensagem)
 
 export function manipularErro(
   erro: unknown,

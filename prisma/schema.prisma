@@ -26,6 +26,11 @@ enum TipoQuestao {
   dissertativa
 }
 
+enum StatusTentativaAvaliacao {
+  aguardando_correcao
+  corrigida
+}
+
 model Usuario {
   id            String   @id @db.Uuid
   email         String   @unique @db.VarChar(255)
@@ -43,6 +48,7 @@ model Usuario {
   cursos             Curso[]
   conclusoes         ConclusaoAula[]
   tentativas         Tentativa[]
+  tentativas_avaliacao TentativaAvaliacao[]
 
   @@map("usuario")
 }
@@ -123,7 +129,8 @@ model Curso {
   atualizado_em DateTime @updatedAt
 
   dono    Usuario  @relation(fields: [dono_id], references: [id], onDelete: Cascade)
-  modulos Modulo[]
+  modulos    Modulo[]
+  avaliacoes Avaliacao[]
 
   @@index([dono_id])
   @@map("curso")
@@ -237,6 +244,8 @@ model Questao {
   modulo       Modulo        @relation(fields: [modulo_id], references: [id], onDelete: Cascade)
   alternativas Alternativa[]
   tentativas   Tentativa[]
+  avaliacoes   AvaliacaoQuestao[]
+  respostas    RespostaAvaliacao[]
 
   @@index([modulo_id])
   @@map("questao")
@@ -272,4 +281,77 @@ model Tentativa {
   @@index([questao_id])
   @@index([usuario_id])
   @@map("tentativa")
+}
+
+model Avaliacao {
+  id             String   @id @db.Uuid
+  curso_id       String   @db.Uuid
+  titulo         String   @db.Text
+  tentativas_max Int
+  abre_em        DateTime
+  fecha_em       DateTime
+  publicado      Boolean  @default(false)
+  criado_em      DateTime @default(now())
+  atualizado_em  DateTime @updatedAt
+
+  curso      Curso                @relation(fields: [curso_id], references: [id], onDelete: Cascade)
+  questoes   AvaliacaoQuestao[]
+  tentativas TentativaAvaliacao[]
+
+  @@index([curso_id])
+  @@map("avaliacao")
+}
+
+model AvaliacaoQuestao {
+  avaliacao_id  String   @db.Uuid
+  questao_id    String   @db.Uuid
+  peso          Decimal  @db.Decimal(7, 2)
+  posicao       Int
+  criado_em     DateTime @default(now())
+  atualizado_em DateTime @updatedAt
+
+  avaliacao Avaliacao @relation(fields: [avaliacao_id], references: [id], onDelete: Cascade)
+  questao   Questao   @relation(fields: [questao_id], references: [id], onDelete: Cascade)
+
+  @@id([avaliacao_id, questao_id])
+  @@unique([avaliacao_id, posicao])
+  @@index([questao_id])
+  @@map("avaliacao_questao")
+}
+
+model TentativaAvaliacao {
+  id            String                   @id @db.Uuid
+  avaliacao_id  String                   @db.Uuid
+  usuario_id    String                   @db.Uuid
+  status        StatusTentativaAvaliacao
+  nota          Decimal?                 @db.Decimal(4, 2)
+  enviada_em    DateTime
+  criado_em     DateTime                 @default(now())
+  atualizado_em DateTime                 @updatedAt
+
+  avaliacao Avaliacao           @relation(fields: [avaliacao_id], references: [id], onDelete: Cascade)
+  usuario   Usuario             @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+  respostas RespostaAvaliacao[]
+
+  @@index([avaliacao_id])
+  @@index([usuario_id])
+  @@map("tentativa_avaliacao")
+}
+
+model RespostaAvaliacao {
+  id            String   @id @db.Uuid
+  tentativa_id  String   @db.Uuid
+  questao_id    String   @db.Uuid
+  resposta      Json
+  acerto        Boolean?
+  pontos        Decimal? @db.Decimal(7, 2)
+  criado_em     DateTime @default(now())
+  atualizado_em DateTime @updatedAt
+
+  tentativa TentativaAvaliacao @relation(fields: [tentativa_id], references: [id], onDelete: Cascade)
+  questao   Questao            @relation(fields: [questao_id], references: [id], onDelete: Cascade)
+
+  @@unique([tentativa_id, questao_id])
+  @@index([questao_id])
+  @@map("resposta_avaliacao")
 }
