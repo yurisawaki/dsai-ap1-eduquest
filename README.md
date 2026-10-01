@@ -2,6 +2,8 @@
 
 Plataforma web de ensino gamificada: cursos → módulos → aulas, exercícios, avaliações, progresso acadêmico e gamificação (XP, níveis, conquistas, moedas, loja) calculada no servidor.
 
+**URL pública (AP1):** `https://tissue-treasure-diego-achieved.trycloudflare.com` — ver [§15](#15-deploy-url-pública).
+
 ## 1. Visão geral
 
 - **O que é:** o EduQuest combina uma camada de ensino (cursos, módulos, aulas, exercícios, avaliações, progresso) com uma camada de gamificação (XP, níveis, conquistas, missões, desafios, rankings, moedas, loja, inventário), mais perfis, notificações, recursos sociais, analytics, certificados e administração. Detalhes: `SPEC/2026-09-30-visao-geral.md`.
@@ -109,15 +111,15 @@ npx tsx scripts/gerar-token-recuperacao.ts <email>   # imprime token de reset (d
 ## 6. Testes
 
 ```bash
-npm test            # 95 testes, 13 arquivos — deve passar 100%
+npm test            # 125 testes, 17 arquivos — deve passar 100%
 npm run test:watch  # modo watch
 ```
 
 - **Banco de teste:** `eduquest_test` (mesma instância do compose, porta 5434). Ele é criado automaticamente pelo init do container (`infra/initdb/01-init.sql`) quando você roda `npm run db:up` pela primeira vez; a URL vem de `TEST_DATABASE_URL`.
 - **Migrations de teste:** rodam sozinhas — `tests/configuracao/global.ts` executa `npx prisma migrate deploy` contra o banco de teste antes da suíte. Não é preciso migrar na mão.
-- **Verde:** a saída final deve ser `Test Files 13 passed (13)` / `Tests 95 passed (95)` e `npm run typecheck` sem erros.
+- **Verde:** a saída final deve ser `Test Files 17 passed (17)` / `Tests 125 passed (125)` e `npm run typecheck` sem erros.
 - **Timeout ocasional:** em máquina carregada, um teste pode estourar o limite padrão de 5 s do Vitest (visto uma vez em `tests/api/conclusao.test.ts`, que passa isolado). Se acontecer, rode o arquivo isolado antes de investigar.
-- Cobertura atual: API (auth, perfis, catálogo, conteúdo e anexos — TC-01–TC-20 da SPEC de conteúdo —, conclusão, questões e tentativas — TQ-01–TQ-16 da SPEC de D4 —, avaliações — TA-01–TA-14 da SPEC de D5), web (React) e unidade (autorização).
+- Cobertura atual: API (auth, perfis, catálogo, conteúdo e anexos — TC-01–TC-20 da SPEC de conteúdo —, conclusão, progresso — AC-D6-6–AC-D6-12 —, questões e tentativas — TQ-01–TQ-16 da SPEC de D4 —, avaliações — TA-01–TA-14 da SPEC de D5 —, health check), web (React: catálogo, questões/avaliações, progresso) e unidade (autorização).
 
 ## 7. Estrutura do projeto
 
@@ -161,13 +163,18 @@ Não existe pasta `diario/` neste repositório.
 
 - **F1 — Identidade, acesso e perfis (D1, D2): implementada** (cadastro, login/logout/sessão, recuperação de senha, papéis, perfis).
 - **F2 — Catálogo de aprendizagem (D3): implementada** (hierarquia curso > módulo > aula, publicação, autoria, consumo e conclusão de aula; **conteúdo de aula conforme DP-19**: lista ordenada de 0–50 blocos texto/mídia/anexo, upload de anexo JSON+base64 e download).
-- **Suíte: 68 testes passando** (`npm test`); **`npm run typecheck` passando** (ambos verificados em 2026-09-30).
+- **F3 — D4 (questões/exercícios): API e interface web implementadas** — 4 tipos de questão com gabarito protegido, tentativas corrigidas no servidor e feedback (F3-01–F3-06); UI do estudante em `src/web/paginas/Questoes.tsx` (**resolve P-30**).
+- **F3 — D5 (avaliações): API e interface web implementadas** — avaliações com pesos, janela, limite de tentativas, nota 0–10 no servidor, correção manual de dissertativas e resultado = maior nota (F3-07–F3-15); UI em `src/web/paginas/Avaliacoes.tsx` (**resolve P-37**).
+- **F4 — Progresso (D6): SPEC e implementação concluídas** — `SPEC/2026-10-01-progresso-aprendizagem.md` (T4.1, **resolve P-14** e P-15/P-16 na parcela progresso): flag `concluida` em `GET /aulas/{id}`, progresso derivado de `conclusao_aula` em `GET /cursos/{id}` (somente papel estudante, percentual `floor`), unicidade `(aula_id, usuario_id)` na migration F4, barra de progresso e contagem por módulo no curso.
+- **Interface visual:** `SPEC/2026-10-01-identidade-visual-frontend.md` implementada (design system único com tokens, responsivo).
+- **Suíte: 125 testes passando** em 17 arquivos (`npm test`); **`npm run typecheck` passando** (ambos verificados em 2026-10-01).
+- **Deploy:** aplicação publica na URL da [§15](#15-deploy-url-pública) — stack Docker de produção + túnel HTTPS; migrations aplicadas automaticamente por `npx prisma migrate deploy` na subida do container.
+- **Contagem de código (`cloc`, 2026-10-01):** **10.033 linhas** em 68 arquivos (TypeScript 8.414, CSS 1.037, Prisma 289, SQL 258, HTML 18, Dockerfile 17), com `cloc . --vcs=git --exclude-dir=node_modules,vendor,dist,build,prompts --exclude-lang=Markdown,JSON,YAML,CSV,Text,SVG --not-match-f='(lock|\.min\.)'`.
 - **DP-19 resolvida:** `SPEC/2026-09-30-conteudo-aula.md` **aprovada** após auditoria (§13 da SPEC); `PLAN.md`, `TASKS.md` (T2.3), `decisoes-pendentes.md` e SPEC D3 revisados formalmente. Pendências derivadas abertas: P-18–P-21.
 - **DP-09 resolvida:** SPEC de D5 `SPEC/2026-10-01-avaliacoes.md` **aprovada** (avaliação do curso, nota 0–10 com pesos, correção manual de dissertativas pelo professor, resultado = maior nota).
 - **DP-08 resolvida:** SPEC de D4 `SPEC/2026-10-01-questoes-exercicios.md` **aprovada** (4 tipos de questão; questão pertence ao módulo); `PLAN.md`, `TASKS.md` e `decisoes-pendentes.md` revisados.
-- **F3 — D4 (T3.2/T3.3): API implementada** — questões dos 4 tipos com gabarito protegido, tentativas corrigidas no servidor e feedback (F3-01–F3-06). **Sem interface web** (pendência P-30 da SPEC de D4). **F3 — D5 (T3.5): API implementada** — avaliações do curso com pesos, janela e limite de tentativas, nota 0–10 no servidor, correção manual de dissertativas e resultado = maior nota (F3-07–F3-15). Sem interface web (P-37).
-- Outras SPECs: visão geral, técnica de fundações, D3 (catálogo) e conteúdo de aula **aprovadas**; D1 revisada, aguardando re-auditoria.
-- **Próximas fases (F3 em diante)** seguem bloqueadas por suas pendências (ex.: DP-08 tipos de questão, DP-09 dissertativas) — ver `PLAN.md` §8.
+- Outras SPECs: visão geral, técnica de fundações, D3 (catálogo), conteúdo de aula, D4, D5, identidade visual e progresso (D6) **aprovadas**; D1 revisada, aguardando re-auditoria.
+- **Próximas fases:** gamificação (D7/D8) e demais domínios do `PLAN.md` §8 — cada um com sua própria SPEC; pendências abertas listadas em cada SPEC (§12) e no `TASKS.md`.
 
 ## 10. SDD / regra de desenvolvimento
 
@@ -238,3 +245,26 @@ Não há estratégia de branches definida neste projeto — siga o fluxo acima n
 | `npm start` sem frontend | rode `npm run build` antes (o backend serve `dist/web` só se existir) |
 | `app`/`caddy` não sobem | build completo: `docker compose up -d --build`; logs: `docker compose logs app` |
 | Client do Prisma desatualizado após puxar mudanças | `npm run db:generate` |
+
+## 15. Deploy (URL pública)
+
+**URL pública (AP1):** `https://tissue-treasure-diego-achieved.trycloudflare.com` — HTTPS automático, sem credenciais.
+
+Como está publicado (executado em 2026-10-01):
+
+- **Stack de produção:** `docker compose build && docker compose up -d` — serviços `db` (PostgreSQL 17), `app` (imagem `Dockerfile`: `prisma migrate deploy` na subida + `node dist/server/index.js`) e `caddy` (proxy/TLS local). As portas do compose estão restritas a `127.0.0.1` (db `5434`, app `3000`, caddy `443`) — nada exposto à rede local.
+- **Túnel:** `cloudflared tunnel --url http://127.0.0.1:3000` (quick tunnel do Cloudflare, processo desanexado; log em `/tmp/opencode/cloudflared.log`).
+- **Migrations:** aplicadas pelo próprio container (`npx prisma migrate deploy`); nunca `migrate reset` em dados existentes.
+- **Dados:** banco do volume `dados-db` já populado com o seed de desenvolvimento (idempotente, `npm run db:seed` — só toca entidades de IDs próprios; nunca executado contra banco não vazio sem necessidade).
+- **Health check:** `GET /api/v1/health` → `200 {"status":"ok"}`.
+- **Bundle:** o Express serve `dist/web` com `Cache-Control: max-age=0` + ETag — o navegador revalida sempre, então a URL pública entrega o build atual (verificado por hash do bundle e pelos marcadores "Seu progresso", "Marcar como concluída", "Ver questões" no JS servido).
+
+Contas de demonstração (criadas pelo seed de `prisma/seed.ts`, senha `Eduquest#Dev2026`):
+
+| Papel | E-mail |
+|---|---|
+| estudante | `estudante@eduquest.example` |
+| professor | `professor@eduquest.example` |
+| administrador | `admin@eduquest.example` |
+
+> O túnel quick é gratuito e não tem garantia de uptime: a URL vale enquanto esta máquina e o processo `cloudflared` estiverem ativos (URL muda se o túnel reiniciar). Para hospedagem permanente, aponte uma plataforma com conta própria (ex.: Render/Fly) para o mesmo `Dockerfile`/compose.
