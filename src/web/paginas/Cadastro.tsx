@@ -25,9 +25,11 @@ export function PaginaCadastro({ aoIrParaLogin }: Props) {
 
   if (criada) {
     return (
-      <main>
-        <h1>Conta criada</h1>
-        <p>Sua conta foi criada. Faça login para continuar.</p>
+      <main className="principal principal-estreito">
+        <h1 className="titulo-pagina">Conta criada</h1>
+        <p role="status" className="alerta alerta-sucesso">
+          Sua conta foi criada. Faça login para continuar.
+        </p>
         <button type="button" onClick={aoIrParaLogin}>
           Ir para o login
         </button>
@@ -36,9 +38,9 @@ export function PaginaCadastro({ aoIrParaLogin }: Props) {
   }
 
   return (
-    <main>
-      <h1>Criar conta</h1>
-      <form onSubmit={enviar}>
+    <main className="principal principal-estreito">
+      <h1 className="titulo-pagina">Criar conta</h1>
+      <form onSubmit={enviar} className="formulario-destaque">
         <label>
           E-mail
           <input

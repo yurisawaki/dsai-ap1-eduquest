@@ -37,9 +37,11 @@ export function PaginaRecuperacao({ aoIrParaLogin }: Props) {
 
   if (concluido) {
     return (
-      <main>
-        <h1>Senha redefinida</h1>
-        <p>Sua senha foi alterada. Entre com a nova senha.</p>
+      <main className="principal principal-estreito">
+        <h1 className="titulo-pagina">Senha redefinida</h1>
+        <p role="status" className="alerta alerta-sucesso">
+          Sua senha foi alterada. Entre com a nova senha.
+        </p>
         <button type="button" onClick={aoIrParaLogin}>
           Ir para o login
         </button>
@@ -48,10 +50,10 @@ export function PaginaRecuperacao({ aoIrParaLogin }: Props) {
   }
 
   return (
-    <main>
-      <h1>Recuperar senha</h1>
+    <main className="principal principal-estreito">
+      <h1 className="titulo-pagina">Recuperar senha</h1>
       {!solicitado ? (
-        <form onSubmit={solicitar}>
+        <form onSubmit={solicitar} className="formulario-destaque">
           <label>
             E-mail
             <input
@@ -69,7 +71,7 @@ export function PaginaRecuperacao({ aoIrParaLogin }: Props) {
           <button type="submit">Solicitar recuperação</button>
         </form>
       ) : (
-        <form onSubmit={redefinir}>
+        <form onSubmit={redefinir} className="formulario-destaque">
           <p>Solicitação de recuperação recebida.</p>
           <label>
             Token de recuperação

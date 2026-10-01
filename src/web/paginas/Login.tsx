@@ -22,9 +22,10 @@ export function PaginaLogin({ aoEntrar }: Props) {
   }
 
   return (
-    <main>
-      <h1>Entrar</h1>
-      <form onSubmit={enviar}>
+    <main className="principal principal-estreito">
+      <h1 className="titulo-pagina">Entrar</h1>
+      <p className="valor-vazio">Entre para acessar seus cursos e aulas.</p>
+      <form onSubmit={enviar} className="formulario-destaque">
         <label>
           E-mail
           <input
