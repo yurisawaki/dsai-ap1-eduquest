@@ -135,13 +135,13 @@ function alteracoes(corpo: unknown): Alteracoes {
   return alteracao
 }
 
-function exigirAutoria(donoId: string, usuario: UsuarioSessao) {
+export function exigirAutoria(donoId: string, usuario: UsuarioSessao) {
   if (usuario.papel === 'administrador') return
   if (usuario.papel === 'professor' && donoId === usuario.id) return
   throw erroProibido('somente o professor dono ou administrador pode alterar')
 }
 
-function ehDonoOuAdmin(donoId: string, usuario: UsuarioSessao): boolean {
+export function ehDonoOuAdmin(donoId: string, usuario: UsuarioSessao): boolean {
   return usuario.papel === 'administrador' || donoId === usuario.id
 }
 

@@ -231,6 +231,7 @@ Série P continua após P-21 (SPEC de conteúdo).
 | P-27 | Entidade agrupadora "exercício" (conjunto nomeado de questões) | revisão de D4 |
 | P-28 | Histórico de tentativas visível ao estudante | D6 |
 | P-29 | Revelar gabarito após o envio (e a partir de quando) | revisão de D4 |
+| P-30 | **Superfície web de D4** (telas de autoria de questões e de resposta pelo estudante): esta SPEC não define interface — diferente da SPEC de conteúdo (R-C8). Registrada na implementação de T3.2/T3.3 (2026-10-01), que entregou só a API | revisão de D4 |
 
 DP-09 permanece **aberta**. Não resolvidas aqui: DP-04–DP-07, DP-10–DP-18; P-14–P-21.
 
