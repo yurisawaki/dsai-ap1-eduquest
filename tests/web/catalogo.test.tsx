@@ -100,9 +100,10 @@ function fetchDeAula(
 async function abrirAula() {
   render(<App />)
   fireEvent.click(await screen.findByText('Catálogo'))
-  await screen.findByText('Algebra — Publicado')
+  await screen.findByText('Algebra')
+  expect(screen.getByText('Publicado')).toBeTruthy()
   fireEvent.click(screen.getByText('Abrir'))
-  await screen.findByText('Fundamentos — Publicado')
+  await screen.findByText('Fundamentos')
   fireEvent.click(screen.getByText('Abrir aula'))
 }
 
@@ -138,7 +139,8 @@ describe('T2.6 — superfície web do catálogo (F2-01, F2-13, F2-14)', () => {
     fireEvent.change(entrada, { target: { value: 'Curso novo' } })
     fireEvent.submit(entrada.closest('form')!)
 
-    await waitFor(() => expect(screen.getByText('Curso novo — Rascunho')).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('Curso novo')).toBeTruthy())
+    expect(screen.getByText('Rascunho')).toBeTruthy()
     expect(screen.getByText('Curso criado.')).toBeTruthy()
 
     const chamada = fetchMock.mock.calls.find((chamada) => {

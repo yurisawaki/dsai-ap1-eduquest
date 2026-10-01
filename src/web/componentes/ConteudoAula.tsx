@@ -30,11 +30,28 @@ function ConteudoAnexo({ dados }: { dados: Record<string, unknown> }) {
   if (typeof arquivoId !== 'string' || typeof nome !== 'string') {
     return <ConteudoIndisponivel tipo="material_anexo" />
   }
-  const espacoTamanho = typeof tamanho === 'number' ? ` (${tamanhoLegivel(tamanho)})` : ''
+  const espacoTamanho = typeof tamanho === 'number' ? tamanhoLegivel(tamanho) : null
   return (
     <p className="conteudo-anexo">
+      <span className="anexo-icone" aria-hidden="true">
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M14 3v5h5" />
+          <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+          <path d="M12 11v6" />
+          <path d="M9.5 14.5 12 17l2.5-2.5" />
+        </svg>
+      </span>
       <a href={`/api/v1/arquivos/${arquivoId}`}>Baixar {nome}</a>
-      {espacoTamanho}
+      {espacoTamanho && <span className="anexo-tamanho">({espacoTamanho})</span>}
     </p>
   )
 }

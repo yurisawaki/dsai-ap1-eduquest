@@ -134,15 +134,19 @@ export function PaginaCatalogo({ sessao }: Props) {
   }
 
   return (
-    <main>
-      <h1>Catálogo de aprendizagem</h1>
+    <main className="principal principal-largo">
+      <h1 className="titulo-pagina">Catálogo de aprendizagem</h1>
 
       {erro && (
         <p role="alert" className="erro">
           {erro}
         </p>
       )}
-      {mensagem && <p>{mensagem}</p>}
+      {mensagem && (
+        <p role="status" className="alerta alerta-sucesso">
+          {mensagem}
+        </p>
+      )}
 
       {sessao.papel === 'professor' && (
         <form onSubmit={criarCurso}>
@@ -159,14 +163,33 @@ export function PaginaCatalogo({ sessao }: Props) {
       <section>
         <h2>Cursos</h2>
         {!cursos ? (
-          <p>Carregando catálogo…</p>
+          <div className="skeleton-lista" role="status">
+            <span className="skeleton-card" aria-hidden="true" />
+            <span className="skeleton-card" aria-hidden="true" />
+            <span className="skeleton-card" aria-hidden="true" />
+            <span className="sr-only">Carregando catálogo…</span>
+          </div>
         ) : cursos.length === 0 ? (
-          <p>Nenhum curso disponível.</p>
+          <div className="estado-vazio">
+            <p className="estado-vazio-frase">Nenhum curso disponível.</p>
+            <p className="estado-vazio-apoio">
+              {sessao.papel === 'professor'
+                ? 'Use o formulário acima para criar seu primeiro curso.'
+                : 'Assim que um professor publicar cursos, eles aparecem aqui.'}
+            </p>
+          </div>
         ) : (
-          <ul>
+          <ul className="grade-cursos">
             {cursos.map((curso) => (
-              <li key={curso.id}>
-                {curso.titulo} — {estado(curso.publicado)}{' '}
+              <li key={curso.id} className="card-curso">
+                <div className="card-curso-topo">
+                  <h3>{curso.titulo}</h3>
+                  <span
+                    className={`badge ${curso.publicado ? 'badge-sucesso' : 'badge-aviso'}`}
+                  >
+                    {estado(curso.publicado)}
+                  </span>
+                </div>
                 <button type="button" onClick={() => setCursoAberto(curso.id)}>
                   Abrir
                 </button>
@@ -218,11 +241,15 @@ function DetalheCurso({ sessao, cursoId, aoVoltar }: PropsCurso) {
 
   if (erro && !curso) {
     return (
-      <main>
+      <main className="principal principal-largo">
         <p role="alert" className="erro">
           {erro}
         </p>
-        <button type="button" onClick={aoVoltar}>
+        <button
+          type="button"
+          className="botao-secundario voltar"
+          onClick={aoVoltar}
+        >
           Voltar ao catálogo
         </button>
       </main>
@@ -231,8 +258,8 @@ function DetalheCurso({ sessao, cursoId, aoVoltar }: PropsCurso) {
 
   if (!curso) {
     return (
-      <main>
-        <p>Carregando curso…</p>
+      <main className="principal principal-largo">
+        <p className="carregando">Carregando curso…</p>
       </main>
     )
   }
@@ -254,6 +281,7 @@ function DetalheCurso({ sessao, cursoId, aoVoltar }: PropsCurso) {
   }
 
   const podeEditar = sessao.papel === 'administrador' || curso.donoId === sessao.usuarioId
+  const totalAulas = curso.modulos.reduce((total, modulo) => total + modulo.aulas.length, 0)
 
   async function executar(acao: () => Promise<unknown>, sucesso?: string) {
     setErro(null)
@@ -296,21 +324,38 @@ function DetalheCurso({ sessao, cursoId, aoVoltar }: PropsCurso) {
   }
 
   return (
-    <main>
-      <p>
-        <button type="button" onClick={aoVoltar}>
+    <main className="principal principal-largo">
+      <div className="cabecalho-pagina">
+        <button
+          type="button"
+          className="botao-secundario voltar"
+          onClick={aoVoltar}
+        >
           Voltar ao catálogo
         </button>
-      </p>
-      <h1>{curso.titulo}</h1>
-      <p>Estado: {estado(curso.publicado)}</p>
+        <h1>{curso.titulo}</h1>
+        <p className="linha-estado">
+          Estado: {''}
+          <span className={`badge ${curso.publicado ? 'badge-sucesso' : 'badge-aviso'}`}>
+            {estado(curso.publicado)}
+          </span>
+        </p>
+        <p className="resumo-estrutura">
+          {curso.modulos.length} {curso.modulos.length === 1 ? 'módulo' : 'módulos'} ·{' '}
+          {totalAulas} {totalAulas === 1 ? 'aula' : 'aulas'}
+        </p>
+      </div>
 
       {erro && (
         <p role="alert" className="erro">
           {erro}
         </p>
       )}
-      {mensagem && <p>{mensagem}</p>}
+      {mensagem && (
+        <p role="status" className="alerta alerta-sucesso">
+          {mensagem}
+        </p>
+      )}
 
       {podeEditar && (
         <>
@@ -330,9 +375,10 @@ function DetalheCurso({ sessao, cursoId, aoVoltar }: PropsCurso) {
             {campoTitulo(cursoId, (valor) => setTitulos({ ...titulos, [cursoId]: valor }))}
             <button type="submit">Salvar titulo do curso</button>
           </form>
-          <p>
+          <div className="barra-acoes">
             <button
               type="button"
+              className="botao-secundario"
               onClick={() =>
                 void executar(
                   () =>
@@ -345,9 +391,10 @@ function DetalheCurso({ sessao, cursoId, aoVoltar }: PropsCurso) {
               }
             >
               {curso.publicado ? 'Despublicar curso' : 'Publicar curso'}
-            </button>{' '}
+            </button>
             <button
               type="button"
+              className="botao-perigo"
               onClick={() =>
                 void executar(
                   async () => {
@@ -360,7 +407,7 @@ function DetalheCurso({ sessao, cursoId, aoVoltar }: PropsCurso) {
             >
               Excluir curso
             </button>
-          </p>
+          </div>
 
           <form onSubmit={criarModulo}>
             <label htmlFor="titulo-modulo">Novo modulo</label>
@@ -377,14 +424,24 @@ function DetalheCurso({ sessao, cursoId, aoVoltar }: PropsCurso) {
       <section>
         <h2>Modulos</h2>
         {curso.modulos.length === 0 ? (
-          <p>Nenhum modulo ainda.</p>
+          <p className="valor-vazio">Nenhum modulo ainda.</p>
         ) : (
-          <ul>
-            {curso.modulos.map((modulo) => (
-              <li key={modulo.id}>
-                <h3>
-                  {modulo.titulo} — {estado(modulo.publicado)}
-                </h3>
+          <ul className="lista-modulos">
+            {curso.modulos.map((modulo, indice) => (
+              <li key={modulo.id} className="modulo">
+                <div className="modulo-cabecalho">
+                  <h3 className="modulo-titulo">
+                    <span className="modulo-numero" aria-hidden="true">
+                      {indice + 1}
+                    </span>
+                    {modulo.titulo}
+                  </h3>
+                  <span
+                    className={`badge ${modulo.publicado ? 'badge-sucesso' : 'badge-aviso'}`}
+                  >
+                    {estado(modulo.publicado)}
+                  </span>
+                </div>
                 {podeEditar && (
                   <>
                     <form
@@ -405,32 +462,36 @@ function DetalheCurso({ sessao, cursoId, aoVoltar }: PropsCurso) {
                       )}
                       <button type="submit">Salvar titulo do modulo</button>
                     </form>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        void executar(
-                          () =>
-                            api(`/api/v1/modulos/${modulo.id}`, {
-                              metodo: 'PATCH',
-                              corpo: { publicado: !modulo.publicado },
-                            }),
-                          modulo.publicado ? 'Modulo despublicado.' : 'Modulo publicado.'
-                        )
-                      }
-                    >
-                      {modulo.publicado ? 'Despublicar modulo' : 'Publicar modulo'}
-                    </button>{' '}
-                    <button
-                      type="button"
-                      onClick={() =>
-                        void executar(
-                          () => api(`/api/v1/modulos/${modulo.id}`, { metodo: 'DELETE' }),
-                          'Modulo excluido.'
-                        )
-                      }
-                    >
-                      Excluir modulo
-                    </button>
+                    <div className="modulo-acoes">
+                      <button
+                        type="button"
+                        className="botao-secundario"
+                        onClick={() =>
+                          void executar(
+                            () =>
+                              api(`/api/v1/modulos/${modulo.id}`, {
+                                metodo: 'PATCH',
+                                corpo: { publicado: !modulo.publicado },
+                              }),
+                            modulo.publicado ? 'Modulo despublicado.' : 'Modulo publicado.'
+                          )
+                        }
+                      >
+                        {modulo.publicado ? 'Despublicar modulo' : 'Publicar modulo'}
+                      </button>
+                      <button
+                        type="button"
+                        className="botao-perigo"
+                        onClick={() =>
+                          void executar(
+                            () => api(`/api/v1/modulos/${modulo.id}`, { metodo: 'DELETE' }),
+                            'Modulo excluido.'
+                          )
+                        }
+                      >
+                        Excluir modulo
+                      </button>
+                    </div>
                     <form
                       onSubmit={(evento) => {
                         evento.preventDefault()
@@ -451,19 +512,25 @@ function DetalheCurso({ sessao, cursoId, aoVoltar }: PropsCurso) {
                 )}
 
                 {modulo.aulas.length === 0 ? (
-                  <p>Nenhuma aula neste modulo.</p>
+                  <p className="valor-vazio">Nenhuma aula neste modulo.</p>
                 ) : (
-                  <ul>
+                  <ul className="lista-aulas">
                     {modulo.aulas.map((aula) => (
                       <li key={aula.id}>
-                        {aula.titulo} — {estado(aula.publicado)}{' '}
+                        <span className="aula-nome">{aula.titulo}</span>
+                        <span
+                          className={`badge ${aula.publicado ? 'badge-sucesso' : 'badge-aviso'}`}
+                        >
+                          {estado(aula.publicado)}
+                        </span>
                         <button type="button" onClick={() => setAulaAberta(aula.id)}>
                           Abrir aula
-                        </button>{' '}
+                        </button>
                         {podeEditar && (
                           <>
                             <button
                               type="button"
+                              className="botao-secundario"
                               onClick={() =>
                                 void executar(
                                   () =>
@@ -476,9 +543,10 @@ function DetalheCurso({ sessao, cursoId, aoVoltar }: PropsCurso) {
                               }
                             >
                               {aula.publicado ? 'Despublicar aula' : 'Publicar aula'}
-                            </button>{' '}
+                            </button>
                             <button
                               type="button"
+                              className="botao-perigo"
                               onClick={() =>
                                 void executar(
                                   () => api(`/api/v1/aulas/${aula.id}`, { metodo: 'DELETE' }),
@@ -634,9 +702,9 @@ function DetalheAula({
             {erro}
           </p>
         ) : (
-          <p>Carregando aula…</p>
+          <p className="carregando">Carregando aula…</p>
         )}
-        <button type="button" onClick={aoVoltar}>
+        <button type="button" className="botao-secundario voltar" onClick={aoVoltar}>
           Voltar ao curso
         </button>
       </main>
@@ -647,30 +715,44 @@ function DetalheAula({
 
   return (
     <main>
-      <p>
-        <button type="button" onClick={aoVoltar}>
-          Voltar ao curso
-        </button>
-      </p>
+      <button type="button" className="botao-secundario voltar" onClick={aoVoltar}>
+        Voltar ao curso
+      </button>
       {tituloCurso && tituloModulo && (
         <p className="trilha">
           {tituloCurso} › {tituloModulo} › Aula
         </p>
       )}
       <h1 className="titulo-aula">{aula.titulo}</h1>
-      <p>Estado: {estado(aula.publicado)}</p>
+      <p className="linha-estado">
+        Estado: {''}
+        <span className={`badge ${aula.publicado ? 'badge-sucesso' : 'badge-aviso'}`}>
+          {estado(aula.publicado)}
+        </span>
+      </p>
 
       {erro && (
         <p role="alert" className="erro">
           {erro}
         </p>
       )}
-      {mensagem && <p>{mensagem}</p>}
+      {mensagem && (
+        <p role="status" className="alerta alerta-sucesso">
+          {mensagem}
+        </p>
+      )}
 
       <section>
         <h2>Conteudo</h2>
         {aula.conteudo.length === 0 ? (
-          <p>Sem conteudo.</p>
+          <div className="estado-vazio">
+            <p className="estado-vazio-frase">Sem conteudo.</p>
+            {podeEditar && (
+              <p className="estado-vazio-apoio">
+                Use o editor abaixo para adicionar texto, mídia ou arquivo.
+              </p>
+            )}
+          </div>
         ) : (
           <ConteudoAula conteudo={aula.conteudo} />
         )}
@@ -684,7 +766,11 @@ function DetalheAula({
               {aula.conteudo.map((bloco, indice) => (
                 <li key={bloco.id ?? indice}>
                   Bloco {indice + 1} — {bloco.tipo}{' '}
-                  <button type="button" onClick={() => void removerBloco(indice)}>
+                  <button
+                    type="button"
+                    className="botao-perigo"
+                    onClick={() => void removerBloco(indice)}
+                  >
                     Remover bloco
                   </button>
                 </li>
@@ -748,6 +834,7 @@ function DetalheAula({
             type="button"
             onClick={() => void concluir()}
             disabled={concluida || enviandoConclusao}
+            aria-busy={enviandoConclusao}
             className={concluida ? 'concluida' : undefined}
           >
             {concluida ? '✓ Aula concluída' : 'Marcar como concluída'}
