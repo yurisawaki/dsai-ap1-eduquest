@@ -15,10 +15,16 @@
  * - `criado_em` explícito e crescente: a leitura atual ordena por `criado_em`
  *   (ordenação por `posicao` é pendência C-7/R-C2); timestamps determinísticos
  *   mantêm a ordem exibida igual à ordem de definição.
+ * - F3 (D4/D5): questões dos 4 tipos com alternativas, gabarito e explicação,
+ *   tentativas de exercício e 5 avaliações — encerrada com histórico (uma
+ *   aguardando correção e outra corrigida), aberta, futura e rascunho — com
+ *   composição e respostas pré-corrigidas.
+ * - Janelas e datas das avaliações são recalculadas a cada execução (relativas
+ *   ao relógio), de modo que os cenários continuem válidos em qualquer data.
  * - Recusa rodar contra o banco de teste (`eduquest_test`).
  */
 import 'dotenv/config'
-import type { Papel } from '@prisma/client'
+import { Prisma, type Papel, type StatusTentativaAvaliacao, type TipoQuestao } from '@prisma/client'
 import { prisma } from '../src/server/prisma'
 import { gerarHash } from '../src/server/servicos/senha'
 
@@ -88,16 +94,24 @@ const usuarios: UsuarioSeed[] = [
 
 const PROFESSOR_LOGICA = usuarios[0].id
 const PROFESSOR_WEB = usuarios[1].id
+const ESTUDANTE = usuarios[2].id
+
+// IDs de referência compartilhados com o seed de F3 (questões e avaliações)
+const CURSO_FUNDAMENTOS = '5eed0001-0000-4000-8000-000000000001'
+const CURSO_WEB = '5eed0001-0000-4000-8000-000000000002'
+const MODULO_INTRODUCAO = '5eed0002-0000-4000-8000-000000000001'
+const MODULO_LOGICA = '5eed0002-0000-4000-8000-000000000002'
+const MODULO_WEB_FUNDAMENTOS = '5eed0002-0000-4000-8000-000000000003'
 
 const arvore: CursoSeed[] = [
   {
-    id: '5eed0001-0000-4000-8000-000000000001',
+    id: CURSO_FUNDAMENTOS,
     titulo: 'Fundamentos de Programação',
     publicado: true,
     donoId: PROFESSOR_LOGICA,
     modulos: [
       {
-        id: '5eed0002-0000-4000-8000-000000000001',
+        id: MODULO_INTRODUCAO,
         titulo: 'Introdução à Programação',
         publicado: true,
         aulas: [
@@ -166,7 +180,7 @@ A expressão precisa ser verdadeira ou falsa. Aninhe com moderação: vários "s
         ],
       },
       {
-        id: '5eed0002-0000-4000-8000-000000000002',
+        id: MODULO_LOGICA,
         titulo: 'Lógica e Repetição',
         publicado: true,
         aulas: [
@@ -215,13 +229,13 @@ Resolva primeiro no papel, escrevendo o algoritmo em português, e só depois tr
     ],
   },
   {
-    id: '5eed0001-0000-4000-8000-000000000002',
+    id: CURSO_WEB,
     titulo: 'Desenvolvimento Web',
     publicado: true,
     donoId: PROFESSOR_WEB,
     modulos: [
       {
-        id: '5eed0002-0000-4000-8000-000000000003',
+        id: MODULO_WEB_FUNDAMENTOS,
         titulo: 'Fundamentos da Web',
         publicado: true,
         aulas: [
@@ -446,6 +460,380 @@ Pratice montando a consulta antes de rodá-la: escrever primeiro evita seleciona
   },
 ]
 
+// ====================== F3: questões, tentativas e avaliações ======================
+// D4 (questões/exercícios) e D5 (avaliacoes): cenarios de demonstracao da UI.
+// Prefixo fixo 5eed001x; janelas recalculadas a cada execucao.
+
+interface AlternativaSeed {
+  id: string
+  texto: string
+  correta: boolean
+}
+
+interface QuestaoSeed {
+  id: string
+  moduloId: string
+  tipo: TipoQuestao
+  enunciado: string
+  explicacao: string | null
+  publicado: boolean
+  alternativas?: AlternativaSeed[]
+  gabarito?: { valor: boolean } | { valor: number; tolerancia: number }
+}
+
+let contadorAlternativas = 0
+
+// alternativas recebem IDs determinísticos na ordem de definição
+function alternativas(opcoes: { texto: string; correta: boolean }[]): AlternativaSeed[] {
+  return opcoes.map((opcao) => {
+    contadorAlternativas += 1
+    return {
+      id: `5eed0011-0000-4000-8000-${String(contadorAlternativas).padStart(12, '0')}`,
+      texto: opcao.texto,
+      correta: opcao.correta,
+    }
+  })
+}
+
+const questoes: QuestaoSeed[] = [
+  {
+    id: '5eed0010-0000-4000-8000-000000000001',
+    moduloId: MODULO_INTRODUCAO,
+    tipo: 'multipla_escolha',
+    publicado: true,
+    enunciado: 'Quais alternativas descrevem um algoritmo?',
+    explicacao:
+      'Algoritmo é uma sequência finita e ordenada de passos que resolve um problema; qualquer programa é uma implementação concreta e uma receita sem ordem não resolve nada sozinha.',
+    alternativas: alternativas([
+      { texto: 'Uma sequência finita de instruções que resolve um problema', correta: true },
+      { texto: 'Um conjunto de instruções com início, meio e fim', correta: true },
+      { texto: 'Qualquer programa escrito em Python', correta: false },
+      { texto: 'Uma receita de bolo escrita sem a ordem das etapas', correta: false },
+    ]),
+  },
+  {
+    id: '5eed0010-0000-4000-8000-000000000002',
+    moduloId: MODULO_INTRODUCAO,
+    tipo: 'verdadeiro_falso',
+    publicado: true,
+    enunciado: 'Em linguagens de tipagem dinâmica toda variável precisa declarar seu tipo antes do uso.',
+    explicacao:
+      'Falso: em tipagem dinâmica o tipo é definido em tempo de execução. Quem declara o tipo antes é a tipagem estática.',
+    gabarito: { valor: false },
+  },
+  {
+    id: '5eed0010-0000-4000-8000-000000000003',
+    moduloId: MODULO_INTRODUCAO,
+    tipo: 'numerica',
+    publicado: true,
+    enunciado: 'Quantos números inteiros existem entre 1 e 100, incluindo as extremidades?',
+    explicacao: 'Contando as extremidades: 100 − 1 + 1 = 100. São 100 números inteiros de 1 a 100.',
+    gabarito: { valor: 100, tolerancia: 0 },
+  },
+  {
+    id: '5eed0010-0000-4000-8000-000000000004',
+    moduloId: MODULO_INTRODUCAO,
+    tipo: 'dissertativa',
+    publicado: true,
+    enunciado: 'Explique com suas palavras por que a ordem das instruções importa em um algoritmo.',
+    explicacao:
+      'Uma boa resposta mostra que instruções trocadas de ordem produzem resultado diferente — por exemplo, subtrair antes de dividir muda o resultado.',
+  },
+  {
+    id: '5eed0010-0000-4000-8000-000000000005',
+    moduloId: MODULO_INTRODUCAO,
+    tipo: 'multipla_escolha',
+    publicado: false,
+    enunciado: 'Rascunho: qual estrutura repete um bloco de código enquanto a condição for verdadeira?',
+    explicacao: null,
+    alternativas: alternativas([
+      { texto: 'Laço de repetição', correta: true },
+      { texto: 'Decisão condicional', correta: false },
+      { texto: 'Função', correta: false },
+    ]),
+  },
+  {
+    id: '5eed0010-0000-4000-8000-000000000006',
+    moduloId: MODULO_LOGICA,
+    tipo: 'multipla_escolha',
+    publicado: true,
+    enunciado: 'Quais estruturas permitem repetir um bloco de código?',
+    explicacao: 'for e while são estruturas de repetição; if é decisão e return encerra uma função.',
+    alternativas: alternativas([
+      { texto: 'for', correta: true },
+      { texto: 'while', correta: true },
+      { texto: 'if', correta: false },
+      { texto: 'return', correta: false },
+    ]),
+  },
+  {
+    id: '5eed0010-0000-4000-8000-000000000007',
+    moduloId: MODULO_LOGICA,
+    tipo: 'numerica',
+    publicado: true,
+    enunciado: 'Qual é o resultado da soma de todos os números de 1 a 10?',
+    explicacao: 'S = n × (n + 1) ÷ 2 = 10 × 11 ÷ 2 = 55.',
+    gabarito: { valor: 55, tolerancia: 0 },
+  },
+  {
+    id: '5eed0010-0000-4000-8000-000000000008',
+    moduloId: MODULO_WEB_FUNDAMENTOS,
+    tipo: 'multipla_escolha',
+    publicado: true,
+    enunciado: 'Quais elementos do HTML são considerados semânticos?',
+    explicacao:
+      'header e nav descrevem a função do conteúdo; div e span são caixas genéricas, sem significado para quem lê a página.',
+    alternativas: alternativas([
+      { texto: 'header', correta: true },
+      { texto: 'nav', correta: true },
+      { texto: 'div', correta: false },
+      { texto: 'span', correta: false },
+    ]),
+  },
+  {
+    id: '5eed0010-0000-4000-8000-000000000009',
+    moduloId: MODULO_WEB_FUNDAMENTOS,
+    tipo: 'verdadeiro_falso',
+    publicado: true,
+    enunciado: 'O CSS é interpretado pelo navegador para definir a apresentação da página.',
+    explicacao: 'Verdadeiro: o navegador aplica as regras de CSS ao renderizar. A estrutura, por outro lado, é o HTML.',
+    gabarito: { valor: true },
+  },
+]
+
+const [qAlgoritmo, qTipagem, qInteiros, qOrdem, qRascunho, qRepeticao, qSoma, qSemantica, qCss] = questoes
+
+interface TentativaQuestaoSeed {
+  id: string
+  questaoId: string
+  usuarioId: string
+  resposta: Prisma.InputJsonValue
+  acerto: boolean | null
+}
+
+const tentativasQuestao: TentativaQuestaoSeed[] = [
+  {
+    id: '5eed0012-0000-4000-8000-000000000001',
+    questaoId: qAlgoritmo.id,
+    usuarioId: ESTUDANTE,
+    resposta: { alternativas: [qAlgoritmo.alternativas![0].id, qAlgoritmo.alternativas![1].id] },
+    acerto: true,
+  },
+  {
+    id: '5eed0012-0000-4000-8000-000000000002',
+    questaoId: qTipagem.id,
+    usuarioId: ESTUDANTE,
+    resposta: { valor: true },
+    acerto: false,
+  },
+  {
+    id: '5eed0012-0000-4000-8000-000000000003',
+    questaoId: qInteiros.id,
+    usuarioId: ESTUDANTE,
+    resposta: { valor: 100 },
+    acerto: true,
+  },
+  {
+    id: '5eed0012-0000-4000-8000-000000000004',
+    questaoId: qOrdem.id,
+    usuarioId: ESTUDANTE,
+    resposta: {
+      texto: 'A ordem importa porque cada instrução usa o resultado da anterior; trocando a ordem, o resultado final muda.',
+    },
+    acerto: null,
+  },
+]
+
+const AGORA_SEED = new Date()
+
+function emDias(dias: number): Date {
+  return new Date(AGORA_SEED.getTime() + dias * 86_400_000)
+}
+
+function emHoras(horas: number): Date {
+  return new Date(AGORA_SEED.getTime() + horas * 3_600_000)
+}
+
+interface ItemComposicaoSeed {
+  questaoId: string
+  peso: number
+}
+
+interface AvaliacaoSeed {
+  id: string
+  cursoId: string
+  titulo: string
+  tentativasMax: number
+  abreEm: Date
+  fechaEm: Date
+  publicado: boolean
+  questoes: ItemComposicaoSeed[]
+}
+
+const avaliacoes: AvaliacaoSeed[] = [
+  {
+    id: '5eed0013-0000-4000-8000-000000000001',
+    cursoId: CURSO_FUNDAMENTOS,
+    titulo: 'Avaliação inicial — Fundamentos',
+    tentativasMax: 3,
+    abreEm: emDias(-30),
+    fechaEm: emDias(-7),
+    publicado: true,
+    questoes: [
+      { questaoId: qAlgoritmo.id, peso: 4 },
+      { questaoId: qTipagem.id, peso: 2 },
+      { questaoId: qInteiros.id, peso: 3 },
+      { questaoId: qOrdem.id, peso: 1 },
+    ],
+  },
+  {
+    id: '5eed0013-0000-4000-8000-000000000002',
+    cursoId: CURSO_FUNDAMENTOS,
+    titulo: 'Avaliação parcial — Fundamentos',
+    tentativasMax: 2,
+    abreEm: emHoras(-36),
+    fechaEm: emDias(7),
+    publicado: true,
+    questoes: [
+      { questaoId: qRepeticao.id, peso: 5 },
+      { questaoId: qSoma.id, peso: 5 },
+    ],
+  },
+  {
+    id: '5eed0013-0000-4000-8000-000000000003',
+    cursoId: CURSO_FUNDAMENTOS,
+    titulo: 'Prova final — Fundamentos',
+    tentativasMax: 1,
+    abreEm: emDias(14),
+    fechaEm: emDias(21),
+    publicado: false,
+    questoes: [
+      { questaoId: qAlgoritmo.id, peso: 6 },
+      { questaoId: qTipagem.id, peso: 4 },
+    ],
+  },
+  {
+    id: '5eed0013-0000-4000-8000-000000000004',
+    cursoId: CURSO_FUNDAMENTOS,
+    titulo: 'Avaliação complementar — Fundamentos',
+    tentativasMax: 3,
+    abreEm: emDias(7),
+    fechaEm: emDias(14),
+    publicado: true,
+    questoes: [
+      { questaoId: qInteiros.id, peso: 5 },
+      { questaoId: qOrdem.id, peso: 5 },
+    ],
+  },
+  {
+    id: '5eed0013-0000-4000-8000-000000000005',
+    cursoId: CURSO_WEB,
+    titulo: 'Avaliação de Front-end',
+    tentativasMax: 2,
+    abreEm: emDias(-2),
+    fechaEm: emDias(5),
+    publicado: true,
+    questoes: [
+      { questaoId: qSemantica.id, peso: 8 },
+      { questaoId: qCss.id, peso: 2 },
+    ],
+  },
+]
+
+interface RespostaAvaliacaoSeed {
+  id: string
+  questaoId: string
+  resposta: Prisma.InputJsonValue
+  acerto: boolean | null
+  pontos: number | null
+}
+
+let contadorRespostas = 0
+
+// respostas recebem IDs determinísticos na ordem de definição
+function respostas(itens: Omit<RespostaAvaliacaoSeed, 'id'>[]): RespostaAvaliacaoSeed[] {
+  return itens.map((item) => {
+    contadorRespostas += 1
+    return {
+      id: `5eed0015-0000-4000-8000-${String(contadorRespostas).padStart(12, '0')}`,
+      ...item,
+    }
+  })
+}
+
+interface TentativaAvaliacaoSeed {
+  id: string
+  avaliacaoId: string
+  usuarioId: string
+  status: StatusTentativaAvaliacao
+  nota: number | null
+  enviadaEm: Date
+  respostas: RespostaAvaliacaoSeed[]
+}
+
+const tentativasAvaliacao: TentativaAvaliacaoSeed[] = [
+  {
+    id: '5eed0014-0000-4000-8000-000000000001',
+    avaliacaoId: avaliacoes[0].id,
+    usuarioId: ESTUDANTE,
+    status: 'aguardando_correcao',
+    nota: null,
+    enviadaEm: emDias(-20),
+    respostas: respostas([
+      {
+        questaoId: qAlgoritmo.id,
+        resposta: { alternativas: [qAlgoritmo.alternativas![0].id, qAlgoritmo.alternativas![1].id] },
+        acerto: true,
+        pontos: 4,
+      },
+      { questaoId: qTipagem.id, resposta: { valor: true }, acerto: false, pontos: 0 },
+      { questaoId: qInteiros.id, resposta: { valor: 100 }, acerto: true, pontos: 3 },
+      {
+        questaoId: qOrdem.id,
+        resposta: { texto: 'A ordem importa porque cada instrução usa o resultado da anterior.' },
+        acerto: null,
+        pontos: null,
+      },
+    ]),
+  },
+  {
+    id: '5eed0014-0000-4000-8000-000000000002',
+    avaliacaoId: avaliacoes[0].id,
+    usuarioId: ESTUDANTE,
+    status: 'corrigida',
+    nota: 9,
+    enviadaEm: emDias(-15),
+    respostas: respostas([
+      {
+        questaoId: qAlgoritmo.id,
+        resposta: { alternativas: [qAlgoritmo.alternativas![0].id, qAlgoritmo.alternativas![1].id] },
+        acerto: true,
+        pontos: 4,
+      },
+      { questaoId: qTipagem.id, resposta: { valor: false }, acerto: true, pontos: 2 },
+      { questaoId: qInteiros.id, resposta: { valor: 100 }, acerto: true, pontos: 3 },
+      { questaoId: qOrdem.id, resposta: { texto: 'Qualquer ordem serve.' }, acerto: null, pontos: 0 },
+    ]),
+  },
+  {
+    id: '5eed0014-0000-4000-8000-000000000003',
+    avaliacaoId: avaliacoes[4].id,
+    usuarioId: ESTUDANTE,
+    status: 'corrigida',
+    nota: 8,
+    enviadaEm: emDias(-1),
+    respostas: respostas([
+      {
+        questaoId: qSemantica.id,
+        resposta: { alternativas: [qSemantica.alternativas![0].id, qSemantica.alternativas![1].id] },
+        acerto: true,
+        pontos: 8,
+      },
+      { questaoId: qCss.id, resposta: { valor: false }, acerto: false, pontos: 0 },
+    ]),
+  },
+]
+
 let tick = 0
 
 function proximoInstante(): Date {
@@ -577,6 +965,134 @@ async function principal(): Promise<void> {
     await remocao
   }
 
+  // ---- F3-01–F3-06: questões (alternativas substituídas por substituição total) ----
+  for (const questao of questoes) {
+    await prisma.questao.upsert({
+      where: { id: questao.id },
+      create: {
+        id: questao.id,
+        modulo_id: questao.moduloId,
+        tipo: questao.tipo,
+        enunciado: questao.enunciado,
+        explicacao: questao.explicacao,
+        gabarito: questao.gabarito ?? Prisma.DbNull,
+        publicado: questao.publicado,
+        criado_em: proximoInstante(),
+      },
+      update: {
+        modulo_id: questao.moduloId,
+        tipo: questao.tipo,
+        enunciado: questao.enunciado,
+        explicacao: questao.explicacao,
+        gabarito: questao.gabarito ?? Prisma.DbNull,
+        publicado: questao.publicado,
+      },
+    })
+    if (questao.alternativas) {
+      await prisma.$transaction([
+        prisma.alternativa.deleteMany({ where: { questao_id: questao.id } }),
+        prisma.alternativa.createMany({
+          data: questao.alternativas.map((alternativa, posicao) => ({
+            id: alternativa.id,
+            questao_id: questao.id,
+            texto: alternativa.texto,
+            correta: alternativa.correta,
+            posicao,
+          })),
+        }),
+      ])
+    }
+  }
+
+  for (const tentativa of tentativasQuestao) {
+    await prisma.tentativa.upsert({
+      where: { id: tentativa.id },
+      create: {
+        id: tentativa.id,
+        questao_id: tentativa.questaoId,
+        usuario_id: tentativa.usuarioId,
+        resposta: tentativa.resposta,
+        acerto: tentativa.acerto,
+        criado_em: proximoInstante(),
+      },
+      update: { resposta: tentativa.resposta, acerto: tentativa.acerto },
+    })
+  }
+
+  // ---- F3-07–F3-13: avaliações (composição reescrita por substituição total) ----
+  for (const avaliacao of avaliacoes) {
+    await prisma.avaliacao.upsert({
+      where: { id: avaliacao.id },
+      create: {
+        id: avaliacao.id,
+        curso_id: avaliacao.cursoId,
+        titulo: avaliacao.titulo,
+        tentativas_max: avaliacao.tentativasMax,
+        abre_em: avaliacao.abreEm,
+        fecha_em: avaliacao.fechaEm,
+        publicado: avaliacao.publicado,
+        criado_em: proximoInstante(),
+      },
+      update: {
+        titulo: avaliacao.titulo,
+        tentativas_max: avaliacao.tentativasMax,
+        abre_em: avaliacao.abreEm,
+        fecha_em: avaliacao.fechaEm,
+        publicado: avaliacao.publicado,
+      },
+    })
+    await prisma.$transaction([
+      prisma.avaliacaoQuestao.deleteMany({ where: { avaliacao_id: avaliacao.id } }),
+      prisma.avaliacaoQuestao.createMany({
+        data: avaliacao.questoes.map((item, posicao) => ({
+          avaliacao_id: avaliacao.id,
+          questao_id: item.questaoId,
+          peso: item.peso,
+          posicao,
+        })),
+      }),
+    ])
+  }
+
+  for (const tentativa of tentativasAvaliacao) {
+    await prisma.tentativaAvaliacao.upsert({
+      where: { id: tentativa.id },
+      create: {
+        id: tentativa.id,
+        avaliacao_id: tentativa.avaliacaoId,
+        usuario_id: tentativa.usuarioId,
+        status: tentativa.status,
+        nota: tentativa.nota,
+        enviada_em: tentativa.enviadaEm,
+        criado_em: proximoInstante(),
+      },
+      update: {
+        status: tentativa.status,
+        nota: tentativa.nota,
+        enviada_em: tentativa.enviadaEm,
+      },
+    })
+    for (const resposta of tentativa.respostas) {
+      await prisma.respostaAvaliacao.upsert({
+        where: { id: resposta.id },
+        create: {
+          id: resposta.id,
+          tentativa_id: tentativa.id,
+          questao_id: resposta.questaoId,
+          resposta: resposta.resposta,
+          acerto: resposta.acerto,
+          pontos: resposta.pontos,
+          criado_em: proximoInstante(),
+        },
+        update: {
+          resposta: resposta.resposta,
+          acerto: resposta.acerto,
+          pontos: resposta.pontos,
+        },
+      })
+    }
+  }
+
   const aulas = arvore.flatMap((curso) => curso.modulos.flatMap((modulo) => modulo.aulas))
   const blocos = aulas.flatMap((aula) => aula.blocos)
   const contaPublicados = (itens: { publicado: boolean }[]) =>
@@ -597,6 +1113,15 @@ async function principal(): Promise<void> {
     `[seed] conteúdo: ${blocos.filter((b) => b.tipo === 'texto').length} texto + ` +
       `${blocos.filter((b) => b.tipo === 'midia_embedada').length} midia_embedada ` +
       `(reescrito nas ${aulas.length} aulas-seed; material_anexo não seedado — requer F2-15/F2-16)`
+  )
+  console.log(
+    `[seed] questões — ${questoes.length} (${contaPublicados(questoes)}) · ` +
+      `${contadorAlternativas} alternativas · ${tentativasQuestao.length} tentativas de exercício`
+  )
+  console.log(
+    `[seed] avaliações — ${avaliacoes.length} (${contaPublicados(avaliacoes)}) · ` +
+      `${tentativasAvaliacao.length} tentativas com ${contadorRespostas} respostas ` +
+      `(cenários: encerrada com histórico, aberta, futura e rascunho)`
   )
   console.log('[seed] acesso de desenvolvimento (mesma senha para todos):')
   for (const usuario of usuarios) {
