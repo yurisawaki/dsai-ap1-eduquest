@@ -997,3 +997,215 @@ main.principal-estreito .titulo-pagina {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ============================ questões e avaliações ============================ */
+
+.lista-questoes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-4);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.card-questao {
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-m);
+  padding: var(--esp-6);
+  box-shadow: var(--sombra-1);
+}
+
+.questao-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--esp-2);
+  margin-bottom: var(--esp-3);
+}
+
+.questao-enunciado {
+  font-size: var(--tam-leitura);
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  max-width: 65ch;
+  margin: 0 0 var(--esp-4);
+}
+
+.alternativas {
+  border: none;
+  margin: 0 0 var(--esp-4);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-2);
+}
+
+.alternativa-opcao {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--esp-3);
+  padding: var(--esp-3);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-s);
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.alternativa-opcao:hover {
+  background: var(--superficie-alt);
+}
+
+.alternativa-opcao:has(input:checked) {
+  border-color: var(--primaria);
+  background: var(--primaria-suave);
+}
+
+.alternativa-opcao input[type='checkbox'],
+.alternativa-opcao input[type='radio'] {
+  width: 1.125rem;
+  height: 1.125rem;
+  margin-top: 0.125rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.alternativa-opcao span {
+  flex: 1;
+}
+
+.campo-numerico,
+.campo-texto {
+  display: block;
+  margin-bottom: var(--esp-4);
+}
+
+.campo-numerico input,
+.campo-texto textarea {
+  width: 100%;
+  max-width: 32rem;
+}
+
+.questao-formulario {
+  margin-top: var(--esp-4);
+}
+
+.questao-feedback {
+  margin-top: var(--esp-4);
+  padding: var(--esp-4);
+  border-radius: var(--raio-s);
+  background: var(--superficie-alt);
+  border: 1px solid var(--borda);
+}
+
+.feedback-acerto {
+  font-weight: var(--peso-forte);
+  font-size: var(--tam-h3);
+  margin: 0 0 var(--esp-2);
+  display: flex;
+  align-items: center;
+  gap: var(--esp-2);
+}
+
+.feedback-acerto.sucesso {
+  color: var(--sucesso);
+}
+
+.feedback-acerto.erro {
+  color: var(--erro);
+}
+
+.feedback-acerto.pendente {
+  color: var(--texto-sec);
+}
+
+.feedback-explicacao {
+  margin: var(--esp-3) 0;
+  padding: var(--esp-3);
+  background: var(--superficie);
+  border-left: 3px solid var(--primaria);
+  border-radius: var(--raio-s);
+  font-size: var(--tam-botao);
+  line-height: 1.6;
+}
+
+/* ============================ avaliação ============================ */
+
+.lista-questoes-avaliacao {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-6);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: questao-counter;
+}
+
+.avaliacao-formulario,
+.revisao-formulario {
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-m);
+  padding: var(--esp-6);
+  box-shadow: var(--sombra-1);
+}
+
+.revisao-formulario {
+  background: var(--superficie-alt);
+}
+
+.lista-pendentes {
+  margin: var(--esp-2) 0;
+  padding-left: var(--esp-6);
+  font-size: var(--tam-botao);
+}
+
+.lista-pendentes li {
+  margin-bottom: var(--esp-1);
+}
+
+.resultado-secao {
+  margin-top: var(--esp-6);
+}
+
+.resultado-destaque {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--esp-2);
+  padding: var(--esp-6);
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-m);
+  box-shadow: var(--sombra-1);
+}
+
+.lista-historico {
+  list-style: none;
+  margin: var(--esp-4) 0 0;
+  padding: 0;
+}
+
+.lista-historico li {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-3);
+  padding: var(--esp-3);
+  border-bottom: 1px solid var(--borda);
+  font-size: var(--tam-botao);
+}
+
+.lista-historico li:last-child {
+  border-bottom: none;
+}
+
+.lista-historico li span:first-child {
+  flex: 1;
+}
+
+/* ============================ estado vazio - histórico ============================ */
+
+.estado-vazio .lista-historico {
+  margin-top: var(--esp-4);
+}

@@ -2,6 +2,8 @@ import { FormEvent, useCallback, useEffect, useState } from 'react'
 import { api, mensagemDeErro } from '../cliente'
 import type { Sessao } from '../App'
 import { ConteudoAula, type BlocoConteudo } from '../componentes/ConteudoAula'
+import { QuestoesModulo } from './Questoes'
+import { AvaliacaoDetalhe } from './Avaliacoes'
 
 interface ResumoCurso {
   id: string
@@ -25,6 +27,15 @@ interface ModuloItem {
 
 interface CursoDetalhe extends ResumoCurso {
   modulos: ModuloItem[]
+}
+
+interface AvaliacaoResumo {
+  id: string
+  titulo: string
+  tentativasMax: number
+  abreEm: string
+  fechaEm: string
+  publicado: boolean
 }
 
 interface ArquivoEnviado {
@@ -210,12 +221,15 @@ interface PropsCurso {
 
 function DetalheCurso({ sessao, cursoId, aoVoltar }: PropsCurso) {
   const [curso, setCurso] = useState<CursoDetalhe | null>(null)
+  const [avaliacoes, setAvaliacoes] = useState<AvaliacaoResumo[] | null>(null)
   const [erro, setErro] = useState<string | null>(null)
   const [mensagem, setMensagem] = useState<string | null>(null)
   const [tituloNovoModulo, setTituloNovoModulo] = useState('')
   const [titulos, setTitulos] = useState<Record<string, string>>({})
   const [aulasNovas, setAulasNovas] = useState<Record<string, string>>({})
   const [aulaAberta, setAulaAberta] = useState<string | null>(null)
+  const [moduloQuestoesAberto, setModuloQuestoesAberto] = useState<string | null>(null)
+  const [avaliacaoAberta, setAvaliacaoAberta] = useState<string | null>(null)
 
   const carregar = useCallback(async () => {
     try {
@@ -232,6 +246,13 @@ function DetalheCurso({ sessao, cursoId, aoVoltar }: PropsCurso) {
       setErro(null)
     } catch (erroCarga) {
       setErro(mensagemDeErro(erroCarga))
+    }
+
+    try {
+      const lista = await api<AvaliacaoResumo[]>(`/api/v1/cursos/${cursoId}/avaliacoes`)
+      setAvaliacoes(lista)
+    } catch {
+      setAvaliacoes([])
     }
   }, [cursoId])
 
@@ -261,6 +282,29 @@ function DetalheCurso({ sessao, cursoId, aoVoltar }: PropsCurso) {
       <main className="principal principal-largo">
         <p className="carregando">Carregando curso…</p>
       </main>
+    )
+  }
+
+  if (moduloQuestoesAberto) {
+    const modulo = curso.modulos.find((m) => m.id === moduloQuestoesAberto)
+    return (
+      <QuestoesModulo
+        moduloId={moduloQuestoesAberto}
+        tituloModulo={modulo?.titulo ?? ''}
+        aoVoltar={() => setModuloQuestoesAberto(null)}
+        sessao={sessao}
+      />
+    )
+  }
+
+  if (avaliacaoAberta) {
+    return (
+      <AvaliacaoDetalhe
+        avaliacaoId={avaliacaoAberta}
+        tituloCurso={curso.titulo}
+        aoVoltar={() => setAvaliacaoAberta(null)}
+        sessao={sessao}
+      />
     )
   }
 
@@ -562,6 +606,54 @@ function DetalheCurso({ sessao, cursoId, aoVoltar }: PropsCurso) {
                     ))}
                   </ul>
                 )}
+
+                <div className="modulo-acoes">
+                  <button
+                    type="button"
+                    className="botao-secundario"
+                    onClick={() => setModuloQuestoesAberto(modulo.id)}
+                  >
+                    Ver questões
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section>
+        <h2>Avaliações</h2>
+        {!avaliacoes ? (
+          <p className="carregando">Carregando avaliações…</p>
+        ) : avaliacoes.length === 0 ? (
+          <div className="estado-vazio">
+            <p className="estado-vazio-frase">Nenhuma avaliação disponível.</p>
+            <p className="estado-vazio-apoio">As avaliações publicadas aparecem aqui.</p>
+          </div>
+        ) : (
+          <ul className="grade-cursos">
+            {avaliacoes.map((avaliacao) => (
+              <li key={avaliacao.id} className="card-curso">
+                <div className="card-curso-topo">
+                  <h3>{avaliacao.titulo}</h3>
+                  <span
+                    className={`badge ${avaliacao.publicado ? 'badge-sucesso' : 'badge-aviso'}`}
+                  >
+                    {estado(avaliacao.publicado)}
+                  </span>
+                </div>
+                <p className="resumo-estrutura">
+                  {new Date(avaliacao.abreEm).toLocaleDateString('pt-BR')} —{' '}
+                  {new Date(avaliacao.fechaEm).toLocaleDateString('pt-BR')}
+                </p>
+                <p className="resumo-estrutura">
+                  {avaliacao.tentativasMax}{' '}
+                  {avaliacao.tentativasMax === 1 ? 'tentativa' : 'tentativas'}
+                </p>
+                <button type="button" onClick={() => setAvaliacaoAberta(avaliacao.id)}>
+                  Abrir avaliação
+                </button>
               </li>
             ))}
           </ul>
