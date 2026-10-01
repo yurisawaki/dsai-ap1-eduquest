@@ -2,7 +2,9 @@
 
 Plataforma web de ensino gamificada: cursos → módulos → aulas, exercícios, avaliações, progresso acadêmico e gamificação (XP, níveis, conquistas, moedas, loja) calculada no servidor.
 
-**URL pública (AP1):** `https://tissue-treasure-diego-achieved.trycloudflare.com` — ver [§15](#15-deploy-url-pública).
+**Equipe (AP1):** Breno Yuri Saraiva Sawaki · Jessica Lopes Melo
+
+**URL pública (AP1):** `https://eduquest-n1jj.onrender.com/` — ver [§15](#15-deploy-url-pública).
 
 ## 1. Visão geral
 
@@ -168,8 +170,8 @@ Não existe pasta `diario/` neste repositório.
 - **F4 — Progresso (D6): SPEC e implementação concluídas** — `SPEC/2026-10-01-progresso-aprendizagem.md` (T4.1, **resolve P-14** e P-15/P-16 na parcela progresso): flag `concluida` em `GET /aulas/{id}`, progresso derivado de `conclusao_aula` em `GET /cursos/{id}` (somente papel estudante, percentual `floor`), unicidade `(aula_id, usuario_id)` na migration F4, barra de progresso e contagem por módulo no curso.
 - **Interface visual:** `SPEC/2026-10-01-identidade-visual-frontend.md` implementada (design system único com tokens, responsivo).
 - **Suíte: 125 testes passando** em 17 arquivos (`npm test`); **`npm run typecheck` passando** (ambos verificados em 2026-10-01).
-- **Deploy:** aplicação publica na URL da [§15](#15-deploy-url-pública) — stack Docker de produção + túnel HTTPS; migrations aplicadas automaticamente por `npx prisma migrate deploy` na subida do container.
-- **Contagem de código (`cloc`, 2026-10-01):** **10.033 linhas** em 68 arquivos (TypeScript 8.414, CSS 1.037, Prisma 289, SQL 258, HTML 18, Dockerfile 17), com `cloc . --vcs=git --exclude-dir=node_modules,vendor,dist,build,prompts --exclude-lang=Markdown,JSON,YAML,CSV,Text,SVG --not-match-f='(lock|\.min\.)'`.
+- **Deploy:** aplicação publica na URL da [§15](#15-deploy-url-pública) — **Render** (Blueprint `render.yaml` + Docker + PostgreSQL gerenciado); migrations aplicadas automaticamente por `npx prisma migrate deploy` na subida do container e seed via `initialDeployHook` no primeiro deploy.
+- **Contagem de código (`cloc`, 2026-10-01):** **10.049 linhas** em 69 arquivos (TypeScript 8.423, CSS 1.037, Prisma 289, SQL 258, Dockerfile 24, HTML 18), com `cloc . --vcs=git --exclude-dir=node_modules,vendor,dist,build,prompts --exclude-lang=Markdown,JSON,YAML,CSV,Text,SVG --not-match-f='(lock|\.min\.)'`.
 - **DP-19 resolvida:** `SPEC/2026-09-30-conteudo-aula.md` **aprovada** após auditoria (§13 da SPEC); `PLAN.md`, `TASKS.md` (T2.3), `decisoes-pendentes.md` e SPEC D3 revisados formalmente. Pendências derivadas abertas: P-18–P-21.
 - **DP-09 resolvida:** SPEC de D5 `SPEC/2026-10-01-avaliacoes.md` **aprovada** (avaliação do curso, nota 0–10 com pesos, correção manual de dissertativas pelo professor, resultado = maior nota).
 - **DP-08 resolvida:** SPEC de D4 `SPEC/2026-10-01-questoes-exercicios.md` **aprovada** (4 tipos de questão; questão pertence ao módulo); `PLAN.md`, `TASKS.md` e `decisoes-pendentes.md` revisados.
@@ -248,16 +250,19 @@ Não há estratégia de branches definida neste projeto — siga o fluxo acima n
 
 ## 15. Deploy (URL pública)
 
-**URL pública (AP1):** `https://tissue-treasure-diego-achieved.trycloudflare.com` — HTTPS automático, sem credenciais.
+**URL pública (AP1):** `https://eduquest-n1jj.onrender.com/`
 
-Como está publicado (executado em 2026-10-01):
+Como está publicado (Render, verificado em 2026-10-01):
 
-- **Stack de produção:** `docker compose build && docker compose up -d` — serviços `db` (PostgreSQL 17), `app` (imagem `Dockerfile`: `prisma migrate deploy` na subida + `node dist/server/index.js`) e `caddy` (proxy/TLS local). As portas do compose estão restritas a `127.0.0.1` (db `5434`, app `3000`, caddy `443`) — nada exposto à rede local.
-- **Túnel:** `cloudflared tunnel --url http://127.0.0.1:3000` (quick tunnel do Cloudflare, processo desanexado; log em `/tmp/opencode/cloudflared.log`).
-- **Migrations:** aplicadas pelo próprio container (`npx prisma migrate deploy`); nunca `migrate reset` em dados existentes.
-- **Dados:** banco do volume `dados-db` já populado com o seed de desenvolvimento (idempotente, `npm run db:seed` — só toca entidades de IDs próprios; nunca executado contra banco não vazio sem necessidade).
-- **Health check:** `GET /api/v1/health` → `200 {"status":"ok"}`.
-- **Bundle:** o Express serve `dist/web` com `Cache-Control: max-age=0` + ETag — o navegador revalida sempre, então a URL pública entrega o build atual (verificado por hash do bundle e pelos marcadores "Seu progresso", "Marcar como concluída", "Ver questões" no JS servido).
+- **Plataforma:** Render — Web Service `eduquest` + PostgreSQL gerenciado `eduquest-db`, provisionados pelo Blueprint `render.yaml` conectado ao repositório no GitHub (cada push no `main` sincroniza o Blueprint).
+- **Build:** Dockerfile multi-stage (estágios `dependencias`, `build`, `runtime`): `npm ci` → `prisma generate` → `npm run build` (API + SPA); imagem final `node:24-slim` com `openssl` (engines Prisma `debian-openssl-3.0.x`), contendo `dist/`, `src/`, `prisma/` e `node_modules`.
+- **Subida do container:** `npx prisma migrate deploy` (migrations) e, em seguida, `node dist/server/index.js`.
+- **Seed:** `initialDeployHook: npx prisma db seed` no `render.yaml` — executa `tsx prisma/seed.ts` uma única vez no primeiro deploy do Blueprint (idempotente; **não** roda a cada deploy/restart).
+- **Banco:** PostgreSQL gerenciado com TLS; `DATABASE_URL` injetado pelo Render via `fromDatabase` — nunca versionado nem exposto.
+- **Health check:** `GET /api/v1/health` → `200 {"status":"ok"}` (mesmo endpoint usado como health check do serviço).
+- **Bundle:** o Express serve `dist/web` (SPA) com `Cache-Control: max-age=0` + ETag — o navegador revalida sempre.
+- **Limitações do plano gratuito:** o serviço entra em sono por inatividade (a primeira requisição após o sono leva alguns segundos); sem Shell no container — comandos pontuais (seed manual, consultas) rodam na própria máquina com o `DATABASE_URL` da área do serviço, nunca comandos destrutivos (`migrate reset`, `db push --force-reset`).
+- **Desenvolvimento local:** a stack `docker compose` (`db`, `app`, `caddy`, portas restritas a `127.0.0.1`) segue como ambiente de dev/teste — os testes (`npm test`) dependem dela.
 
 Contas de demonstração (criadas pelo seed de `prisma/seed.ts`, senha `Eduquest#Dev2026`):
 
@@ -266,5 +271,3 @@ Contas de demonstração (criadas pelo seed de `prisma/seed.ts`, senha `Eduquest
 | estudante | `estudante@eduquest.example` |
 | professor | `professor@eduquest.example` |
 | administrador | `admin@eduquest.example` |
-
-> O túnel quick é gratuito e não tem garantia de uptime: a URL vale enquanto esta máquina e o processo `cloudflared` estiverem ativos (URL muda se o túnel reiniciar). Para hospedagem permanente, aponte uma plataforma com conta própria (ex.: Render/Fly) para o mesmo `Dockerfile`/compose.
