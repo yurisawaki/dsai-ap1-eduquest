@@ -10,6 +10,7 @@ services:
     repo: https://github.com/yurisawaki/dsai-ap1-eduquest
     branch: main
     healthCheckPath: /api/v1/health
+    initialDeployHook: npx prisma db seed
     envVars:
       - key: DATABASE_URL
         fromDatabase:

@@ -29,7 +29,8 @@
     "express": "^5",
     "prisma": "^6",
     "react": "^19",
-    "react-dom": "^19"
+    "react-dom": "^19",
+    "tsx": "^4"
   },
   "devDependencies": {
     "@testing-library/dom": "^10",
@@ -44,7 +45,6 @@
     "@vitejs/plugin-react": "^4",
     "jsdom": "^26",
     "supertest": "^7",
-    "tsx": "^4",
     "typescript": "^5",
     "vite": "^6",
     "vitest": "^3"
