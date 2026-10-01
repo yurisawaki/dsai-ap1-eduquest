@@ -186,7 +186,7 @@ Cada subseção declara: **escopo de implementação**, **entidades** (herdadas 
 - **Entidades:** questão (tipos **a confirmar em SPEC própria**), alternativa, tentativa, resposta, feedback.
 - **Regras a preservar:** questão pertence a um curso/módulo; tentativa registrada com resposta e acerto; gabarito não exposto antes do envio; feedback emitido conforme regra da questão.
 - **Dependências:** D3 (questão vive em curso/módulo); alimenta D6 (progresso) e D7 (XP por acerto).
-- **Pendências (explícitas na SPEC):** conjunto definitivo de tipos de questão está "a confirmar em SPEC própria" (SPEC D4); tipos citados na SPEC são exemplos, não requisito fechado.
+- **Pendências (explícitas na SPEC):** ~~conjunto definitivo de tipos de questão~~ **resolvido (DP-08, 2026-10-01 — `SPEC/2026-10-01-questoes-exercicios.md`)**: múltipla escolha, verdadeiro/falso, numérica e dissertativa; questão pertence ao módulo. Pendências derivadas P-22–P-29 abertas naquela SPEC.
 
 ### 5.5 Avaliações (D5)
 
@@ -375,7 +375,7 @@ Ordem lógica derivada das dependências da Seção 6. Cada fase: objetivo, dom�
 - **Resultado esperado:** questões com gabarito protegido; tentativas com resposta, acerto e feedback imediato; avaliações com número de tentativas e janela definidos pelo professor; nota calculada no servidor; resultado disponível para progresso.
 - **Validação:** regras de D4/D5 (gabarito não exposto antes do envio; tentativa registrada; nota servidor); passo 5–6 do fluxo.
 - **Rastreabilidade:** SPEC §5 D4/D5; §4 passos 5–6; funcionalidades 6–8.
-- **Pendências vinculadas (bloqueiam detalhe):** tipos definitivos de questão (D4, "a confirmar"); correção manual de dissertativas (D5, "a confirmar").
+- **Pendências vinculadas (bloqueiam detalhe):** ~~tipos definitivos de questão (D4)~~ — **resolvida** (DP-08, `SPEC/2026-10-01-questoes-exercicios.md`, 2026-10-01); correção manual de dissertativas (D5, "a confirmar") — segue aberta (DP-09).
 
 ### Fase 4 — Progresso acadêmico
 
@@ -500,7 +500,7 @@ Ordem lógica derivada das dependências da Seção 6. Cada fase: objetivo, dom�
 | DP-05 | Design de UI/UX (wireframes, paleta, componentes) | SPEC §7.5 | SPEC de UI/UX própria |
 | DP-06 | Acessibilidade e internacionalização (níveis, idiomas, fuso) | SPEC §7.6 | SPEC própria |
 | DP-07 | Fórmula exata de XP, fórmula/tabela de níveis | SPEC §7.7 (D7) | SPEC de D7 antes do detalhe de F5 |
-| DP-08 | Conjunto definitivo de tipos de questão | SPEC D4 — "a confirmar em SPEC própria" | SPEC de D4 antes do detalhe de F3 |
+| DP-08 | Conjunto definitivo de tipos de questão | SPEC D4 — "a confirmar em SPEC própria" | SPEC de D4 antes do detalhe de F3 — **Resolvida em 2026-10-01** (ver `SPEC/2026-10-01-questoes-exercicios.md`, aprovada) |
 | DP-09 | Correção manual de dissertativas | SPEC D5 — "a confirmar em SPEC própria"; SPEC §6 | SPEC de D5 antes do detalhe de F3 |
 | DP-10 | Regras detalhadas de ranking (empate, privacidade fina) | SPEC §7.7 (D11) | SPEC de D11 antes do detalhe de F7 |
 | DP-11 | Integrações externas (LTI/SCORM, OAuth social, e-mail transacional, CDN, vídeo, analytics de terceiros) | SPEC §7.9 | SPEC de integrações; e-mail opcional — D13 |

@@ -5,7 +5,7 @@
 | Artefato | `SPEC/2026-09-30-decisoes-pendentes.md` (apoio ao processo SDD) |
 | Tarefa de origem | T0.1 — Inventário das decisões pendentes do EduQuest (`TASKS.md`, fase F0) |
 | Fonte de autoridade | SPEC → PLAN → TASKS → este documento |
-| Status | Inventário registrado. **Revisão 2026-09-30:** DP-19 marcada como **Resolvida** (`SPEC/2026-09-30-conteudo-aula.md`, aprovada) — critério §6 atendido; demais DPs inalteradas neste documento |
+| Status | Inventário registrado. **Revisão 2026-09-30:** DP-19 marcada como **Resolvida** (`SPEC/2026-09-30-conteudo-aula.md`, aprovada) — critério §6 atendido. **Revisão 2026-10-01:** DP-08 marcada como **Resolvida** (`SPEC/2026-10-01-questoes-exercicios.md`, aprovada). Demais DPs inalteradas neste documento |
 | Data | 2026-09-30 |
 | Fora de escopo deste artefato | Resolver DP-01–DP-19; escolher stack, arquitetura, endpoints, schemas, fórmulas ou tipos de questão; alterar SPEC/PLAN/TASKS; escrever código |
 
@@ -40,7 +40,7 @@ Legenda de status: **Pendente** = decisão ainda não tomada, com artefato futur
 | DP-05 | Design de UI/UX | Pendente | Não atribuída no `PLAN.md` (artefato próprio) | Não (declarado no `TASKS.md` preâmbulo) | Nenhuma declarada |
 | DP-06 | Acessibilidade e internacionalização | Pendente | Não atribuída no `PLAN.md` (artefato próprio) | Não (declarado no `TASKS.md` preâmbulo) | Nenhuma declarada |
 | DP-07 | Fórmula de XP e fórmula/tabela de níveis | Pendente | F5 (antes do detalhe de F5); efeitos em F13 | **Sim** — T5.1, T5.2, T5.3, T5.4, T13.4 | Nenhuma outra DP declarada |
-| DP-08 | Conjunto definitivo de tipos de questão | Pendente | F3 (antes do detalhe de F3) | **Sim** — T3.1, T3.2, T3.3, T3.5 | Nenhuma outra DP declarada |
+| DP-08 | Conjunto definitivo de tipos de questão | **Resolvida (2026-10-01 — `SPEC/2026-10-01-questoes-exercicios.md`)** | F3 (antes do detalhe de F3) | **Não mais** — bloqueios de T3.1–T3.3 e T3.5 removidos na revisão de `TASKS.md` de 2026-10-01 | Nenhuma outra DP declarada |
 | DP-09 | Correção manual de dissertativas | Pendente | F3 (antes do detalhe de F3) | **Parcial** — só dissertativas: T3.4 (item), T3.5 (parcial) | Nenhuma outra DP declarada |
 | DP-10 | Regras detalhadas de ranking (empate, privacidade fina) | Pendente | F7 (antes do detalhe de F7) | **Sim** — T7.1, T7.2, T7.3 | Nenhuma outra DP declarada |
 | DP-11 | Integrações externas (LTI/SCORM, OAuth social, e-mail, CDN, vídeo, analytics de terceiros) | Pendente | F9 (canal de e-mail de D13) | **Parcial** — só e-mail: T9.4 bloqueada; T9.1 parcial (in-app `[Livre]`) | Nenhuma outra DP declarada |
@@ -53,7 +53,7 @@ Legenda de status: **Pendente** = decisão ainda não tomada, com artefato futur
 | DP-18 | Catálogos e tabelas de gamificação (conquistas, missões, itens/preços, desafios) | Pendente | F5, F6, F8 | **Sim** — T5.5, T6.1, T6.3, T8.1 | Nenhuma outra DP declarada |
 | DP-19 | Formato de conteúdo de aula, limites de upload, embeds | **Resolvida (2026-09-30 — `SPEC/2026-09-30-conteudo-aula.md`)** | F2 (antes do detalhe de F2) | **Não mais** — bloqueio de T2.3 removido na revisão de `TASKS.md` de 2026-09-30 | Nenhuma outra DP declarada |
 
-**Contagem:** 19 decisões (DP-01–DP-19); 15 com status **Pendente**; 3 **Fora de escopo (desta visão)** (DP-12, DP-13, DP-14); **1 resolvida** (DP-19, 2026-09-30).
+**Contagem:** 19 decisões (DP-01–DP-19); 14 com status **Pendente**; 3 **Fora de escopo (desta visão)** (DP-12, DP-13, DP-14); **2 resolvidas** (DP-19, 2026-09-30; DP-08, 2026-10-01).
 
 > **Observação (não corrigida nesta revisão):** DP-01–DP-03 foram resolvidas pela `SPEC/2026-09-30-tecnica-fundacoes.md` (aprovada), mas a revisão formal prevista na técnica §5 ainda não foi feita neste documento nem no `PLAN.md` §8 — segue como pendência de processo.
 
@@ -150,6 +150,7 @@ Para cada decisão: ID; nome; descrição objetiva; origem no `PLAN.md`; domíni
 - **Dependências:** nenhuma outra DP declarada.
 - **Bloqueadora:** **Sim** (para F3).
 - **Artefato futuro:** **SPEC de D4** (`PLAN.md` §8).
+- **Resolução (2026-10-01):** `SPEC/2026-10-01-questoes-exercicios.md` — aprovada após auditoria (§12 daquela SPEC). Decisão do usuário: múltipla escolha, verdadeiro/falso, numérica e dissertativa; questão pertence ao módulo. Os 6 critérios da §6 foram atendidos. DP-09 (correção de dissertativas) permanece aberta.
 
 ### DP-09 — Correção manual de dissertativas
 

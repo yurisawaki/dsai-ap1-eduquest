@@ -267,7 +267,7 @@
 - **Artefatos esperados:** `SPEC/` de D4 com critérios de aceitação e tipos de questão definidos.
 - **Validação:** regras de D4 da visão cobertas; tipos de questão presentes apenas na SPEC D4, ausentes deste TASKS.
 - **Rastreabilidade:** `PLAN.md` §5.4, §7 F3, §8 DP-08; SPEC §5 D4 ("a confirmar em SPEC própria").
-- **Bloqueios:** `[Bloqueada: DP-08]` — a SPEC D4 é o veículo de resolução; DP-08 não pode ser resolvida aqui
+- **Bloqueios:** **Concluída em 2026-10-01** — `SPEC/2026-10-01-questoes-exercicios.md` aprovada; DP-08 resolvida (revisão formal desta data)
 
 #### T3.2 — Implementar questões e gabarito protegido
 
@@ -277,7 +277,7 @@
 - **Artefatos esperados:** questões publicadas em curso/módulo; testes de não exposição do gabarito antes do envio.
 - **Validação:** "gabarito não exposto antes do envio" verificado; questão pertence a curso/módulo; funcionalidades 6–7 verificáveis.
 - **Rastreabilidade:** `PLAN.md` §5.4, §7 F3; SPEC §5 D4; funcionalidades 6, 7.
-- **Bloqueios:** `[Bloqueada: DP-08]` + global DP-01–DP-03
+- **Bloqueios:** `[Livre]` — DP-08 resolvida e SPEC D4 aprovada (`SPEC/2026-10-01-questoes-exercicios.md`: R-Q1–R-Q5, F3-01–F3-05, TQ-01–TQ-07, TQ-15, TQ-16) + global DP-01–DP-03
 
 #### T3.3 — Implementar tentativas de exercício e feedback imediato
 
@@ -287,7 +287,7 @@
 - **Artefatos esperados:** tentativas persistidas com acerto; feedback emitido após envio; testes de fluxo de tentativa.
 - **Validação:** "tentativa registrada com resposta e acerto"; passo 5 do fluxo executável; evento alimenta F4 e F5.
 - **Rastreabilidade:** `PLAN.md` §5.4, §6 item 5, §7 F3; SPEC §5 D4, §4 passo 5.
-- **Bloqueios:** `[Bloqueada: DP-08]` (correção depende dos tipos) + global DP-01–DP-03
+- **Bloqueios:** `[Livre]` — DP-08 resolvida (`SPEC/2026-10-01-questoes-exercicios.md`: R-Q6–R-Q11, F3-06, TQ-08–TQ-14); dissertativa gravada sem correção até DP-09 + global DP-01–DP-03
 
 #### T3.4 — Elaborar SPEC do domínio D5 (avaliações)
 
@@ -307,7 +307,7 @@
 - **Artefatos esperados:** avaliação publicável; tentativa respeitando janela/limite; nota calculada servidor; testes de janela e limite de tentativas.
 - **Validação:** "nota calculada servidor"; "professor define tentativas e janela"; passo 6 do fluxo executável; funcionalidade 8 verificável.
 - **Rastreabilidade:** `PLAN.md` §5.5, §7 F3; SPEC §5 D5, §4 passo 6; funcionalidade 8.
-- **Bloqueios:** `[Bloqueada: DP-08]` (composição/nota por tipo) e `[Bloqueada: DP-09]` (só para dissertativas) + global DP-01–DP-03
+- **Bloqueios:** `[Depende de SPEC D5]` (T3.4) e `[Bloqueada: DP-09]` (só para dissertativas) — DP-08 resolvida em 2026-10-01 + global DP-01–DP-03
 
 #### T3.6 — Validar F3 (D4 e D5)
 

@@ -161,6 +161,7 @@ Não existe pasta `diario/` neste repositório.
 - **F2 — Catálogo de aprendizagem (D3): implementada** (hierarquia curso > módulo > aula, publicação, autoria, consumo e conclusão de aula; **conteúdo de aula conforme DP-19**: lista ordenada de 0–50 blocos texto/mídia/anexo, upload de anexo JSON+base64 e download).
 - **Suíte: 68 testes passando** (`npm test`); **`npm run typecheck` passando** (ambos verificados em 2026-09-30).
 - **DP-19 resolvida:** `SPEC/2026-09-30-conteudo-aula.md` **aprovada** após auditoria (§13 da SPEC); `PLAN.md`, `TASKS.md` (T2.3), `decisoes-pendentes.md` e SPEC D3 revisados formalmente. Pendências derivadas abertas: P-18–P-21.
+- **DP-08 resolvida:** SPEC de D4 `SPEC/2026-10-01-questoes-exercicios.md` **aprovada** (4 tipos de questão; questão pertence ao módulo); `PLAN.md`, `TASKS.md` e `decisoes-pendentes.md` revisados. Ainda **sem código** de F3.
 - Outras SPECs: visão geral, técnica de fundações, D3 (catálogo) e conteúdo de aula **aprovadas**; D1 revisada, aguardando re-auditoria.
 - **Próximas fases (F3 em diante)** seguem bloqueadas por suas pendências (ex.: DP-08 tipos de questão, DP-09 dissertativas) — ver `PLAN.md` §8.
 
@@ -195,7 +196,8 @@ Antes de implementar qualquer funcionalidade:
 2. ~~Implementar conteúdo de aula (T2.3)~~ — feito: F2-12/F2-13 definitivos, F2-15/F2-16, migração `f2_conteudo_aula`, editor por tipo; TC-01–TC-20 automatizados.
 3. ~~Concluir F2 (T2.6)~~ — feito: `docs/validacao/F2.md` (F2 validada, com ressalvas de ambiente).
 4. **Pendências de processo abertas:** revisão formal de DP-01–DP-03 em `PLAN.md` §8/`decisoes-pendentes.md` (técnica §5); re-auditoria da SPEC D1.
-5. **Depois:** F3 (D4/D5) começa pela SPEC de D4 — que resolve DP-08; nada antes disso.
+5. ~~SPEC de D4 (T3.1, DP-08)~~ — feito (2026-10-01).
+6. **Próximo:** implementar T3.2 (questões e gabarito protegido) e T3.3 (tentativas e feedback) conforme a SPEC de D4. Avaliações (T3.4/T3.5) dependem da SPEC de D5 e de DP-09.
 
 ## 13. Git
 
