@@ -45,6 +45,67 @@ function mockDeSessao(sessao: typeof sessaoProfessor) {
   }
 }
 
+const cursoId = '55555555-5555-4555-8555-555555555555'
+const moduloId = '66666666-6666-4666-8666-666666666666'
+const aulaId = '77777777-7777-4777-8777-777777777777'
+
+interface OpcoesRoteiro {
+  falharConclusao?: boolean
+}
+
+function fetchDeAula(
+  sessao: typeof sessaoProfessor,
+  conteudo: unknown[],
+  opcoes: OpcoesRoteiro = {}
+) {
+  const base = mockDeSessao(sessao)
+  return vi.fn(async (url: unknown, init?: { method?: string; body?: string }) => {
+    const alvo = String(url)
+    const metodo = init?.method ?? 'GET'
+    if (alvo.endsWith('/api/v1/cursos') && metodo === 'GET') {
+      return respostaJson([{ id: cursoId, titulo: 'Algebra', publicado: true, donoId: 'dono' }])
+    }
+    if (alvo === `/api/v1/cursos/${cursoId}`) {
+      return respostaJson({
+        id: cursoId,
+        titulo: 'Algebra',
+        publicado: true,
+        donoId: 'dono',
+        modulos: [
+          {
+            id: moduloId,
+            titulo: 'Fundamentos',
+            publicado: true,
+            aulas: [{ id: aulaId, titulo: 'Equacoes', publicado: true }],
+          },
+        ],
+      })
+    }
+    if (alvo === `/api/v1/aulas/${aulaId}` && metodo === 'GET') {
+      return respostaJson({ id: aulaId, titulo: 'Equacoes', publicado: true, conteudo })
+    }
+    if (alvo === `/api/v1/aulas/${aulaId}/conclusao` && metodo === 'POST') {
+      if (opcoes.falharConclusao) {
+        return respostaJson(
+          { erro: { codigo: 'interno', mensagem: 'falha ao registrar' } },
+          500
+        )
+      }
+      return respostaJson({ aulaId, concluidaEm: '2026-09-30T12:00:00.000Z' }, 201)
+    }
+    return base(url, init)
+  })
+}
+
+async function abrirAula() {
+  render(<App />)
+  fireEvent.click(await screen.findByText('Catálogo'))
+  await screen.findByText('Algebra — Publicado')
+  fireEvent.click(screen.getByText('Abrir'))
+  await screen.findByText('Fundamentos — Publicado')
+  fireEvent.click(screen.getByText('Abrir aula'))
+}
+
 describe('T2.6 — superfície web do catálogo (F2-01, F2-13, F2-14)', () => {
   it('professor cria um curso pelo formulário: POST {titulo} e o curso aparece na lista', async () => {
     let cursos: { id: string; titulo: string; publicado: boolean; donoId: string }[] = []
@@ -89,88 +150,60 @@ describe('T2.6 — superfície web do catálogo (F2-01, F2-13, F2-14)', () => {
     expect(JSON.parse(init?.body ?? '{}')).toEqual({ titulo: 'Curso novo' })
   })
 
-  it('estudante abre a estrutura, consome o conteúdo da aula e conclui (F2-03/F2-13/F2-14)', async () => {
-    const cursoId = '55555555-5555-4555-8555-555555555555'
-    const moduloId = '66666666-6666-4666-8666-666666666666'
-    const aulaId = '77777777-7777-4777-8777-777777777777'
-    const base = mockDeSessao(sessaoEstudante)
-    const fetchMock = vi.fn(async (url: unknown, init?: { method?: string; body?: string }) => {
-      const alvo = String(url)
-      const metodo = init?.method ?? 'GET'
-      if (alvo.endsWith('/api/v1/cursos') && metodo === 'GET') {
-        return respostaJson([{ id: cursoId, titulo: 'Algebra', publicado: true, donoId: 'dono' }])
-      }
-      if (alvo === `/api/v1/cursos/${cursoId}`) {
-        return respostaJson({
-          id: cursoId,
-          titulo: 'Algebra',
-          publicado: true,
-          donoId: 'dono',
-          modulos: [
-            {
-              id: moduloId,
-              titulo: 'Fundamentos',
-              publicado: true,
-              aulas: [{ id: aulaId, titulo: 'Equacoes', publicado: true }],
-            },
-          ],
-        })
-      }
-      if (alvo === `/api/v1/aulas/${aulaId}` && metodo === 'GET') {
-        return respostaJson({
-          id: aulaId,
-          titulo: 'Equacoes',
-          publicado: true,
-          conteudo: [
-            { id: 'bloco-1', tipo: 'texto', posicao: 0, dados: { texto: 'x + y = z\n<b>nao e html</b>' } },
-            {
-              id: 'bloco-2',
-              tipo: 'midia_embedada',
-              posicao: 1,
-              dados: { url: 'https://provedor.example/embed/abc' },
-            },
-            {
-              id: 'bloco-3',
-              tipo: 'material_anexo',
-              posicao: 2,
-              dados: { arquivoId: 'arq-1', nome: 'lista.pdf', mime: 'application/pdf', tamanho: 2048 },
-            },
-          ],
-        })
-      }
-      if (alvo === `/api/v1/aulas/${aulaId}/conclusao` && metodo === 'POST') {
-        return respostaJson({ aulaId, concluidaEm: '2026-09-30T12:00:00.000Z' }, 201)
-      }
-      return base(url, init)
-    })
+  it('estudante consome texto, mídia e anexo na ordem do servidor, sem JSON, e conclui (F2-13/F2-14/R-C8)', async () => {
+    const fetchMock = fetchDeAula(sessaoEstudante, [
+      { id: 'bloco-1', tipo: 'texto', posicao: 0, dados: { texto: 'x + y = z\n<b>nao e html</b>' } },
+      {
+        id: 'bloco-2',
+        tipo: 'midia_embedada',
+        posicao: 1,
+        dados: { url: 'https://provedor.example/embed/abc' },
+      },
+      {
+        id: 'bloco-3',
+        tipo: 'material_anexo',
+        posicao: 2,
+        dados: { arquivoId: 'arq-1', nome: 'lista.pdf', mime: 'application/pdf', tamanho: 2048 },
+      },
+    ])
     vi.stubGlobal('fetch', fetchMock)
 
-    render(<App />)
-    fireEvent.click(await screen.findByText('Catálogo'))
-    await screen.findByText('Algebra — Publicado')
+    await abrirAula()
 
-    fireEvent.click(screen.getByText('Abrir'))
-    await screen.findByText('Fundamentos — Publicado')
-    expect(screen.getByText('Equacoes — Publicado')).toBeTruthy()
-
-    fireEvent.click(screen.getByText('Abrir aula'))
-    await screen.findByText('Conteudo')
-    const texto = screen.getByText(/x \+ y = z/)
+    const texto = await screen.findByText(/x \+ y = z/)
     expect(texto.textContent).toBe('x + y = z\n<b>nao e html</b>')
     expect(texto.querySelector('b')).toBeNull()
-    const iframe = screen.getByTitle('Midia da aula')
+    expect(screen.queryByText(/"texto"/)).toBeNull()
+    expect(document.querySelector('pre')).toBeNull()
+
+    const iframe = screen.getByTitle('Mídia da aula')
     expect(iframe.getAttribute('src')).toBe('https://provedor.example/embed/abc')
-    expect(iframe.getAttribute('sandbox')).toBe('allow-scripts allow-same-origin allow-popups allow-presentation')
-    expect(screen.getByText('Abrir midia em nova aba').getAttribute('rel')).toContain('noopener')
-    expect(screen.getByText('Baixar lista.pdf').getAttribute('href')).toBe('/api/v1/arquivos/arq-1')
-    const ordem = Array.from(document.querySelectorAll('ol > li')).map((item) => item.textContent ?? '')
-    expect(ordem[0]).toContain('x + y = z')
-    expect(ordem[1]).toContain('Abrir midia')
-    expect(ordem[2]).toContain('Baixar lista.pdf')
+    expect(iframe.getAttribute('sandbox')).toBe(
+      'allow-scripts allow-same-origin allow-popups allow-presentation'
+    )
+    expect(screen.getByText('Abrir em nova aba').getAttribute('rel')).toContain('noopener')
+
+    expect(screen.getByText('Baixar lista.pdf').getAttribute('href')).toBe(
+      '/api/v1/arquivos/arq-1'
+    )
+
+    const blocos = Array.from(document.querySelectorAll('.conteudo-aula > *'))
+    expect(blocos).toHaveLength(3)
+    expect(blocos[0].textContent).toContain('x + y = z')
+    expect(blocos[1].querySelector('iframe')).toBeTruthy()
+    expect(blocos[2].textContent).toContain('Baixar lista.pdf')
+
     expect(screen.queryByLabelText('Tipo do bloco')).toBeNull()
 
-    fireEvent.click(screen.getByText('Marcar aula como concluida'))
-    await waitFor(() => expect(screen.getByText('Conclusao registrada.')).toBeTruthy())
+    expect(screen.getByText('Marcar como concluída')).toBeTruthy()
+
+    fireEvent.click(screen.getByText('Marcar como concluída'))
+    await screen.findByText('✓ Aula concluída')
+    expect(screen.getByText('Conclusao registrada.')).toBeTruthy()
+
+    const botao = screen.getByText('✓ Aula concluída')
+    expect((botao as HTMLButtonElement).disabled).toBe(true)
+
     const conclusao = fetchMock.mock.calls.find((chamada) => {
       const [, init] = chamada as [unknown, { method?: string }?]
       return init?.method === 'POST' && String(chamada[0]).includes('/conclusao')
@@ -178,9 +211,73 @@ describe('T2.6 — superfície web do catálogo (F2-01, F2-13, F2-14)', () => {
     expect(conclusao).toBeTruthy()
   })
 
+  it('bloco {id:1, tipo:texto, dados:{texto:"Olá mundo"}} renderiza "Olá mundo" e nunca o JSON', async () => {
+    const fetchMock = fetchDeAula(sessaoEstudante, [
+      { id: '1', tipo: 'texto', dados: { texto: 'Olá mundo' } },
+    ])
+    vi.stubGlobal('fetch', fetchMock)
+
+    await abrirAula()
+
+    expect(await screen.findByText(/Olá mundo/)).toBeTruthy()
+    expect(screen.queryByText(/"texto": "Olá mundo"/)).toBeNull()
+    expect(screen.queryByText(/\{\s*"texto"/)).toBeNull()
+    expect(document.querySelector('pre')).toBeNull()
+  })
+
+  it('mídia embedada renderiza iframe responsivo sem expor a URL como texto (R-C8)', async () => {
+    const url = 'https://player.vimeo.com/video/76979871'
+    const fetchMock = fetchDeAula(sessaoEstudante, [
+      { id: 'bloco-2', tipo: 'midia_embedada', dados: { url } },
+    ])
+    vi.stubGlobal('fetch', fetchMock)
+
+    await abrirAula()
+
+    const iframe = await screen.findByTitle('Mídia da aula')
+    expect(iframe.getAttribute('src')).toBe(url)
+    expect(iframe.getAttribute('sandbox')).toContain('allow-scripts')
+    expect(screen.queryByText(/player\.vimeo\.com/)).toBeNull()
+
+    const link = screen.getByText('Abrir em nova aba')
+    expect(link.getAttribute('href')).toBe(url)
+    expect(link.getAttribute('rel')).toContain('noopener')
+  })
+
+  it('tipo de conteúdo não suportado mostra aviso amigável, sem JSON bruto', async () => {
+    const fetchMock = fetchDeAula(sessaoEstudante, [
+      { id: 'bloco-3', tipo: 'video', dados: { url: 'https://exemplo.example/v' } },
+    ])
+    vi.stubGlobal('fetch', fetchMock)
+
+    await abrirAula()
+
+    expect(await screen.findByText(/ainda não é exibido nesta versão/)).toBeTruthy()
+    expect(screen.queryByText(/exemplo\.example/)).toBeNull()
+    expect(document.querySelector('pre')).toBeNull()
+  })
+
+  it('falha na conclusão mostra erro amigável e mantém o botão acionável', async () => {
+    const fetchMock = fetchDeAula(
+      sessaoEstudante,
+      [{ id: 'bloco-4', tipo: 'texto', dados: { texto: 'Conteudo da aula.' } }],
+      { falharConclusao: true }
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await abrirAula()
+
+    fireEvent.click(await screen.findByText('Marcar como concluída'))
+    await screen.findByText('falha ao registrar')
+
+    expect(screen.queryByText('✓ Aula concluída')).toBeNull()
+    const botao = screen.getByText('Marcar como concluída')
+    expect((botao as HTMLButtonElement).disabled).toBe(false)
+  })
+
   it('professor dono edita por formulário: texto, mídia https e anexo via F2-15, reenviando anexo como {arquivoId} (R-C8/A-3)', async () => {
     const cursoId = '88888888-8888-4888-8888-888888888888'
-    const aulaId = '99999999-9999-4999-8999-999999999999'
+    const aulaId = '99999999-9999-4999-9999-999999999999'
     const base = mockDeSessao(sessaoProfessor)
     let conteudo: unknown[] = [
       {

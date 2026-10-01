@@ -88,13 +88,107 @@ section {
   color: #a4262c;
 }
 
-/* R-C8 (SPEC de conteudo): texto simples preservando quebras de linha */
-.texto-aula {
-  white-space: pre-wrap;
+.trilha {
+  margin: 0 0 0.25rem;
+  color: #5c6470;
+  font-size: 0.9rem;
 }
 
-iframe {
+.titulo-aula {
+  border-bottom: 1px solid #d8dbe0;
+  padding-bottom: 0.5rem;
+}
+
+.conteudo-aula {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.conteudo-texto {
+  max-width: 65ch;
+  font-size: 1.05rem;
+  line-height: 1.65;
+}
+
+.conteudo-texto p {
+  margin: 0 0 1rem;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.conteudo-texto p:last-child {
+  margin-bottom: 0;
+}
+
+.conteudo-midia {
+  margin: 0;
+}
+
+.midia-moldura {
+  position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
+  overflow: hidden;
   border: 1px solid #d8dbe0;
+  border-radius: 6px;
+  background: #000000;
+}
+
+.midia-moldura iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.midia-alternativa {
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+  text-align: right;
+}
+
+.conteudo-indisponivel {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border: 1px dashed #b9bec6;
+  border-radius: 6px;
+  background: #fbfbfc;
+  color: #5c6470;
+  font-size: 0.95rem;
+}
+
+.conteudo-anexo {
+  margin: 0;
+}
+
+.lista-blocos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-left: 1.25rem;
+}
+
+.lista-blocos li {
+  font-size: 0.95rem;
+}
+
+.lista-blocos button {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.85rem;
+}
+
+.acao-conclusao {
+  margin-top: 1.5rem;
+}
+
+button.concluida {
+  background: #1f7a3d;
+  border-color: #1f7a3d;
+}
+
+button:disabled {
+  cursor: default;
+  opacity: 0.9;
 }

@@ -1,6 +1,7 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react'
 import { api, mensagemDeErro } from '../cliente'
 import type { Sessao } from '../App'
+import { ConteudoAula, type BlocoConteudo } from '../componentes/ConteudoAula'
 
 interface ResumoCurso {
   id: string
@@ -24,13 +25,6 @@ interface ModuloItem {
 
 interface CursoDetalhe extends ResumoCurso {
   modulos: ModuloItem[]
-}
-
-interface BlocoConteudo {
-  id?: string
-  tipo: string
-  posicao?: number
-  dados: unknown
 }
 
 interface ArquivoEnviado {
@@ -70,13 +64,6 @@ function campo(dados: unknown, chave: string): string | null {
   return typeof valor === 'string' ? valor : null
 }
 
-function tamanhoLegivel(bytes: unknown): string {
-  if (typeof bytes !== 'number') return ''
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
-
 function urlHttps(valor: string): boolean {
   try {
     return new URL(valor).protocol === 'https:'
@@ -103,48 +90,6 @@ function lerBase64(arquivo: File): Promise<string> {
     leitor.onerror = () => rejeitar(new Error('Nao foi possivel ler o arquivo.'))
     leitor.readAsDataURL(arquivo)
   })
-}
-
-// R-C8: cada tipo tem renderização própria; texto nunca é interpretado como marcação
-function BlocoRenderizado({ bloco }: { bloco: BlocoConteudo }) {
-  if (bloco.tipo === 'texto') {
-    const texto = campo(bloco.dados, 'texto')
-    if (texto !== null) return <p className="texto-aula">{texto}</p>
-  }
-  if (bloco.tipo === 'midia_embedada') {
-    const url = campo(bloco.dados, 'url')
-    if (url !== null) {
-      return (
-        <div>
-          <iframe
-            src={url}
-            title="Midia da aula"
-            loading="lazy"
-            sandbox="allow-scripts allow-same-origin allow-popups allow-presentation"
-          />
-          <p>
-            <a href={url} target="_blank" rel="noopener noreferrer">
-              Abrir midia em nova aba
-            </a>
-          </p>
-        </div>
-      )
-    }
-  }
-  if (bloco.tipo === 'material_anexo') {
-    const arquivoId = campo(bloco.dados, 'arquivoId')
-    const nome = campo(bloco.dados, 'nome')
-    if (arquivoId !== null && nome !== null) {
-      const tamanho = tamanhoLegivel((bloco.dados as Record<string, unknown>).tamanho)
-      return (
-        <p>
-          <a href={`/api/v1/arquivos/${arquivoId}`}>Baixar {nome}</a>
-          {tamanho && ` (${tamanho})`}
-        </p>
-      )
-    }
-  }
-  return <p>Bloco em formato nao suportado.</p>
 }
 
 export function PaginaCatalogo({ sessao }: Props) {
@@ -293,11 +238,16 @@ function DetalheCurso({ sessao, cursoId, aoVoltar }: PropsCurso) {
   }
 
   if (aulaAberta) {
+    const moduloDaAula = curso.modulos.find((modulo) =>
+      modulo.aulas.some((aula) => aula.id === aulaAberta)
+    )
     return (
       <DetalheAula
         sessao={sessao}
         aulaId={aulaAberta}
         donoId={curso.donoId}
+        tituloCurso={curso.titulo}
+        tituloModulo={moduloDaAula?.titulo ?? ''}
         aoVoltar={() => setAulaAberta(null)}
       />
     )
@@ -557,10 +507,19 @@ interface PropsAula {
   sessao: Sessao
   aulaId: string
   donoId: string
+  tituloCurso: string
+  tituloModulo: string
   aoVoltar: () => void
 }
 
-function DetalheAula({ sessao, aulaId, donoId, aoVoltar }: PropsAula) {
+function DetalheAula({
+  sessao,
+  aulaId,
+  donoId,
+  tituloCurso,
+  tituloModulo,
+  aoVoltar,
+}: PropsAula) {
   const [aula, setAula] = useState<AulaDetalhe | null>(null)
   const [erro, setErro] = useState<string | null>(null)
   const [mensagem, setMensagem] = useState<string | null>(null)
@@ -568,6 +527,8 @@ function DetalheAula({ sessao, aulaId, donoId, aoVoltar }: PropsAula) {
   const [textoNovo, setTextoNovo] = useState('')
   const [urlNova, setUrlNova] = useState('')
   const [arquivoNovo, setArquivoNovo] = useState<File | null>(null)
+  const [concluida, setConcluida] = useState(false)
+  const [enviandoConclusao, setEnviandoConclusao] = useState(false)
 
   const carregar = useCallback(async () => {
     try {
@@ -650,13 +611,18 @@ function DetalheAula({ sessao, aulaId, donoId, aoVoltar }: PropsAula) {
   }
 
   async function concluir() {
+    if (concluida || enviandoConclusao) return
     setErro(null)
     setMensagem(null)
+    setEnviandoConclusao(true)
     try {
       await api(`/api/v1/aulas/${aulaId}/conclusao`, { metodo: 'POST', corpo: {} })
+      setConcluida(true)
       setMensagem('Conclusao registrada.')
     } catch (erroConclusao) {
       setErro(mensagemDeErro(erroConclusao))
+    } finally {
+      setEnviandoConclusao(false)
     }
   }
 
@@ -686,7 +652,12 @@ function DetalheAula({ sessao, aulaId, donoId, aoVoltar }: PropsAula) {
           Voltar ao curso
         </button>
       </p>
-      <h1>{aula.titulo}</h1>
+      {tituloCurso && tituloModulo && (
+        <p className="trilha">
+          {tituloCurso} › {tituloModulo} › Aula
+        </p>
+      )}
+      <h1 className="titulo-aula">{aula.titulo}</h1>
       <p>Estado: {estado(aula.publicado)}</p>
 
       {erro && (
@@ -701,76 +672,85 @@ function DetalheAula({ sessao, aulaId, donoId, aoVoltar }: PropsAula) {
         {aula.conteudo.length === 0 ? (
           <p>Sem conteudo.</p>
         ) : (
-          <ol>
-            {aula.conteudo.map((bloco, indice) => (
-              <li key={bloco.id ?? indice}>
-                <BlocoRenderizado bloco={bloco} />
-                {podeEditar && (
-                  <button type="button" onClick={() => void removerBloco(indice)}>
-                    Remover bloco
-                  </button>
-                )}
-              </li>
-            ))}
-          </ol>
+          <ConteudoAula conteudo={aula.conteudo} />
         )}
       </section>
 
       {podeEditar && (
-        <form onSubmit={adicionarBloco}>
-          <label htmlFor="tipo-conteudo">Tipo do bloco</label>
-          <select
-            id="tipo-conteudo"
-            value={tipoNovo}
-            onChange={(evento) => setTipoNovo(evento.target.value)}
-          >
-            {TIPOS_CONTEUDO.map((tipo) => (
-              <option key={tipo.valor} value={tipo.valor}>
-                {tipo.rotulo}
-              </option>
-            ))}
-          </select>
+        <section>
+          <h2>Editar conteudo</h2>
+          {aula.conteudo.length > 0 && (
+            <ul className="lista-blocos">
+              {aula.conteudo.map((bloco, indice) => (
+                <li key={bloco.id ?? indice}>
+                  Bloco {indice + 1} — {bloco.tipo}{' '}
+                  <button type="button" onClick={() => void removerBloco(indice)}>
+                    Remover bloco
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <form onSubmit={adicionarBloco}>
+            <label htmlFor="tipo-conteudo">Tipo do bloco</label>
+            <select
+              id="tipo-conteudo"
+              value={tipoNovo}
+              onChange={(evento) => setTipoNovo(evento.target.value)}
+            >
+              {TIPOS_CONTEUDO.map((tipo) => (
+                <option key={tipo.valor} value={tipo.valor}>
+                  {tipo.rotulo}
+                </option>
+              ))}
+            </select>
 
-          {tipoNovo === 'texto' && (
-            <>
-              <label htmlFor="texto-conteudo">Texto</label>
-              <textarea
-                id="texto-conteudo"
-                value={textoNovo}
-                onChange={(evento) => setTextoNovo(evento.target.value)}
-              />
-            </>
-          )}
-          {tipoNovo === 'midia_embedada' && (
-            <>
-              <label htmlFor="url-conteudo">URL da midia (https)</label>
-              <input
-                id="url-conteudo"
-                type="url"
-                value={urlNova}
-                onChange={(evento) => setUrlNova(evento.target.value)}
-              />
-            </>
-          )}
-          {tipoNovo === 'material_anexo' && (
-            <>
-              <label htmlFor="arquivo-conteudo">Arquivo (PDF, PNG, JPEG, GIF ou ZIP ate 5 MB)</label>
-              <input
-                id="arquivo-conteudo"
-                type="file"
-                accept={TIPOS_ANEXO}
-                onChange={(evento) => setArquivoNovo(evento.target.files?.[0] ?? null)}
-              />
-            </>
-          )}
-          <button type="submit">Adicionar bloco</button>
-        </form>
+            {tipoNovo === 'texto' && (
+              <>
+                <label htmlFor="texto-conteudo">Texto</label>
+                <textarea
+                  id="texto-conteudo"
+                  value={textoNovo}
+                  onChange={(evento) => setTextoNovo(evento.target.value)}
+                />
+              </>
+            )}
+            {tipoNovo === 'midia_embedada' && (
+              <>
+                <label htmlFor="url-conteudo">URL da midia (https)</label>
+                <input
+                  id="url-conteudo"
+                  type="url"
+                  value={urlNova}
+                  onChange={(evento) => setUrlNova(evento.target.value)}
+                />
+              </>
+            )}
+            {tipoNovo === 'material_anexo' && (
+              <>
+                <label htmlFor="arquivo-conteudo">Arquivo (PDF, PNG, JPEG, GIF ou ZIP ate 5 MB)</label>
+                <input
+                  id="arquivo-conteudo"
+                  type="file"
+                  accept={TIPOS_ANEXO}
+                  onChange={(evento) => setArquivoNovo(evento.target.files?.[0] ?? null)}
+                />
+              </>
+            )}
+            <button type="submit">Adicionar bloco</button>
+          </form>
+        </section>
       )}
 
       {sessao.papel === 'estudante' && (
-        <p>
-          <button type="button" onClick={() => void concluir()}>
-            Marcar aula como concluida
+        <p className="acao-conclusao">
+          <button
+            type="button"
+            onClick={() => void concluir()}
+            disabled={concluida || enviandoConclusao}
+            className={concluida ? 'concluida' : undefined}
+          >
+            {concluida ? '✓ Aula concluída' : 'Marcar como concluída'}
           </button>
         </p>
       )}
