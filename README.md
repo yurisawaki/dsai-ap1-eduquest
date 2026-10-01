@@ -109,14 +109,15 @@ npx tsx scripts/gerar-token-recuperacao.ts <email>   # imprime token de reset (d
 ## 6. Testes
 
 ```bash
-npm test            # 82 testes, 12 arquivos — deve passar 100%
+npm test            # 95 testes, 13 arquivos — deve passar 100%
 npm run test:watch  # modo watch
 ```
 
 - **Banco de teste:** `eduquest_test` (mesma instância do compose, porta 5434). Ele é criado automaticamente pelo init do container (`infra/initdb/01-init.sql`) quando você roda `npm run db:up` pela primeira vez; a URL vem de `TEST_DATABASE_URL`.
 - **Migrations de teste:** rodam sozinhas — `tests/configuracao/global.ts` executa `npx prisma migrate deploy` contra o banco de teste antes da suíte. Não é preciso migrar na mão.
-- **Verde:** a saída final deve ser `Test Files 12 passed (12)` / `Tests 82 passed (82)` e `npm run typecheck` sem erros.
-- Cobertura atual: API (auth, perfis, catálogo, conteúdo e anexos — TC-01–TC-20 da SPEC de conteúdo —, conclusão, questões e tentativas — TQ-01–TQ-16 da SPEC de D4), web (React) e unidade (autorização).
+- **Verde:** a saída final deve ser `Test Files 13 passed (13)` / `Tests 95 passed (95)` e `npm run typecheck` sem erros.
+- **Timeout ocasional:** em máquina carregada, um teste pode estourar o limite padrão de 5 s do Vitest (visto uma vez em `tests/api/conclusao.test.ts`, que passa isolado). Se acontecer, rode o arquivo isolado antes de investigar.
+- Cobertura atual: API (auth, perfis, catálogo, conteúdo e anexos — TC-01–TC-20 da SPEC de conteúdo —, conclusão, questões e tentativas — TQ-01–TQ-16 da SPEC de D4 —, avaliações — TA-01–TA-14 da SPEC de D5), web (React) e unidade (autorização).
 
 ## 7. Estrutura do projeto
 
@@ -125,7 +126,7 @@ src/server/          backend Express
   app.ts             cria a app (middlewares, rotas, static)
   index.ts           sobe o servidor na porta configurada
   config.ts          variáveis de ambiente (falha cedo se faltar)
-  rotas/             auth, perfis, catalogo, questoes (montadas em /api/v1)
+  rotas/             auth, perfis, catalogo, questoes, avaliacoes (montadas em /api/v1)
   servicos/          regras de negócio (usuarios, sessoes, catalogo, …)
   middlewares/       sessão/papel
 src/web/             frontend React (Vite; root = src/web)
@@ -146,7 +147,8 @@ Não existe pasta `diario/` neste repositório.
 ## 8. Arquitetura atual
 
 - **Backend:** Express 5 + TypeScript, API versionada em **`/api/v1`**:
-  - `/api/v1/auth` (registro, login, logout, recuperação), `/api/v1/perfis`, `/api/v1` (catálogo: cursos/módulos/aulas/conteúdo/anexos/conclusão; questões e tentativas de D4).
+  - `/api/v1/auth` (registro, login, logout, recuperação), `/api/v1/perfis`, `/api/v1` (catálogo: cursos/módulos/aulas/conteúdo/anexos/conclusão; questões e tentativas de D4; avaliações, correção e resultado de D5).
+  - Código `409` usado em D5 para estado: avaliação fora da janela, tentativas esgotadas, composição congelada.
   - Limite de corpo JSON: 8 MiB em `PUT /aulas/{id}/conteudo` e `POST /aulas/{id}/arquivos`; padrão nas demais. Corpo acima do limite → `400`.
   - Erros no padrão `{"erro": {"codigo", "mensagem"}}` com códigos `400/401/403/404` (`src/server/erros.ts`).
   - Organização: **rotas** (HTTP/validação) → **serviços** (regra de negócio) → **Prisma**.
@@ -163,7 +165,7 @@ Não existe pasta `diario/` neste repositório.
 - **DP-19 resolvida:** `SPEC/2026-09-30-conteudo-aula.md` **aprovada** após auditoria (§13 da SPEC); `PLAN.md`, `TASKS.md` (T2.3), `decisoes-pendentes.md` e SPEC D3 revisados formalmente. Pendências derivadas abertas: P-18–P-21.
 - **DP-09 resolvida:** SPEC de D5 `SPEC/2026-10-01-avaliacoes.md` **aprovada** (avaliação do curso, nota 0–10 com pesos, correção manual de dissertativas pelo professor, resultado = maior nota).
 - **DP-08 resolvida:** SPEC de D4 `SPEC/2026-10-01-questoes-exercicios.md` **aprovada** (4 tipos de questão; questão pertence ao módulo); `PLAN.md`, `TASKS.md` e `decisoes-pendentes.md` revisados.
-- **F3 — D4 (T3.2/T3.3): API implementada** — questões dos 4 tipos com gabarito protegido, tentativas corrigidas no servidor e feedback (F3-01–F3-06). **Sem interface web** (pendência P-30 da SPEC de D4). Avaliações (D5): SPEC aprovada, ainda **sem código**.
+- **F3 — D4 (T3.2/T3.3): API implementada** — questões dos 4 tipos com gabarito protegido, tentativas corrigidas no servidor e feedback (F3-01–F3-06). **Sem interface web** (pendência P-30 da SPEC de D4). **F3 — D5 (T3.5): API implementada** — avaliações do curso com pesos, janela e limite de tentativas, nota 0–10 no servidor, correção manual de dissertativas e resultado = maior nota (F3-07–F3-15). Sem interface web (P-37).
 - Outras SPECs: visão geral, técnica de fundações, D3 (catálogo) e conteúdo de aula **aprovadas**; D1 revisada, aguardando re-auditoria.
 - **Próximas fases (F3 em diante)** seguem bloqueadas por suas pendências (ex.: DP-08 tipos de questão, DP-09 dissertativas) — ver `PLAN.md` §8.
 
@@ -201,7 +203,8 @@ Antes de implementar qualquer funcionalidade:
 5. ~~SPEC de D4 (T3.1, DP-08)~~ — feito (2026-10-01).
 6. ~~T3.2/T3.3 (API de D4)~~ — feito (2026-10-01).
 7. ~~SPEC de D5 (T3.4, DP-09)~~ — feito (2026-10-01): `SPEC/2026-10-01-avaliacoes.md`.
-8. **Próximo:** implementar T3.5 (avaliações) conforme a SPEC de D5. Superfície web de D4/D5 segue pendente (P-30/P-37).
+8. ~~T3.5 (API de D5)~~ — feito (2026-10-01).
+9. **Próximo:** validar a F3 (T3.6). Superfície web de D4/D5 segue pendente (P-30/P-37).
 
 ## 13. Git
 

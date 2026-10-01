@@ -146,14 +146,14 @@ function questaoVisivel(questao: CadeiaDaQuestao, usuario: UsuarioSessao): boole
   return cadeiaPublicada || ehDonoOuAdmin(questao.modulo.curso.dono_id, usuario)
 }
 
-const incluirCadeia = {
+export const incluirCadeia = {
   alternativas: { orderBy: { posicao: 'asc' } },
   modulo: {
     select: { publicado: true, curso: { select: { dono_id: true, publicado: true } } },
   },
 } satisfies Prisma.QuestaoInclude
 
-type QuestaoComCadeia = Prisma.QuestaoGetPayload<{ include: typeof incluirCadeia }>
+export type QuestaoComCadeia = Prisma.QuestaoGetPayload<{ include: typeof incluirCadeia }>
 
 async function buscarQuestao(id: unknown): Promise<QuestaoComCadeia | null> {
   if (typeof id !== 'string' || !uuidValido.test(id)) return null
@@ -168,7 +168,7 @@ async function questaoParaAlteracao(id: unknown, usuario: UsuarioSessao) {
 }
 
 // R-Q5/D4-h: gabarito, `correta` e explicação só para dono/admin
-function montarQuestao(questao: QuestaoComCadeia, autor: boolean): QuestaoLida {
+export function montarQuestao(questao: QuestaoComCadeia, autor: boolean): QuestaoLida {
   const lida: QuestaoLida = {
     id: questao.id,
     moduloId: questao.modulo_id,
@@ -336,7 +336,7 @@ export async function excluirQuestao(usuario: UsuarioSessao, id: unknown): Promi
 }
 
 // R-Q7/R-Q8: correção no servidor; `acerto` null só para dissertativa
-function corrigir(questao: QuestaoComCadeia, corpo: unknown): { resposta: Prisma.InputJsonValue; acerto: boolean | null } {
+export function corrigirResposta(questao: QuestaoComCadeia, corpo: unknown): { resposta: Prisma.InputJsonValue; acerto: boolean | null } {
   switch (questao.tipo) {
     case 'multipla_escolha': {
       const { alternativas } = chavesExatas(corpo, ['alternativas'], 'resposta')
@@ -387,7 +387,7 @@ export async function responderQuestao(
   if (!questao || !questaoVisivel(questao, usuario)) {
     throw erroNaoEncontrado('questao nao encontrada')
   }
-  const { resposta, acerto } = corrigir(questao, corpo)
+  const { resposta, acerto } = corrigirResposta(questao, corpo)
   const tentativa = await prisma.tentativa.create({
     data: { id: randomUUID(), questao_id: questao.id, usuario_id: usuario.id, resposta, acerto },
     select: { id: true },
