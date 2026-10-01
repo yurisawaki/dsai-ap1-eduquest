@@ -134,6 +134,7 @@ tests/               api/ · web/ · unidade/ · configuracao/ · utilidades/
 prisma/              schema.prisma + migrations/ (versionadas)
 SPEC/                especificações (fonte de requisitos — ver §10)
 PLAN.md, TASKS.md    planejamento e tarefas (processo SDD)
+docs/validacao/      relatórios de validação de fase (ex.: F2.md — T2.6)
 prompts/             prompts usados no processo SDD (histórico)
 scripts/             utilitários (ex.: token de recuperação)
 infra/               initdb (cria eduquest_test) e caddy/Caddyfile
@@ -192,7 +193,7 @@ Antes de implementar qualquer funcionalidade:
 
 1. ~~Aprovar a SPEC de DP-19~~ — feito (2026-09-30).
 2. ~~Implementar conteúdo de aula (T2.3)~~ — feito: F2-12/F2-13 definitivos, F2-15/F2-16, migração `f2_conteudo_aula`, editor por tipo; TC-01–TC-20 automatizados.
-3. **Concluir F2:** validar a fase (T2.6) — relatório de validação de F2.
+3. ~~Concluir F2 (T2.6)~~ — feito: `docs/validacao/F2.md` (F2 validada, com ressalvas de ambiente).
 4. **Pendências de processo abertas:** revisão formal de DP-01–DP-03 em `PLAN.md` §8/`decisoes-pendentes.md` (técnica §5); re-auditoria da SPEC D1.
 5. **Depois:** F3 (D4/D5) começa pela SPEC de D4 — que resolve DP-08; nada antes disso.
 
