@@ -161,8 +161,9 @@ Não existe pasta `diario/` neste repositório.
 - **F2 — Catálogo de aprendizagem (D3): implementada** (hierarquia curso > módulo > aula, publicação, autoria, consumo e conclusão de aula; **conteúdo de aula conforme DP-19**: lista ordenada de 0–50 blocos texto/mídia/anexo, upload de anexo JSON+base64 e download).
 - **Suíte: 68 testes passando** (`npm test`); **`npm run typecheck` passando** (ambos verificados em 2026-09-30).
 - **DP-19 resolvida:** `SPEC/2026-09-30-conteudo-aula.md` **aprovada** após auditoria (§13 da SPEC); `PLAN.md`, `TASKS.md` (T2.3), `decisoes-pendentes.md` e SPEC D3 revisados formalmente. Pendências derivadas abertas: P-18–P-21.
+- **DP-09 resolvida:** SPEC de D5 `SPEC/2026-10-01-avaliacoes.md` **aprovada** (avaliação do curso, nota 0–10 com pesos, correção manual de dissertativas pelo professor, resultado = maior nota).
 - **DP-08 resolvida:** SPEC de D4 `SPEC/2026-10-01-questoes-exercicios.md` **aprovada** (4 tipos de questão; questão pertence ao módulo); `PLAN.md`, `TASKS.md` e `decisoes-pendentes.md` revisados.
-- **F3 — D4 (T3.2/T3.3): API implementada** — questões dos 4 tipos com gabarito protegido, tentativas corrigidas no servidor e feedback (F3-01–F3-06). **Sem interface web** (pendência P-30 da SPEC de D4). Avaliações (D5) ainda não começaram.
+- **F3 — D4 (T3.2/T3.3): API implementada** — questões dos 4 tipos com gabarito protegido, tentativas corrigidas no servidor e feedback (F3-01–F3-06). **Sem interface web** (pendência P-30 da SPEC de D4). Avaliações (D5): SPEC aprovada, ainda **sem código**.
 - Outras SPECs: visão geral, técnica de fundações, D3 (catálogo) e conteúdo de aula **aprovadas**; D1 revisada, aguardando re-auditoria.
 - **Próximas fases (F3 em diante)** seguem bloqueadas por suas pendências (ex.: DP-08 tipos de questão, DP-09 dissertativas) — ver `PLAN.md` §8.
 
@@ -199,7 +200,8 @@ Antes de implementar qualquer funcionalidade:
 4. **Pendências de processo abertas:** revisão formal de DP-01–DP-03 em `PLAN.md` §8/`decisoes-pendentes.md` (técnica §5); re-auditoria da SPEC D1.
 5. ~~SPEC de D4 (T3.1, DP-08)~~ — feito (2026-10-01).
 6. ~~T3.2/T3.3 (API de D4)~~ — feito (2026-10-01).
-7. **Próximo:** decidir a superfície web de D4 (P-30) e escrever a SPEC de D5 (T3.4), que trata DP-09; T3.5 depende dela.
+7. ~~SPEC de D5 (T3.4, DP-09)~~ — feito (2026-10-01): `SPEC/2026-10-01-avaliacoes.md`.
+8. **Próximo:** implementar T3.5 (avaliações) conforme a SPEC de D5. Superfície web de D4/D5 segue pendente (P-30/P-37).
 
 ## 13. Git
 

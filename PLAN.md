@@ -194,7 +194,7 @@ Cada subseção declara: **escopo de implementação**, **entidades** (herdadas 
 - **Entidades:** avaliação, composição (questões), tentativa de avaliação, nota, prazo.
 - **Regras a preservar:** professor define número de tentativas e janela; nota calculada no servidor; resultado atualiza progresso acadêmico.
 - **Dependências:** D4 (composição); D6 (atualiza progresso); D7 (pode conceder XP/recompensa — SPEC §4 passo 6).
-- **Pendências (explícitas na SPEC):** correção manual de dissertativas está "a confirmar em SPEC própria" (SPEC D5); SPEC §6 remete a correção de dissertativas a SPEC própria.
+- **Pendências (explícitas na SPEC):** ~~correção manual de dissertativas~~ **resolvida (DP-09, 2026-10-01 — `SPEC/2026-10-01-avaliacoes.md`)**: correção manual pelo professor dono (ou admin) nas avaliações; avaliação do curso com questões de D4, nota 0–10 com pesos, resultado = maior nota. Pendências derivadas P-31–P-38 abertas; dissertativas de exercício seguem em P-25 (SPEC de D4).
 
 ### 5.6 Progresso acadêmico (D6)
 
@@ -375,7 +375,7 @@ Ordem lógica derivada das dependências da Seção 6. Cada fase: objetivo, dom�
 - **Resultado esperado:** questões com gabarito protegido; tentativas com resposta, acerto e feedback imediato; avaliações com número de tentativas e janela definidos pelo professor; nota calculada no servidor; resultado disponível para progresso.
 - **Validação:** regras de D4/D5 (gabarito não exposto antes do envio; tentativa registrada; nota servidor); passo 5–6 do fluxo.
 - **Rastreabilidade:** SPEC §5 D4/D5; §4 passos 5–6; funcionalidades 6–8.
-- **Pendências vinculadas (bloqueiam detalhe):** ~~tipos definitivos de questão (D4)~~ — **resolvida** (DP-08, `SPEC/2026-10-01-questoes-exercicios.md`, 2026-10-01); correção manual de dissertativas (D5, "a confirmar") — segue aberta (DP-09).
+- **Pendências vinculadas (bloqueiam detalhe):** ~~tipos definitivos de questão (D4)~~ — **resolvida** (DP-08, `SPEC/2026-10-01-questoes-exercicios.md`, 2026-10-01); ~~correção manual de dissertativas (D5)~~ — **resolvida** (DP-09, `SPEC/2026-10-01-avaliacoes.md`, 2026-10-01).
 
 ### Fase 4 — Progresso acadêmico
 
@@ -501,7 +501,7 @@ Ordem lógica derivada das dependências da Seção 6. Cada fase: objetivo, dom�
 | DP-06 | Acessibilidade e internacionalização (níveis, idiomas, fuso) | SPEC §7.6 | SPEC própria |
 | DP-07 | Fórmula exata de XP, fórmula/tabela de níveis | SPEC §7.7 (D7) | SPEC de D7 antes do detalhe de F5 |
 | DP-08 | Conjunto definitivo de tipos de questão | SPEC D4 — "a confirmar em SPEC própria" | SPEC de D4 antes do detalhe de F3 — **Resolvida em 2026-10-01** (ver `SPEC/2026-10-01-questoes-exercicios.md`, aprovada) |
-| DP-09 | Correção manual de dissertativas | SPEC D5 — "a confirmar em SPEC própria"; SPEC §6 | SPEC de D5 antes do detalhe de F3 |
+| DP-09 | Correção manual de dissertativas | SPEC D5 — "a confirmar em SPEC própria"; SPEC §6 | SPEC de D5 antes do detalhe de F3 — **Resolvida em 2026-10-01** (ver `SPEC/2026-10-01-avaliacoes.md`, aprovada) |
 | DP-10 | Regras detalhadas de ranking (empate, privacidade fina) | SPEC §7.7 (D11) | SPEC de D11 antes do detalhe de F7 |
 | DP-11 | Integrações externas (LTI/SCORM, OAuth social, e-mail transacional, CDN, vídeo, analytics de terceiros) | SPEC §7.9 | SPEC de integrações; e-mail opcional — D13 |
 | DP-12 | Pagamentos, moedas reais, marketplace | SPEC §7.10, §6 | **Fora de escopo do produto nesta visão** (não pendência de implementação) |

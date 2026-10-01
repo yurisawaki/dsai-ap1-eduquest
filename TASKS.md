@@ -287,7 +287,7 @@
 - **Artefatos esperados:** tentativas persistidas com acerto; feedback emitido após envio; testes de fluxo de tentativa.
 - **Validação:** "tentativa registrada com resposta e acerto"; passo 5 do fluxo executável; evento alimenta F4 e F5.
 - **Rastreabilidade:** `PLAN.md` §5.4, §6 item 5, §7 F3; SPEC §5 D4, §4 passo 5.
-- **Bloqueios:** `[Livre]` — DP-08 resolvida (`SPEC/2026-10-01-questoes-exercicios.md`: R-Q6–R-Q11, F3-06, TQ-08–TQ-14); dissertativa gravada sem correção até DP-09 + global DP-01–DP-03
+- **Bloqueios:** `[Livre]` — DP-08 resolvida (`SPEC/2026-10-01-questoes-exercicios.md`: R-Q6–R-Q11, F3-06, TQ-08–TQ-14); dissertativa de exercício gravada sem correção (pendência P-25 da SPEC de D4; DP-09 resolveu só avaliações) + global DP-01–DP-03
 
 #### T3.4 — Elaborar SPEC do domínio D5 (avaliações)
 
@@ -297,7 +297,7 @@
 - **Artefatos esperados:** `SPEC/` de D5 com critérios de aceitação.
 - **Validação:** regras de D5 da visão cobertas; DP-09 citada como pendência, não resolvida.
 - **Rastreabilidade:** `PLAN.md` §5.5, §7 F3, §8 DP-09; SPEC §5 D5 ("a confirmar em SPEC própria").
-- **Bloqueios:** `[Bloqueada: DP-09]` para o item de correção manual
+- **Bloqueios:** **Concluída em 2026-10-01** — `SPEC/2026-10-01-avaliacoes.md` aprovada; DP-09 resolvida (revisão formal desta data)
 
 #### T3.5 — Implementar avaliações (composição, tentativas, prazo, nota no servidor)
 
@@ -307,7 +307,7 @@
 - **Artefatos esperados:** avaliação publicável; tentativa respeitando janela/limite; nota calculada servidor; testes de janela e limite de tentativas.
 - **Validação:** "nota calculada servidor"; "professor define tentativas e janela"; passo 6 do fluxo executável; funcionalidade 8 verificável.
 - **Rastreabilidade:** `PLAN.md` §5.5, §7 F3; SPEC §5 D5, §4 passo 6; funcionalidade 8.
-- **Bloqueios:** `[Depende de SPEC D5]` (T3.4) e `[Bloqueada: DP-09]` (só para dissertativas) — DP-08 resolvida em 2026-10-01 + global DP-01–DP-03
+- **Bloqueios:** `[Livre]` — DP-08 e DP-09 resolvidas e SPEC D5 aprovada (`SPEC/2026-10-01-avaliacoes.md`: R-A1–R-A13, F3-07–F3-15, TA-01–TA-14) + global DP-01–DP-03
 
 #### T3.6 — Validar F3 (D4 e D5)
 
