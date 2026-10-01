@@ -25,6 +25,12 @@ export function criarApp() {
   app.use(carregarSessao)
 
   app.use('/api/v1/auth', rotasAuth)
+
+  // Health check público (deploy/monitoração): não depende de sessão nem de banco
+  app.get('/api/v1/health', (_req, res) => {
+    res.status(200).json({ status: 'ok' })
+  })
+
   app.use('/api/v1/perfis', rotasPerfis)
   app.use('/api/v1', rotasCatalogo)
   app.use('/api/v1', rotasQuestoes)
