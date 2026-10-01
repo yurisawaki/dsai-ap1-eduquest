@@ -7,11 +7,22 @@ const tentativasDeEscalada: Record<string, unknown>[] = [
   { papel: 'administrador' },
   { papel: 'professor' },
   { papel: 'admin' },
+  { papel: 'ADMINISTRADOR' },
+  { Papel: 'administrador' },
   { perfil: 'ADMIN' },
+  { perfil: { papel: 'administrador' } },
+  { usuario: { papel: 'administrador' } },
   { role: 'admin' },
   { administrador: true },
   { isAdmin: true },
+  { admin: true },
   { tipo: 'professor' },
+  { privilegio: 'admin' },
+  { nivel: 'admin' },
+  { papel: ['administrador'] },
+  { papel: { valor: 'administrador' } },
+  { papel: 1 },
+  { papel: null },
 ]
 
 describe('T1.2 — cadastro de contas (contrato 1; R-12)', () => {
@@ -69,6 +80,63 @@ describe('T1.2 — cadastro de contas (contrato 1; R-12)', () => {
     }
   })
 
+  it('ignora campos de privilégio em query string e headers (R-12)', async () => {
+    const email = emailUnico()
+    const resposta = await api
+      .post('/api/v1/auth/registro?papel=administrador&role=admin&isAdmin=true')
+      .set('x-papel', 'administrador')
+      .set('x-is-admin', 'true')
+      .send({ email, senha: senhaPadrao })
+    expect(resposta.status).toBe(201)
+    expect(resposta.body.papel).toBe('estudante')
+    const usuario = await prisma.usuario.findUnique({ where: { email } })
+    expect(usuario?.papel).toBe('estudante')
+  })
+
+  it('corpo não-JSON (form-urlencoded) não é interpretado: 400 e nenhuma conta criada', async () => {
+    const email = emailUnico()
+    const resposta = await api
+      .post('/api/v1/auth/registro')
+      .set('Content-Type', 'application/x-www-form-urlencoded')
+      .send(
+        `email=${encodeURIComponent(email)}&senha=${encodeURIComponent(senhaPadrao)}&papel=administrador`
+      )
+    expect(resposta.status).toBe(400)
+    expect(resposta.body.erro.codigo).toBe('validacao')
+    expect(await prisma.usuario.count({ where: { email } })).toBe(0)
+  })
+
+  it('JSON com __proto__/constructor não contamina o protótipo nem vira papel', async () => {
+    const email = emailUnico()
+    const resposta = await api
+      .post('/api/v1/auth/registro')
+      .set('Content-Type', 'application/json')
+      .send(
+        `{"email":"${email}","senha":"${senhaPadrao}","__proto__":{"papel":"administrador"},"constructor":{"prototype":{"papel":"administrador"}}}`
+      )
+    expect(resposta.status).toBe(201)
+    expect(resposta.body.papel).toBe('estudante')
+    const usuario = await prisma.usuario.findUnique({ where: { email } })
+    expect(usuario?.papel).toBe('estudante')
+    expect(({} as Record<string, unknown>).papel).toBeUndefined()
+  })
+
+  it('não existe endpoint público de promoção de usuário (404)', async () => {
+    const id = '22222222-2222-4222-8222-222222222222'
+    const respostas = [
+      await api.post('/api/v1/auth/promover').send({ papel: 'administrador' }),
+      await api.post('/api/v1/auth/registro/administrador').send({ email: emailUnico(), senha: senhaPadrao }),
+      await api.post(`/api/v1/usuarios/${id}/papel`).send({ papel: 'administrador' }),
+      await api.patch(`/api/v1/usuarios/${id}`).send({ papel: 'administrador' }),
+      await api.put(`/api/v1/usuarios/${id}/papel`).send({ papel: 'administrador' }),
+      await api.post(`/api/v1/perfis/${id}/papel`).send({ papel: 'administrador' }),
+    ]
+    for (const [indice, resposta] of respostas.entries()) {
+      expect(resposta.status, `caso ${indice}: ${resposta.status}`).toBe(404)
+      expect(resposta.body.erro.codigo).toBe('nao_encontrado')
+    }
+  })
+
   it('escalada bloqueada de ponta a ponta: cadastro "administrador" não administra cursos (403)', async () => {
     const email = emailUnico()
     const registro = await api.post('/api/v1/auth/registro').send({
@@ -85,7 +153,9 @@ describe('T1.2 — cadastro de contas (contrato 1; R-12)', () => {
     expect(registro.status).toBe(201)
 
     const atacante = request.agent(app)
-    const login = await atacante.post('/api/v1/auth/login').send({ email, senha: senhaPadrao })
+    const login = await atacante
+      .post('/api/v1/auth/login')
+      .send({ email, senha: senhaPadrao, papel: 'administrador', role: 'admin' })
     expect(login.status).toBe(200)
 
     const sessao = await atacante.get('/api/v1/auth/sessao')

@@ -100,6 +100,10 @@ describe('T1.5 — perfis (contratos 7 e 8)', () => {
       { agente: estudante.agente, id: estudante.id, corpo: { bio: 'estudante sem coluna de bio' } },
       { agente: estudante.agente, id: estudante.id, corpo: {} },
       { agente: admin.agente, id: admin.id, corpo: { bio: 'admin sem perfil' } },
+      { agente: professor.agente, id: professor.id, corpo: { papel: 'administrador' } },
+      { agente: estudante.agente, id: estudante.id, corpo: { papel: 'professor' } },
+      { agente: professor.agente, id: professor.id, corpo: { bio: 'x', papel: 'administrador' } },
+      { agente: estudante.agente, id: estudante.id, corpo: { role: 'admin', isAdmin: true } },
     ]
     for (const caso of casos) {
       const resposta = await caso.agente.patch(`/api/v1/perfis/${caso.id}`).send(caso.corpo)
