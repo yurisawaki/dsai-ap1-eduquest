@@ -50,30 +50,60 @@ export function App() {
 
   return (
     <>
-      <header>
-        <strong>EduQuest</strong>
-        <nav>
+      <header className="topo">
+        <span className="marca">
+          <span className="marca-monograma" aria-hidden="true">
+            EQ
+          </span>
+          <strong className="marca-nome">EduQuest</strong>
+        </span>
+        <nav aria-label="Navegação principal" className="nav-principal">
           {autenticado ? (
             <>
-              <button type="button" onClick={() => setVista('perfil')}>
+              <button
+                type="button"
+                className="nav-item"
+                aria-current={vista === 'perfil' ? 'page' : undefined}
+                onClick={() => setVista('perfil')}
+              >
                 Perfil
               </button>
-              <button type="button" onClick={() => setVista('catalogo')}>
+              <button
+                type="button"
+                className="nav-item"
+                aria-current={vista === 'catalogo' ? 'page' : undefined}
+                onClick={() => setVista('catalogo')}
+              >
                 Catálogo
               </button>
-              <button type="button" onClick={() => void sair()}>
+              <button type="button" className="nav-item nav-sair" onClick={() => void sair()}>
                 Sair
               </button>
             </>
           ) : (
             <>
-              <button type="button" onClick={() => setVista('login')}>
+              <button
+                type="button"
+                className="nav-item"
+                aria-current={vista === 'login' ? 'page' : undefined}
+                onClick={() => setVista('login')}
+              >
                 Entrar
               </button>
-              <button type="button" onClick={() => setVista('cadastro')}>
+              <button
+                type="button"
+                className="nav-item"
+                aria-current={vista === 'cadastro' ? 'page' : undefined}
+                onClick={() => setVista('cadastro')}
+              >
                 Criar conta
               </button>
-              <button type="button" onClick={() => setVista('recuperacao')}>
+              <button
+                type="button"
+                className="nav-item"
+                aria-current={vista === 'recuperacao' ? 'page' : undefined}
+                onClick={() => setVista('recuperacao')}
+              >
                 Recuperar senha
               </button>
             </>
@@ -81,15 +111,17 @@ export function App() {
         </nav>
       </header>
 
-      {erro && (
-        <p role="alert" className="erro">
-          {erro}
-        </p>
-      )}
+      <div className="area-alertas">
+        {erro && (
+          <p role="alert" className="erro">
+            {erro}
+          </p>
+        )}
+      </div>
 
       {sessao === 'carregando' ? (
         <main>
-          <p>Carregando…</p>
+          <p className="carregando">Carregando…</p>
         </main>
       ) : sessaoAtual && vista === 'perfil' ? (
         <PaginaPerfil sessao={sessaoAtual} />
