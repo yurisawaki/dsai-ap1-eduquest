@@ -210,7 +210,7 @@ Cada subseção declara: **escopo de implementação**, **entidades** (herdadas 
 - **Entidades:** regra de XP, evento de XP, saldo de XP, faixa de nível.
 - **Regras a preservar:** XP concedido apenas por ações verificadas; configuração de XP ajustável por escopo (global do professor/admin); nível monotônico (nunca diminui); XP total ≠ XP do período.
 - **Dependências:** ações de D3–D6 (alvo da concessão); D17 (configuração global); alimenta D11 (métrica de ranking) e D2 (exibição de nível).
-- **Pendências (explícitas na SPEC):** fórmula exata de XP, fórmula de níveis e tabela de níveis estão fora da SPEC de visão geral (SPEC §7.7) — **não definidas neste PLAN**.
+- **Pendências (explícitas na SPEC):** ~~fórmula exata de XP, fórmula de níveis e tabela de níveis~~ **resolvidas (DP-07, 2026-10-02 — `SPEC/2026-10-02-xp-niveis.md`)** — definidas somente naquela SPEC, não neste PLAN. Pendências derivadas P-44–P-49 abertas.
 - **Restrições herdadas:** XP não pode ser comprado nem transferido (SPEC §1).
 
 ### 5.8 Gamificação: conquistas (D8)
@@ -394,7 +394,7 @@ Ordem lógica derivada das dependências da Seção 6. Cada fase: objetivo, dom�
 - **Resultado esperado:** concessão de XP apenas por ações verificadas, no servidor; configuração de XP ajustável por escopo; níveis monotônicos; separação XP total × XP do período; desbloqueio de conquistas permanente e idempotente; nível e conquistas exibidos no perfil (D2).
 - **Validação:** regras de D7/D8 (monotonicidade; idempotência; sem XP sem ação verificada; XP não comprável/transferível); passo 8 do fluxo; verificação da regra de ouro.
 - **Rastreabilidade:** SPEC §5 D7/D8; §1 definições de XP/Nível/Conquista; §4 passo 8; funcionalidades 10–12.
-- **Pendências vinculadas (bloqueiam detalhe):** fórmula de XP, fórmula/tabela de níveis, catálogo de conquistas (SPEC §7.7).
+- **Pendências vinculadas (bloqueiam detalhe):** ~~fórmula de XP, fórmula/tabela de níveis~~ — **resolvida** (DP-07, `SPEC/2026-10-02-xp-niveis.md`, 2026-10-02); catálogo de conquistas (SPEC §7.7, DP-18) — segue aberto.
 
 ### Fase 6 — Missões e desafios
 
@@ -499,7 +499,7 @@ Ordem lógica derivada das dependências da Seção 6. Cada fase: objetivo, dom�
 | DP-04 | Requisitos não funcionais quantificados (performance, disponibilidade, escalabilidade, carga) | SPEC §7.4 | SPEC de NFRs própria |
 | DP-05 | Design de UI/UX (wireframes, paleta, componentes) | SPEC §7.5 | SPEC de UI/UX própria |
 | DP-06 | Acessibilidade e internacionalização (níveis, idiomas, fuso) | SPEC §7.6 | SPEC própria |
-| DP-07 | Fórmula exata de XP, fórmula/tabela de níveis | SPEC §7.7 (D7) | SPEC de D7 antes do detalhe de F5 |
+| DP-07 | Fórmula exata de XP, fórmula/tabela de níveis | SPEC §7.7 (D7) | SPEC de D7 antes do detalhe de F5 — **Resolvida em 2026-10-02** (ver `SPEC/2026-10-02-xp-niveis.md`, aprovada) |
 | DP-08 | Conjunto definitivo de tipos de questão | SPEC D4 — "a confirmar em SPEC própria" | SPEC de D4 antes do detalhe de F3 — **Resolvida em 2026-10-01** (ver `SPEC/2026-10-01-questoes-exercicios.md`, aprovada) |
 | DP-09 | Correção manual de dissertativas | SPEC D5 — "a confirmar em SPEC própria"; SPEC §6 | SPEC de D5 antes do detalhe de F3 — **Resolvida em 2026-10-01** (ver `SPEC/2026-10-01-avaliacoes.md`, aprovada) |
 | DP-10 | Regras detalhadas de ranking (empate, privacidade fina) | SPEC §7.7 (D11) | SPEC de D11 antes do detalhe de F7 |

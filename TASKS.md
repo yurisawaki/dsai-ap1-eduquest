@@ -385,7 +385,7 @@
 - **Artefatos esperados:** `SPEC/` de D7 com fórmulas e tabela de níveis definidos ali.
 - **Validação:** fórmulas ausentes deste TASKS e do `PLAN.md`; regras da visão cobertas.
 - **Rastreabilidade:** `PLAN.md` §5.7, §7 F5, §8 DP-07; SPEC §5 D7, §7.7.
-- **Bloqueios:** `[Bloqueada: DP-07]` — a SPEC D7 é o veículo de resolução
+- **Bloqueios:** **Concluída em 2026-10-02** — `SPEC/2026-10-02-xp-niveis.md` aprovada; DP-07 resolvida (revisão formal desta data)
 
 #### T5.2 — Implementar concessão de XP por ações verificadas (servidor)
 
@@ -395,7 +395,7 @@
 - **Artefatos esperados:** eventos de XP emitidos exclusivamente no servidor; testes de que o cliente não concede XP; testes dos gatilhos autorizados.
 - **Validação:** "XP concedido apenas por ações verificadas"; regra de ouro da visão verificada; XP não comprável/transferível; passo 8 executável.
 - **Rastreabilidade:** `PLAN.md` §5.7, §4 princípio 2, §7 F5, O4; SPEC §5 D7, §1, §4 passo 8 e regra de ouro; funcionalidades 10 e 11.
-- **Bloqueios:** `[Bloqueada: DP-07]` + global DP-01–DP-03
+- **Bloqueios:** `[Livre]` — DP-07 resolvida (`SPEC/2026-10-02-xp-niveis.md`: R-X1–R-X9, R-X22, §6.3, TX-01–TX-09, TX-13, TX-17, TX-20) + global DP-01–DP-03
 
 #### T5.3 — Implementar níveis monotônicos e métricas XP total × período
 
@@ -405,7 +405,7 @@
 - **Artefatos esperados:** cálculo de nível conforme tabela da SPEC D7; duas métricas de XP persistidas; testes de monotonicidade.
 - **Validação:** nível nunca diminui; XP total ≠ XP do período; exibição no perfil (T1.6) reflete os valores.
 - **Rastreabilidade:** `PLAN.md` §5.7, §4 princípio 8, §7 F5; SPEC §5 D7, §1 (níveis irreversíveis); funcionalidades 10 e 11.
-- **Bloqueios:** `[Bloqueada: DP-07]` + global DP-01–DP-03
+- **Bloqueios:** `[Livre]` — DP-07 resolvida (`SPEC/2026-10-02-xp-niveis.md`: R-X15–R-X24, F5-01, TX-10–TX-12, TX-18, TX-19) + global DP-01–DP-03
 
 #### T5.4 — Implementar configuração de XP ajustável por escopo
 
@@ -415,7 +415,7 @@
 - **Artefatos esperados:** parâmetros de XP configuráveis por papel autorizado; testes de aplicação por escopo.
 - **Validação:** professor altera apenas o próprio escopo; administrador altera global; alteração não reescreve XP já concedido (salvo regra explícita da SPEC D7/D17).
 - **Rastreabilidade:** `PLAN.md` §5.7, §5.17, §7 F5; SPEC §5 D7, §3 P2/P3.
-- **Bloqueios:** `[Bloqueada: DP-07]` + global DP-01–DP-03
+- **Bloqueios:** `[Livre]` — DP-07 resolvida (`SPEC/2026-10-02-xp-niveis.md`: R-X10–R-X14, F5-02–F5-05, TX-14–TX-16) + global DP-01–DP-03
 
 #### T5.5 — Elaborar SPEC do domínio D8 (conquistas)
 
@@ -887,7 +887,7 @@
 - **Artefatos esperados:** parâmetros globais editáveis pelo administrador; testes de que conquistas passadas permanecem intactas após alteração.
 - **Validação:** "alteração de parâmetros não altera conquistas já desbloqueadas"; administrador ajusta regras sem afetar histórico; funcionalidade 24 verificável.
 - **Rastreabilidade:** `PLAN.md` §5.17, §7 F13; SPEC §5 D17, §3 P3; funcionalidade 24.
-- **Bloqueios:** `[Depende de SPEC D17]` + `[Bloqueada: DP-07]` para os parâmetros de XP/níveis + global DP-01–DP-03
+- **Bloqueios:** `[Depende de SPEC D17]` + global DP-01–DP-03 — parâmetros de XP/níveis definidos (DP-07 resolvida, `SPEC/2026-10-02-xp-niveis.md` R-X10–R-X14, F5-02/F5-03)
 
 #### T13.5 — Disponibilizar analytics de plataforma na administração
 

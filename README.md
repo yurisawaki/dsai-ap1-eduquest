@@ -173,9 +173,10 @@ Não existe pasta `diario/` neste repositório.
 - **Deploy:** aplicação publica na URL da [§15](#15-deploy-url-pública) — **Render** (Blueprint `render.yaml` + Docker + PostgreSQL gerenciado); migrations aplicadas automaticamente por `npx prisma migrate deploy` na subida do container e seed via `initialDeployHook` no primeiro deploy.
 - **Contagem de código (`cloc`, 2026-10-01):** **10.049 linhas** em 69 arquivos (TypeScript 8.423, CSS 1.037, Prisma 289, SQL 258, Dockerfile 24, HTML 18), com `cloc . --vcs=git --exclude-dir=node_modules,vendor,dist,build,prompts --exclude-lang=Markdown,JSON,YAML,CSV,Text,SVG --not-match-f='(lock|\.min\.)'`.
 - **DP-19 resolvida:** `SPEC/2026-09-30-conteudo-aula.md` **aprovada** após auditoria (§13 da SPEC); `PLAN.md`, `TASKS.md` (T2.3), `decisoes-pendentes.md` e SPEC D3 revisados formalmente. Pendências derivadas abertas: P-18–P-21.
+- **DP-07 resolvida:** SPEC de D7 `SPEC/2026-10-02-xp-niveis.md` **aprovada** (XP por aula, 1º acerto e entrega/melhoria de nota de avaliação; curva de níveis progressiva; XP da semana; configuração global + ajuste por curso); `PLAN.md`, `TASKS.md` (T5.1–T5.4, T13.4) e `decisoes-pendentes.md` revisados. F5: SPEC de D7 aprovada, ainda **sem código**.
 - **DP-09 resolvida:** SPEC de D5 `SPEC/2026-10-01-avaliacoes.md` **aprovada** (avaliação do curso, nota 0–10 com pesos, correção manual de dissertativas pelo professor, resultado = maior nota).
 - **DP-08 resolvida:** SPEC de D4 `SPEC/2026-10-01-questoes-exercicios.md` **aprovada** (4 tipos de questão; questão pertence ao módulo); `PLAN.md`, `TASKS.md` e `decisoes-pendentes.md` revisados.
-- Outras SPECs: visão geral, técnica de fundações, D3 (catálogo), conteúdo de aula, D4, D5, identidade visual e progresso (D6) **aprovadas**; D1 revisada, aguardando re-auditoria.
+- Outras SPECs: visão geral, técnica de fundações, D3 (catálogo), conteúdo de aula, D4, D5, identidade visual, progresso (D6) e XP/níveis (D7) **aprovadas**; D1 revisada, aguardando re-auditoria.
 - **Próximas fases:** gamificação (D7/D8) e demais domínios do `PLAN.md` §8 — cada um com sua própria SPEC; pendências abertas listadas em cada SPEC (§12) e no `TASKS.md`.
 
 ## 10. SDD / regra de desenvolvimento
@@ -214,7 +215,9 @@ Antes de implementar qualquer funcionalidade:
 7. ~~SPEC de D5 (T3.4, DP-09)~~ — feito (2026-10-01): `SPEC/2026-10-01-avaliacoes.md`.
 8. ~~T3.5 (API de D5)~~ — feito (2026-10-01).
 9. ~~Validar a F3 (T3.6)~~ — feito: `docs/validacao/F3.md` (API validada; sem interface web — P-30/P-37).
-10. **Próximo:** F4 — Progresso acadêmico (D6), começando pela SPEC de D6 (T4.1).
+10. ~~F4 — Progresso acadêmico (D6)~~ — feito (2026-10-01): `SPEC/2026-10-01-progresso-aprendizagem.md`.
+11. ~~SPEC de D7 (T5.1, DP-07)~~ — feito (2026-10-02): `SPEC/2026-10-02-xp-niveis.md`.
+12. **Próximo:** implementar T5.2–T5.4 (XP, níveis e configuração) conforme a SPEC de D7; em paralelo, SPEC de D8 (T5.5, DP-18).
 
 ## 13. Git
 
