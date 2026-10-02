@@ -109,6 +109,7 @@ rotasCatalogo.post(
       aulaId: conclusao.aulaId,
       concluidaEm: conclusao.concluidaEm,
       xp: conclusao.xp,
+      conquistas: conclusao.conquistas,
     })
   }
 )

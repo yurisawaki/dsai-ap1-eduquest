@@ -7,14 +7,20 @@ import {
   lerConfigGlobal,
   substituirConfigGlobal,
 } from '../servicos/configuracaoXp'
+import { catalogoDoEstudante } from '../servicos/conquistas'
 import { lerXp } from '../servicos/xp'
 
-// SPEC/2026-10-02-xp-niveis.md §6
+// SPEC/2026-10-02-xp-niveis.md §6 e SPEC/2026-10-02-conquistas.md §6 (rotas de gamificação da F5)
 export const rotasXp = Router()
 
 // F5-01: próprio XP e nível (R-X24: só o próprio estudante)
 rotasXp.get('/xp', exigirSessao, exigirPapel('estudante'), async (req, res) => {
   res.status(200).json(await lerXp(prisma, req.usuario!.id))
+})
+
+// F5-06 (SPEC/2026-10-02-conquistas.md §6.1): catálogo com status e progresso do próprio estudante
+rotasXp.get('/conquistas', exigirSessao, exigirPapel('estudante'), async (req, res) => {
+  res.status(200).json(await catalogoDoEstudante(req.usuario!.id))
 })
 
 // F5-02/F5-03 — R-X11: valores globais só pelo administrador (401 → 403 → 400)

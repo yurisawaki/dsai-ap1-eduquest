@@ -4,6 +4,7 @@ import { erroNaoEncontrado, erroValidacao } from '../erros'
 import { prisma } from '../prisma'
 import { uuidValido } from '../tipos'
 import { ehDonoOuAdmin, exigirAutoria, type UsuarioSessao } from './catalogo'
+import { avaliarConquistas, type ConquistaDesbloqueada } from './conquistas'
 import { concederXp, type XpDaAcao } from './xp'
 
 // SPEC/2026-10-01-questoes-exercicios.md (D4, DP-08)
@@ -50,6 +51,7 @@ export interface ResultadoTentativa {
   acerto: boolean | null
   feedback: { explicacao: string | null }
   xp: XpDaAcao
+  conquistas: ConquistaDesbloqueada[]
 }
 
 function pontosDeCodigo(valor: string): number {
@@ -395,7 +397,7 @@ export async function responderQuestao(
   }
   const { resposta, acerto } = corrigirResposta(questao, corpo)
   // R-X3/R-X8 (D7): só o primeiro acerto da questão paga XP (chave única), na mesma transação
-  const { tentativa, xp } = await prisma.$transaction(async (tx) => {
+  const { tentativa, xp, conquistas } = await prisma.$transaction(async (tx) => {
     const tentativa = await tx.tentativa.create({
       data: { id: randomUUID(), questao_id: questao.id, usuario_id: usuario.id, resposta, acerto },
       select: { id: true },
@@ -412,8 +414,10 @@ export async function responderQuestao(
           ]
         : []
     )
-    return { tentativa, xp }
+    // R-C3/R-C5 (D8): avaliadas depois do XP, na mesma transação
+    const conquistas = await avaliarConquistas(tx, usuario.id)
+    return { tentativa, xp, conquistas }
   })
   // R-Q10/D4-c: feedback com acerto e explicação; o gabarito nunca é devolvido
-  return { tentativaId: tentativa.id, acerto, feedback: { explicacao: questao.explicacao }, xp }
+  return { tentativaId: tentativa.id, acerto, feedback: { explicacao: questao.explicacao }, xp, conquistas }
 }

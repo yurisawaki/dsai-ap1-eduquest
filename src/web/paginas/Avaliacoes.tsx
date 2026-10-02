@@ -1,6 +1,11 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react'
 import { api, mensagemDeErro } from '../cliente'
-import { AvisoXp, type XpDaAcao } from '../componentes/AvisoXp'
+import {
+  AvisoConquistas,
+  AvisoXp,
+  type ConquistaDesbloqueada,
+  type XpDaAcao,
+} from '../componentes/AvisoXp'
 
 interface QuestaoRef {
   questao: {
@@ -39,6 +44,7 @@ interface TentativaEnvio {
   status: 'aguardando_correcao' | 'corrigida'
   nota: number | null
   xp?: XpDaAcao
+  conquistas?: ConquistaDesbloqueada[]
 }
 
 interface Props {
@@ -300,6 +306,7 @@ function FormularioAvaliacao({
         <p>Status: {rotuloStatus(envioConcluido.status)}</p>
         <p>Nota: {envioConcluido.nota !== null ? formatarNota(envioConcluido.nota) : 'Disponível após correção'}</p>
         <AvisoXp xp={envioConcluido.xp} />
+        <AvisoConquistas conquistas={envioConcluido.conquistas} />
       </div>
     )
   }

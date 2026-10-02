@@ -15,3 +15,22 @@ export function AvisoXp({ xp }: { xp?: XpDaAcao | null }) {
     </p>
   )
 }
+
+// SPEC/2026-10-02-conquistas.md §6.3/§6.4 (D8-i): uma linha por conquista recém-desbloqueada
+export interface ConquistaDesbloqueada {
+  codigo: string
+  nome: string
+}
+
+export function AvisoConquistas({ conquistas }: { conquistas?: ConquistaDesbloqueada[] | null }) {
+  if (!conquistas || conquistas.length === 0) return null
+  return (
+    <ul className="aviso-conquistas" role="status">
+      {conquistas.map((conquista) => (
+        <li key={conquista.codigo}>
+          Conquista desbloqueada: <strong>{conquista.nome}</strong>
+        </li>
+      ))}
+    </ul>
+  )
+}

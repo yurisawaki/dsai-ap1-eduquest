@@ -51,6 +51,7 @@ model Usuario {
   tentativas_avaliacao TentativaAvaliacao[]
   eventos_xp         EventoXp[]
   saldo_xp           SaldoXp?
+  desbloqueios       DesbloqueioConquista[]
 
   @@map("usuario")
 }
@@ -428,4 +429,49 @@ model SaldoXp {
   usuario Usuario @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
 
   @@map("saldo_xp")
+}
+
+// D8 (SPEC/2026-10-02-conquistas.md §5): conquistas
+
+enum TipoCriterio {
+  aulas_concluidas
+  cursos_concluidos
+  questoes_acertadas
+  avaliacoes_entregues
+  nota_avaliacao
+  nivel
+}
+
+// §5.1 — catálogo fixo (U-1), inserido pela migração
+model Conquista {
+  id            String       @id @db.Uuid
+  codigo        String       @unique @db.Text
+  nome          String       @db.Text
+  descricao     String       @db.Text
+  tipo_criterio TipoCriterio
+  meta          Int
+  ordem         Int          @unique
+  criado_em     DateTime     @default(now())
+  atualizado_em DateTime     @updatedAt
+
+  desbloqueios DesbloqueioConquista[]
+
+  @@map("conquista")
+}
+
+// §5.2 — permanente e idempotente (R-C4/R-C6)
+model DesbloqueioConquista {
+  id              String   @id @db.Uuid
+  usuario_id      String   @db.Uuid
+  conquista_id    String   @db.Uuid
+  desbloqueada_em DateTime
+  criado_em       DateTime @default(now())
+  atualizado_em   DateTime @updatedAt
+
+  usuario   Usuario   @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+  conquista Conquista @relation(fields: [conquista_id], references: [id], onDelete: Restrict)
+
+  @@unique([usuario_id, conquista_id])
+  @@index([conquista_id])
+  @@map("desbloqueio_conquista")
 }

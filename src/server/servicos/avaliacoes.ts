@@ -11,6 +11,7 @@ import {
   type QuestaoComCadeia,
   type QuestaoLida,
 } from './questoes'
+import { avaliarConquistas } from './conquistas'
 import { concederXp, eventoDeNota, maiorNotaRemunerada, type EventoNovo } from './xp'
 
 // SPEC/2026-10-01-avaliacoes.md (D5, DP-09)
@@ -347,7 +348,7 @@ export async function realizarAvaliacao(usuario: UsuarioSessao, id: unknown, cor
         corrigidas.map((resposta) => resposta.pontos!)
       )
   const tentativaId = randomUUID()
-  const xp = await prisma.$transaction(async (tx) => {
+  const { xp, conquistas } = await prisma.$transaction(async (tx) => {
     await tx.tentativaAvaliacao.create({
       data: {
         id: tentativaId,
@@ -370,7 +371,7 @@ export async function realizarAvaliacao(usuario: UsuarioSessao, id: unknown, cor
     })
     // R-X4/R-X5/R-X8 (D7): entrega (só a primeira paga) + melhoria da nota, se já corrigida.
     // R-X6: respostas de avaliação não pagam XP por acerto.
-    return concederXp(tx, usuario.id, avaliacao.curso_id, async (valores) => {
+    const xp = await concederXp(tx, usuario.id, avaliacao.curso_id, async (valores) => {
       const eventos: EventoNovo[] = [
         {
           origem: 'entrega_avaliacao',
@@ -386,6 +387,8 @@ export async function realizarAvaliacao(usuario: UsuarioSessao, id: unknown, cor
       }
       return eventos
     })
+    // R-C3/R-C5 (D8): avaliadas depois do XP, na mesma transação
+    return { xp, conquistas: await avaliarConquistas(tx, usuario.id) }
   })
   // R-A11: só status e nota — nem gabarito nem acerto por questão
   return {
@@ -393,6 +396,7 @@ export async function realizarAvaliacao(usuario: UsuarioSessao, id: unknown, cor
     status: pendente ? 'aguardando_correcao' : 'corrigida',
     nota: nota?.toNumber() ?? null,
     xp,
+    conquistas,
   }
 }
 
@@ -522,6 +526,8 @@ export async function corrigirDissertativa(
         const evento = eventoDeNota(avaliacaoId, nota, anterior, valores.xp_por_ponto_nota)
         return evento ? [evento] : []
       })
+      // R-C2 (D8): desbloqueios do dono da tentativa, nunca do professor
+      await avaliarConquistas(tx, estudanteId)
     }
   })
   const atualizada = await prisma.tentativaAvaliacao.findUnique({

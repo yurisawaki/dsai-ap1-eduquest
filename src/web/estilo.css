@@ -1340,3 +1340,73 @@ main.principal-estreito .titulo-pagina {
   color: var(--texto-sec);
   font-size: var(--tam-sec);
 }
+
+/* ============================ conquistas (D8) ============================ */
+
+.aviso-conquistas {
+  list-style: none;
+  margin: var(--esp-3) 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-2);
+}
+
+.aviso-conquistas li {
+  padding: var(--esp-2) var(--esp-3);
+  border-radius: var(--raio-s);
+  border-left: 3px solid var(--aviso);
+  background: var(--aviso-suave);
+  color: var(--aviso);
+  font-size: var(--tam-sec);
+}
+
+.catalogo-conquistas {
+  margin-top: var(--esp-6);
+}
+
+.catalogo-conquistas ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--esp-3);
+}
+
+.conquista {
+  padding: var(--esp-3) var(--esp-4);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-m);
+  background: var(--superficie-alt);
+  color: var(--texto-sec);
+}
+
+.conquista.desbloqueada {
+  background: var(--superficie);
+  border-color: var(--sucesso);
+  color: var(--texto);
+}
+
+.conquista-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--esp-2);
+}
+
+.conquista-estado {
+  font-size: var(--tam-sec);
+  white-space: nowrap;
+}
+
+.conquista-descricao {
+  margin: var(--esp-1) 0 var(--esp-2);
+  font-size: var(--tam-sec);
+}
+
+@media (max-width: 768px) {
+  .catalogo-conquistas ul {
+    grid-template-columns: 1fr;
+  }
+}

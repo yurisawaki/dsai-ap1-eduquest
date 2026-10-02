@@ -9,6 +9,7 @@ import {
   validarArquivo,
   validarBlocos,
 } from './conteudo'
+import { avaliarConquistas, type ConquistaDesbloqueada } from './conquistas'
 import { concederXp, type XpDaAcao } from './xp'
 
 type Papel = 'estudante' | 'professor' | 'administrador'
@@ -108,6 +109,7 @@ export interface ResultadoConclusao {
   concluidaEm: string
   repetida: boolean
   xp: XpDaAcao
+  conquistas: ConquistaDesbloqueada[]
 }
 
 interface Alteracoes {
@@ -569,7 +571,7 @@ export async function concluirAula(
   // R-D6-2: a unique de (aula_id, usuario_id) torna a escrita idempotente até em corrida;
   // skipDuplicates não gera erro quando outra requisição criou o mesmo registro.
   // R-X2/R-X8 (D7): só a primeira conclusão paga XP, na mesma transação da conclusão.
-  const { criado, registro, xp } = await prisma.$transaction(async (tx) => {
+  const { criado, registro, xp, conquistas } = await prisma.$transaction(async (tx) => {
     const criado = await tx.conclusaoAula.createMany({
       data: [
         {
@@ -597,7 +599,9 @@ export async function concluirAula(
           ]
         : []
     )
-    return { criado, registro, xp }
+    // R-C3/R-C5 (D8): avaliadas depois do XP, na mesma transação
+    const conquistas = await avaliarConquistas(tx, usuario.id)
+    return { criado, registro, xp, conquistas }
   })
   if (!registro) {
     throw erroNaoEncontrado('aula nao encontrada')
@@ -606,6 +610,7 @@ export async function concluirAula(
     aulaId: registro.aula_id,
     concluidaEm: registro.concluida_em.toISOString(),
     xp,
+    conquistas,
     repetida: criado.count === 0,
   }
 }

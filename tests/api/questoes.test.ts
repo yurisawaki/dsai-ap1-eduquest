@@ -298,6 +298,7 @@ describe('T3.3 — tentativas e feedback imediato (F3-06, SPEC D4)', () => {
       feedback: { explicacao: MULTIPLA.explicacao },
       // campo aditivo de D7 (§6.3)
       xp: { ganho: 0, total: 0, nivel: 1, subiuNivel: false },
+      conquistas: [], // campo aditivo de D8 (§6.3)
     })
 
     const semExplicacao = await questaoPublicada(NUMERICA)
@@ -308,6 +309,7 @@ describe('T3.3 — tentativas e feedback imediato (F3-06, SPEC D4)', () => {
       feedback: { explicacao: null },
       // campo aditivo de D7 (§6.3)
       xp: { ganho: 0, total: expect.any(Number), nivel: expect.any(Number), subiuNivel: false },
+      conquistas: [],
     })
     expect(JSON.stringify(numerica.body)).not.toContain('3.14')
   })

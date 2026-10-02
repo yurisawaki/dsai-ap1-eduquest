@@ -213,6 +213,7 @@ describe('T3.5 — avaliações: realização, nota, correção e resultado (F3-
       nota: 2.5,
       // campo aditivo de D7 (§6.3)
       xp: expect.objectContaining({ ganho: expect.any(Number) }),
+      conquistas: expect.any(Array), // campo aditivo de D8 (§6.3)
     })
   })
 
@@ -229,6 +230,7 @@ describe('T3.5 — avaliações: realização, nota, correção e resultado (F3-
       status: 'corrigida',
       nota: 3.33,
       xp: expect.objectContaining({ ganho: expect.any(Number) }),
+      conquistas: expect.any(Array), // campo aditivo de D8 (§6.3)
     })
 
     const segunda = await realizar(aberta.estudante.agente, aberta.avaliacaoId, [

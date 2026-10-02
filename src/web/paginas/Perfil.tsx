@@ -7,8 +7,74 @@ export interface Perfil {
   papel: string
   bio?: string | null
   nivel: number | null
-  conquistas: unknown[]
+  conquistas: ConquistaDoPerfil[]
   inventario: unknown[]
+}
+
+// Contrato 7 + R-C9 (SPEC/2026-10-02-conquistas.md): conquistas desbloqueadas, com data
+export interface ConquistaDoPerfil {
+  codigo: string
+  nome: string
+  desbloqueadaEm: string
+}
+
+// F5-06 (SPEC/2026-10-02-conquistas.md §6.1): catálogo com progresso, só do próprio estudante
+export interface ConquistaDoCatalogo {
+  codigo: string
+  nome: string
+  descricao: string
+  meta: number
+  progresso: number
+  desbloqueada: boolean
+  desbloqueadaEm: string | null
+}
+
+function dataCurta(iso: string): string {
+  return new Date(iso).toLocaleDateString('pt-BR')
+}
+
+function CatalogoConquistas({ itens }: { itens: ConquistaDoCatalogo[] }) {
+  const total = itens.filter((item) => item.desbloqueada).length
+  return (
+    <section className="catalogo-conquistas">
+      <h2>
+        Catálogo de conquistas{' '}
+        <span className="resumo-estrutura">
+          ({total} de {itens.length})
+        </span>
+      </h2>
+      <ul>
+        {itens.map((item) => (
+          <li key={item.codigo} className={item.desbloqueada ? 'conquista desbloqueada' : 'conquista'}>
+            <div className="conquista-topo">
+              <strong>{item.nome}</strong>
+              <span className="conquista-estado">
+                {item.desbloqueada && item.desbloqueadaEm
+                  ? `Desbloqueada em ${dataCurta(item.desbloqueadaEm)}`
+                  : `${item.progresso} / ${item.meta}`}
+              </span>
+            </div>
+            <p className="conquista-descricao">{item.descricao}</p>
+            {!item.desbloqueada && (
+              <div
+                className="progresso-barra"
+                role="progressbar"
+                aria-valuenow={item.progresso}
+                aria-valuemin={0}
+                aria-valuemax={item.meta}
+                aria-label={`Progresso de ${item.nome}`}
+              >
+                <div
+                  className="progresso-preenchimento"
+                  style={{ width: `${Math.floor((item.progresso * 100) / item.meta)}%` }}
+                />
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
 }
 
 // F5-01 (SPEC/2026-10-02-xp-niveis.md §6.1): calculado no servidor; o cliente só exibe
@@ -69,6 +135,7 @@ export function PaginaPerfil({ sessao }: Props) {
   const [mensagemBio, setMensagemBio] = useState<string | null>(null)
   const [erroBio, setErroBio] = useState<string | null>(null)
   const [xp, setXp] = useState<XpDoEstudante | null>(null)
+  const [catalogo, setCatalogo] = useState<ConquistaDoCatalogo[] | null>(null)
 
   const carregar = useCallback(async () => {
     try {
@@ -86,6 +153,10 @@ export function PaginaPerfil({ sessao }: Props) {
     api<XpDoEstudante>('/api/v1/xp')
       .then(setXp)
       .catch(() => setXp(null))
+    // R-C10: catálogo com progresso só para o próprio estudante; falha não impede o perfil
+    api<ConquistaDoCatalogo[]>('/api/v1/conquistas')
+      .then(setCatalogo)
+      .catch(() => setCatalogo(null))
   }, [sessao.papel, sessao.usuarioId])
 
   useEffect(() => {
@@ -170,9 +241,9 @@ export function PaginaPerfil({ sessao }: Props) {
               <p className="valor-vazio">Nenhuma conquista ainda.</p>
             ) : (
               <ul className="lista-chips">
-                {perfil.conquistas.map((conquista, indice) => (
-                  <li key={indice}>
-                    {typeof conquista === 'string' ? conquista : JSON.stringify(conquista)}
+                {perfil.conquistas.map((conquista) => (
+                  <li key={conquista.codigo} title={`Desbloqueada em ${dataCurta(conquista.desbloqueadaEm)}`}>
+                    {conquista.nome}
                   </li>
                 ))}
               </ul>
@@ -192,6 +263,8 @@ export function PaginaPerfil({ sessao }: Props) {
             )}
           </section>
         </div>
+
+        {catalogo && <CatalogoConquistas itens={catalogo} />}
       </article>
     </main>
   )
