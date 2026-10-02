@@ -4,6 +4,7 @@ import { api, mensagemDeErro } from '../cliente'
 import type { Sessao } from '../App'
 import { ConteudoAula, type BlocoConteudo } from '../componentes/ConteudoAula'
 import { AvisoXp, type XpDaAcao } from '../componentes/AvisoXp'
+import { SecaoXpCurso } from './ConfiguracaoXp'
 import { QuestoesModulo } from './Questoes'
 import { AvaliacaoDetalhe } from './Avaliacoes'
 
@@ -718,6 +719,8 @@ function DetalheCurso({ sessao, cursoId, aoVoltar }: PropsCurso) {
           </ul>
         )}
       </section>
+
+      {podeEditar && <SecaoXpCurso cursoId={cursoId} />}
     </main>
   )
 }

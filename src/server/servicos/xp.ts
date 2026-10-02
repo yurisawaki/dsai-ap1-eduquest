@@ -7,15 +7,15 @@ type Tx = Prisma.TransactionClient
 type Db = Tx | PrismaClient
 
 // U-1–U-3: padrões, usados se a linha global não existir
-const PADRAO = {
+export const PADRAO_XP = {
   xp_conclusao_aula: 10,
   xp_acerto_questao: 5,
   xp_entrega_avaliacao: 20,
   xp_por_ponto_nota: 3,
 } as const
 
-type Parametro = keyof typeof PADRAO
-export type ValoresXp = Record<Parametro, number>
+export type ParametroXp = keyof typeof PADRAO_XP
+export type ValoresXp = Record<ParametroXp, number>
 
 export interface XpDaAcao {
   ganho: number
@@ -46,14 +46,14 @@ export function nivelDe(xp: number): number {
 }
 
 // R-X13: efetivo = min(ajuste do curso, 2 × global atual); sem ajuste, o global
-export async function valoresEfetivos(tx: Tx, cursoId: string): Promise<ValoresXp> {
+export async function valoresEfetivos(tx: Db, cursoId: string): Promise<ValoresXp> {
   const [global, curso] = await Promise.all([
     tx.configXpGlobal.findFirst(),
     tx.configXpCurso.findUnique({ where: { curso_id: cursoId } }),
   ])
-  const valores = { ...PADRAO } as ValoresXp
-  for (const parametro of Object.keys(PADRAO) as Parametro[]) {
-    const base = global?.[parametro] ?? PADRAO[parametro]
+  const valores = { ...PADRAO_XP } as ValoresXp
+  for (const parametro of Object.keys(PADRAO_XP) as ParametroXp[]) {
+    const base = global?.[parametro] ?? PADRAO_XP[parametro]
     const ajuste = curso?.[parametro]
     valores[parametro] = ajuste === null || ajuste === undefined ? base : Math.min(ajuste, 2 * base)
   }

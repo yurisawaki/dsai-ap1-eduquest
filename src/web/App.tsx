@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { api, mensagemDeErro } from './cliente'
 import { navegarParaVista, substituirVista, useLocalizacao } from './navegacao'
 import { PaginaCadastro } from './paginas/Cadastro'
+import { PaginaAdministracao } from './paginas/ConfiguracaoXp'
 import { PaginaCatalogo } from './paginas/Catalogo'
 import { PaginaLogin } from './paginas/Login'
 import { PaginaPerfil } from './paginas/Perfil'
@@ -75,6 +76,16 @@ export function App() {
               >
                 Catálogo
               </button>
+              {sessaoAtual?.papel === 'administrador' && (
+                <button
+                  type="button"
+                  className="nav-item"
+                  aria-current={vista === 'administracao' ? 'page' : undefined}
+                  onClick={() => navegarParaVista('administracao')}
+                >
+                  Administração
+                </button>
+              )}
               <button type="button" className="nav-item nav-sair" onClick={() => void sair()}>
                 Sair
               </button>
@@ -126,6 +137,8 @@ export function App() {
         <PaginaPerfil sessao={sessaoAtual} />
       ) : sessaoAtual && vista === 'catalogo' ? (
         <PaginaCatalogo sessao={sessaoAtual} />
+      ) : sessaoAtual && vista === 'administracao' && sessaoAtual.papel === 'administrador' ? (
+        <PaginaAdministracao />
       ) : vista === 'cadastro' ? (
         <PaginaCadastro aoIrParaLogin={() => navegarParaVista('login')} />
       ) : vista === 'recuperacao' ? (

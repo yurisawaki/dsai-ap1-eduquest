@@ -421,3 +421,129 @@ describe('T5.3 — consulta de XP, semana e nível no perfil (F5-01, SPEC D7)', 
     expect(doProfessor.body.nivel).toBeNull()
   })
 })
+
+// Os testes que alteram o valor global ficam neste arquivo (execução sequencial) e sempre
+// restauram os padrões: os demais testes de XP dependem dos valores 10/5/20/3.
+const PADROES = { xpConclusaoAula: 10, xpAcertoQuestao: 5, xpEntregaAvaliacao: 20, xpPorPontoNota: 3 }
+
+async function restaurarPadroes() {
+  await prisma.configXpGlobal.updateMany({
+    data: { xp_conclusao_aula: 10, xp_acerto_questao: 5, xp_entrega_avaliacao: 20, xp_por_ponto_nota: 3 },
+  })
+}
+
+describe('T5.4 — configuração de XP por escopo (F5-02–F5-05, SPEC D7)', () => {
+  it('TX-14/R-X11: administrador lê e substitui o global; demais papéis 403; sem sessão 401', async () => {
+    const admin = await criarUsuarioComSessao('administrador')
+    const professor = await criarUsuarioComSessao('professor')
+    const estudante = await criarUsuarioComSessao('estudante')
+    try {
+      const lida = await admin.agente.get('/api/v1/config/xp')
+      expect(lida.status).toBe(200)
+      expect(lida.body).toEqual(PADROES)
+
+      const novos = { xpConclusaoAula: 12, xpAcertoQuestao: 0, xpEntregaAvaliacao: 1000, xpPorPontoNota: 4 }
+      const salva = await admin.agente.put('/api/v1/config/xp').send(novos)
+      expect(salva.status).toBe(200)
+      expect(salva.body).toEqual(novos)
+      expect((await admin.agente.get('/api/v1/config/xp')).body).toEqual(novos)
+
+      for (const agente of [professor.agente, estudante.agente]) {
+        expect((await agente.get('/api/v1/config/xp')).status).toBe(403)
+        expect((await agente.put('/api/v1/config/xp').send(PADROES)).status).toBe(403)
+      }
+      expect((await request(app).get('/api/v1/config/xp')).status).toBe(401)
+      expect((await request(app).put('/api/v1/config/xp').send(PADROES)).status).toBe(401)
+    } finally {
+      await restaurarPadroes()
+    }
+  })
+
+  it('TX-14/R-X10: corpo inválido do global → 400 sem alterar nada', async () => {
+    const admin = await criarUsuarioComSessao('administrador')
+    const invalidos: unknown[] = [
+      { ...PADROES, xpConclusaoAula: 1001 },
+      { ...PADROES, xpAcertoQuestao: -1 },
+      { ...PADROES, xpEntregaAvaliacao: 2.5 },
+      { ...PADROES, xpPorPontoNota: '3' },
+      { xpConclusaoAula: 10, xpAcertoQuestao: 5, xpEntregaAvaliacao: 20 },
+      { ...PADROES, extra: 1 },
+      [],
+    ]
+    for (const corpo of invalidos) {
+      const resposta = await admin.agente.put('/api/v1/config/xp').send(corpo as object)
+      expect(resposta.status).toBe(400)
+      expect(resposta.body.erro.codigo).toBe('validacao')
+    }
+    expect((await admin.agente.get('/api/v1/config/xp')).body).toEqual(PADROES)
+  })
+
+  it('TX-15/R-X12: dono lê e ajusta o curso dentro de 0–2× o global; null volta ao global', async () => {
+    const { professor, cursoId } = await cursoPublicado()
+    const rota = `/api/v1/cursos/${cursoId}/config-xp`
+
+    const inicial = await professor.agente.get(rota)
+    expect(inicial.status).toBe(200)
+    expect(inicial.body).toEqual({
+      xpConclusaoAula: { global: 10, curso: null, efetivo: 10 },
+      xpAcertoQuestao: { global: 5, curso: null, efetivo: 5 },
+      xpEntregaAvaliacao: { global: 20, curso: null, efetivo: 20 },
+      xpPorPontoNota: { global: 3, curso: null, efetivo: 3 },
+    })
+
+    const ajustada = await professor.agente.patch(rota).send({ xpConclusaoAula: 20, xpPorPontoNota: 0 })
+    expect(ajustada.status).toBe(200)
+    expect(ajustada.body.xpConclusaoAula).toEqual({ global: 10, curso: 20, efetivo: 20 })
+    expect(ajustada.body.xpPorPontoNota).toEqual({ global: 3, curso: 0, efetivo: 0 })
+    expect(ajustada.body.xpAcertoQuestao).toEqual({ global: 5, curso: null, efetivo: 5 })
+
+    for (const corpo of [{ xpConclusaoAula: 21 }, { xpAcertoQuestao: -1 }, { xpAcertoQuestao: 1.5 }, { outro: 1 }, []]) {
+      expect((await professor.agente.patch(rota).send(corpo as object)).status).toBe(400)
+    }
+
+    const vazio = await professor.agente.patch(rota).send({})
+    expect(vazio.body).toEqual(ajustada.body)
+
+    const revertida = await professor.agente.patch(rota).send({ xpConclusaoAula: null })
+    expect(revertida.body.xpConclusaoAula).toEqual({ global: 10, curso: null, efetivo: 10 })
+    expect(revertida.body.xpPorPontoNota.curso).toBe(0)
+  })
+
+  it('TX-15: não-dono e estudante 403; curso inexistente 404; administrador pode ajustar; sem sessão 401', async () => {
+    const { cursoId } = await cursoPublicado()
+    const rota = `/api/v1/cursos/${cursoId}/config-xp`
+    const outro = await criarUsuarioComSessao('professor')
+    const estudante = await criarUsuarioComSessao('estudante')
+    const admin = await criarUsuarioComSessao('administrador')
+
+    for (const agente of [outro.agente, estudante.agente]) {
+      expect((await agente.get(rota)).status).toBe(403)
+      expect((await agente.patch(rota).send({ xpConclusaoAula: 5 })).status).toBe(403)
+    }
+    expect((await admin.agente.get(`/api/v1/cursos/${randomUUID()}/config-xp`)).status).toBe(404)
+    expect((await admin.agente.patch(`/api/v1/cursos/${randomUUID()}/config-xp`).send({})).status).toBe(404)
+    expect((await admin.agente.patch(rota).send({ xpAcertoQuestao: 8 })).body.xpAcertoQuestao.efetivo).toBe(8)
+    expect((await request(app).get(rota)).status).toBe(401)
+  })
+
+  it('TX-16/R-X13/R-X14: ajuste vale na concessão; mudar o global não reescreve eventos e reaplica o teto', async () => {
+    const admin = await criarUsuarioComSessao('administrador')
+    const { professor, moduloId, cursoId } = await cursoPublicado()
+    const aulas = [await aulaPublicada(professor.agente, moduloId), await aulaPublicada(professor.agente, moduloId)]
+    const estudante = await criarUsuarioComSessao('estudante')
+    await professor.agente.patch(`/api/v1/cursos/${cursoId}/config-xp`).send({ xpConclusaoAula: 20 })
+    try {
+      expect((await concluir(estudante.agente, aulas[0])).body.xp.ganho).toBe(20)
+
+      await admin.agente.put('/api/v1/config/xp').send({ ...PADROES, xpConclusaoAula: 5 })
+      const config = await professor.agente.get(`/api/v1/cursos/${cursoId}/config-xp`)
+      expect(config.body.xpConclusaoAula).toEqual({ global: 5, curso: 20, efetivo: 10 })
+
+      expect((await concluir(estudante.agente, aulas[1])).body.xp.ganho).toBe(10)
+      expect((await eventos(estudante.id)).map((evento) => evento.xp)).toEqual([20, 10])
+      expect((await saldo(estudante.id))?.xp_total).toBe(30)
+    } finally {
+      await restaurarPadroes()
+    }
+  })
+})

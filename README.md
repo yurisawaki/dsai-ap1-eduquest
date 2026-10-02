@@ -113,7 +113,7 @@ npx tsx scripts/gerar-token-recuperacao.ts <email>   # imprime token de reset (d
 ## 6. Testes
 
 ```bash
-npm test            # 173 testes, 22 arquivos — deve passar 100%
+npm test            # 182 testes, 22 arquivos — deve passar 100%
 npm run test:watch  # modo watch
 ```
 
@@ -170,8 +170,9 @@ Não existe pasta `diario/` neste repositório.
 - **F4 — Progresso (D6): SPEC e implementação concluídas** — `SPEC/2026-10-01-progresso-aprendizagem.md` (T4.1, **resolve P-14** e P-15/P-16 na parcela progresso): flag `concluida` em `GET /aulas/{id}`, progresso derivado de `conclusao_aula` em `GET /cursos/{id}` (somente papel estudante, percentual `floor`), unicidade `(aula_id, usuario_id)` na migration F4, barra de progresso e contagem por módulo no curso.
 - **Interface visual:** `SPEC/2026-10-01-identidade-visual-frontend.md` implementada (design system único com tokens, responsivo).
 - **F5 — XP (D7, T5.2): concessão implementada no servidor** — 10 XP na 1ª conclusão de aula, 5 no 1º acerto de questão de exercício, 20 na 1ª entrega de avaliação + 3 por ponto de melhoria da maior nota (inclusive após correção manual); eventos idempotentes (`evento_xp`, chave única) e saldo (`saldo_xp`) na mesma transação da ação; campo aditivo `xp: {ganho, total, nivel, subiuNivel}` em F2-14/F3-06/F3-12 (TX-01–TX-09, TX-13, TX-17, TX-20).
-- **F5 — Níveis e consulta (D7, T5.3): implementados** — `GET /api/v1/xp` (F5-01, só estudante) com XP total, XP da semana ISO em `America/Sao_Paulo` e faixa do nível; `nivel` preenchido no perfil do estudante (`null` para professor/admin; XP nunca exposto a terceiros); bloco "Experiência" com barra no perfil e avisos "+N XP"/"Subiu para o nível N" em aula, exercício e avaliação (TX-10–TX-12, TX-18, TX-19). Rotas de configuração (F5-02–F5-05, T5.4) ainda pendentes.
-- **Suíte: 173 testes passando** em 22 arquivos (`npm test`); **`npm run typecheck` passando** (ambos verificados em 2026-10-02).
+- **F5 — Níveis e consulta (D7, T5.3): implementados** — `GET /api/v1/xp` (F5-01, só estudante) com XP total, XP da semana ISO em `America/Sao_Paulo` e faixa do nível; `nivel` preenchido no perfil do estudante (`null` para professor/admin; XP nunca exposto a terceiros); bloco "Experiência" com barra no perfil e avisos "+N XP"/"Subiu para o nível N" em aula, exercício e avaliação (TX-10–TX-12, TX-18, TX-19).
+- **F5 — Configuração de XP (D7, T5.4): implementada** — `GET/PUT /api/v1/config/xp` (F5-02/F5-03, só administrador, inteiros 0–1.000) e `GET/PATCH /api/v1/cursos/{id}/config-xp` (F5-04/F5-05, professor dono ou administrador, ajuste 0–2× o global ou `null`); mudanças não retroativas e teto de 2× reaplicado no uso; tela **Administração** (menu visível só ao administrador) e seção **XP do curso** no detalhe do curso (TX-14–TX-16). **D7 (T5.2–T5.4) concluída.**
+- **Suíte: 182 testes passando** em 22 arquivos (`npm test`); **`npm run typecheck` passando** (ambos verificados em 2026-10-02).
 - **Deploy:** aplicação publica na URL da [§15](#15-deploy-url-pública) — **Render** (Blueprint `render.yaml` + Docker + PostgreSQL gerenciado); migrations aplicadas automaticamente por `npx prisma migrate deploy` na subida do container e seed via `initialDeployHook` no primeiro deploy.
 - **Contagem de código (`cloc`, 2026-10-01):** **10.049 linhas** em 69 arquivos (TypeScript 8.423, CSS 1.037, Prisma 289, SQL 258, Dockerfile 24, HTML 18), com `cloc . --vcs=git --exclude-dir=node_modules,vendor,dist,build,prompts --exclude-lang=Markdown,JSON,YAML,CSV,Text,SVG --not-match-f='(lock|\.min\.)'`.
 - **DP-19 resolvida:** `SPEC/2026-09-30-conteudo-aula.md` **aprovada** após auditoria (§13 da SPEC); `PLAN.md`, `TASKS.md` (T2.3), `decisoes-pendentes.md` e SPEC D3 revisados formalmente. Pendências derivadas abertas: P-18–P-21.
@@ -221,7 +222,8 @@ Antes de implementar qualquer funcionalidade:
 11. ~~SPEC de D7 (T5.1, DP-07)~~ — feito (2026-10-02): `SPEC/2026-10-02-xp-niveis.md`.
 12. ~~T5.2 (concessão de XP)~~ — feito (2026-10-02).
 13. ~~T5.3 (níveis, XP da semana, F5-01, perfil e avisos)~~ — feito (2026-10-02).
-14. **Próximo:** T5.4 (rotas de configuração F5-02–F5-05 e telas de ajuste); em paralelo, SPEC de D8 (T5.5, DP-18).
+14. ~~T5.4 (configuração de XP F5-02–F5-05 e telas)~~ — feito (2026-10-02).
+15. **Próximo:** SPEC de D8 — conquistas (T5.5, DP-18).
 
 ## 13. Git
 

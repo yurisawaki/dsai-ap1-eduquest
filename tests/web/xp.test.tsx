@@ -157,3 +157,102 @@ describe('T5.3 — avisos "+N XP" (D7-i)', () => {
     await waitFor(() => expect(screen.getByText('+5 XP')).toBeTruthy())
   })
 })
+
+describe('T5.4 — telas de configuração de XP (F5-02–F5-05)', () => {
+  const global = { xpConclusaoAula: 10, xpAcertoQuestao: 5, xpEntregaAvaliacao: 20, xpPorPontoNota: 3 }
+  const configCurso = {
+    xpConclusaoAula: { global: 10, curso: 20, efetivo: 20 },
+    xpAcertoQuestao: { global: 5, curso: null, efetivo: 5 },
+    xpEntregaAvaliacao: { global: 20, curso: null, efetivo: 20 },
+    xpPorPontoNota: { global: 3, curso: null, efetivo: 3 },
+  }
+
+  function cursoDe(donoId: string) {
+    return (alvo: string, metodo: string) => {
+      if (alvo.endsWith('/api/v1/cursos') && metodo === 'GET') {
+        return respostaJson([{ id: cursoId, titulo: 'Algebra', publicado: true, donoId }])
+      }
+      if (alvo === `/api/v1/cursos/${cursoId}`) {
+        return respostaJson({ id: cursoId, titulo: 'Algebra', publicado: true, donoId, modulos: [] })
+      }
+      if (alvo.includes('/cursos') && alvo.includes('/avaliacoes')) return respostaJson([])
+      return undefined
+    }
+  }
+
+  it('administrador vê "Administração", carrega o global e envia PUT com os 4 inteiros', async () => {
+    const fetchMock = mock('administrador', (alvo, metodo) => {
+      if (alvo.endsWith('/api/v1/config/xp') && metodo === 'GET') return respostaJson(global)
+      if (alvo.endsWith('/api/v1/config/xp') && metodo === 'PUT') {
+        return respostaJson({ ...global, xpConclusaoAula: 15 })
+      }
+      return undefined
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    render(<App />)
+
+    fireEvent.click(await screen.findByText('Administração'))
+    const campo = (await screen.findByLabelText('Concluir aula (1ª conclusão)')) as HTMLInputElement
+    expect(campo.value).toBe('10')
+    fireEvent.change(campo, { target: { value: '15' } })
+    fireEvent.click(screen.getByText('Salvar valores globais'))
+
+    await screen.findByText(/Valores globais salvos/)
+    const put = fetchMock.mock.calls.find(([url, init]) => String(url).endsWith('/config/xp') && init?.method === 'PUT')
+    expect(JSON.parse(String((put?.[1] as { body?: string }).body))).toEqual({ ...global, xpConclusaoAula: 15 })
+  })
+
+  it('professor e estudante não veem "Administração"', async () => {
+    for (const papel of ['professor', 'estudante']) {
+      vi.stubGlobal('fetch', mock(papel))
+      render(<App />)
+      await screen.findByText('Catálogo')
+      expect(screen.queryByText('Administração')).toBeNull()
+      cleanup()
+    }
+  })
+
+  it('dono vê "XP do curso" com global/efetivo e campo vazio vira null no PATCH', async () => {
+    const fetchMock = mock('professor', (alvo, metodo) => {
+      if (alvo.endsWith(`/cursos/${cursoId}/config-xp`) && metodo === 'GET') return respostaJson(configCurso)
+      if (alvo.endsWith(`/cursos/${cursoId}/config-xp`) && metodo === 'PATCH') {
+        return respostaJson({ ...configCurso, xpConclusaoAula: { global: 10, curso: null, efetivo: 10 } })
+      }
+      return cursoDe(usuarioId)(alvo, metodo)
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    render(<App />)
+    fireEvent.click(await screen.findByText('Catálogo'))
+    fireEvent.click(await screen.findByText('Abrir'))
+
+    await screen.findByText('XP do curso')
+    const campo = (await screen.findByLabelText('Concluir aula (1ª conclusão)')) as HTMLInputElement
+    expect(campo.value).toBe('20')
+    expect(screen.getByText('Global 10 · efetivo 20 XP')).toBeTruthy()
+
+    fireEvent.change(campo, { target: { value: '' } })
+    fireEvent.click(screen.getByText('Salvar XP do curso'))
+    await screen.findByText('Ajustes de XP do curso salvos.')
+    const patch = fetchMock.mock.calls.find(
+      ([url, init]) => String(url).endsWith('/config-xp') && init?.method === 'PATCH'
+    )
+    expect(JSON.parse(String((patch?.[1] as { body?: string }).body))).toEqual({
+      xpConclusaoAula: null,
+      xpAcertoQuestao: null,
+      xpEntregaAvaliacao: null,
+      xpPorPontoNota: null,
+    })
+    expect(screen.getByText('Global 10 · efetivo 10 XP')).toBeTruthy()
+  })
+
+  it('estudante não vê a seção nem consulta F5-04', async () => {
+    const fetchMock = mock('estudante', cursoDe('outro'))
+    vi.stubGlobal('fetch', fetchMock)
+    render(<App />)
+    fireEvent.click(await screen.findByText('Catálogo'))
+    fireEvent.click(await screen.findByText('Abrir'))
+    await screen.findByText('Nenhuma avaliação disponível.')
+    expect(screen.queryByText('XP do curso')).toBeNull()
+    expect(fetchMock.mock.calls.some(([url]) => String(url).includes('/config-xp'))).toBe(false)
+  })
+})

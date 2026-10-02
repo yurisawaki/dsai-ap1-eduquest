@@ -1317,3 +1317,26 @@ main.principal-estreito .titulo-pagina {
     grid-template-columns: 1fr;
   }
 }
+
+.config-xp {
+  margin-top: var(--esp-6);
+}
+
+.config-xp h2 {
+  margin-bottom: var(--esp-2);
+}
+
+.campo-xp {
+  margin-bottom: var(--esp-4);
+}
+
+.campo-xp input {
+  max-width: 12rem;
+}
+
+.campo-xp-apoio {
+  display: block;
+  margin-top: var(--esp-1);
+  color: var(--texto-sec);
+  font-size: var(--tam-sec);
+}

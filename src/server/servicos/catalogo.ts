@@ -174,7 +174,7 @@ function aulaVisivel(aula: CadeiaDaAula, usuario: UsuarioSessao): boolean {
   return cadeiaPublicada || ehDonoOuAdmin(aula.modulo.curso.dono_id, usuario)
 }
 
-async function cursoParaAlteracao(id: unknown, usuario: UsuarioSessao) {
+export async function cursoParaAlteracao(id: unknown, usuario: UsuarioSessao) {
   const curso =
     typeof id === 'string' && uuidValido.test(id)
       ? await prisma.curso.findUnique({ where: { id } })
