@@ -526,6 +526,29 @@ describe('T5.4 — configuração de XP por escopo (F5-02–F5-05, SPEC D7)', ()
     expect((await request(app).get(rota)).status).toBe(401)
   })
 
+  it('TX-15/EX-02: curso não publicado é invisível a quem não é dono — 404, não 403', async () => {
+    const dono = await criarUsuarioComSessao('professor')
+    const curso = await dono.agente.post('/api/v1/cursos').send({ titulo: 'Rascunho' })
+    const rota = `/api/v1/cursos/${curso.body.cursoId}/config-xp`
+    const outro = await criarUsuarioComSessao('professor')
+    const estudante = await criarUsuarioComSessao('estudante')
+    const admin = await criarUsuarioComSessao('administrador')
+
+    for (const agente of [outro.agente, estudante.agente]) {
+      const leitura = await agente.get(rota)
+      expect(leitura.status).toBe(404)
+      expect(leitura.body.erro.codigo).toBe('nao_encontrado')
+      expect((await agente.patch(rota).send({ xpConclusaoAula: 5 })).status).toBe(404)
+      // corpo inválido não muda a resposta: 404 vem antes de 400
+      expect((await agente.patch(rota).send({ outro: 1 })).status).toBe(404)
+    }
+    expect((await dono.agente.get(rota)).status).toBe(200)
+    expect((await admin.agente.patch(rota).send({ xpConclusaoAula: 5 })).status).toBe(200)
+    expect(await prisma.configXpCurso.findUnique({ where: { curso_id: curso.body.cursoId } })).toMatchObject({
+      xp_conclusao_aula: 5,
+    })
+  })
+
   it('TX-16/R-X13/R-X14: ajuste vale na concessão; mudar o global não reescreve eventos e reaplica o teto', async () => {
     const admin = await criarUsuarioComSessao('administrador')
     const { professor, moduloId, cursoId } = await cursoPublicado()

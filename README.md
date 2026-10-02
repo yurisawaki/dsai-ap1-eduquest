@@ -113,7 +113,7 @@ npx tsx scripts/gerar-token-recuperacao.ts <email>   # imprime token de reset (d
 ## 6. Testes
 
 ```bash
-npm test            # 200 testes, 24 arquivos — deve passar 100%
+npm test            # 201 testes, 24 arquivos — deve passar 100%
 npm run test:watch  # modo watch
 ```
 
@@ -173,7 +173,7 @@ Não existe pasta `diario/` neste repositório.
 - **F5 — Níveis e consulta (D7, T5.3): implementados** — `GET /api/v1/xp` (F5-01, só estudante) com XP total, XP da semana ISO em `America/Sao_Paulo` e faixa do nível; `nivel` preenchido no perfil do estudante (`null` para professor/admin; XP nunca exposto a terceiros); bloco "Experiência" com barra no perfil e avisos "+N XP"/"Subiu para o nível N" em aula, exercício e avaliação (TX-10–TX-12, TX-18, TX-19).
 - **F5 — Configuração de XP (D7, T5.4): implementada** — `GET/PUT /api/v1/config/xp` (F5-02/F5-03, só administrador, inteiros 0–1.000) e `GET/PATCH /api/v1/cursos/{id}/config-xp` (F5-04/F5-05, professor dono ou administrador, ajuste 0–2× o global ou `null`); mudanças não retroativas e teto de 2× reaplicado no uso; tela **Administração** (menu visível só ao administrador) e seção **XP do curso** no detalhe do curso (TX-14–TX-16). **D7 (T5.2–T5.4) concluída.**
 - **F5 — Conquistas (D8, T5.6): implementadas** — catálogo fixo de 10 conquistas gravado pela migração `f5_conquistas`; critérios avaliados sobre o estado verificado a cada ação (conclusão, resposta, envio e correção de avaliação), na mesma transação e depois do XP; desbloqueio permanente e idempotente (`desbloqueio_conquista`, UNIQUE por estudante e conquista), sem recompensa; `GET /api/v1/conquistas` (F5-06, só estudante) com progresso; perfil lista as desbloqueadas; campo aditivo `conquistas` em F2-14/F3-06/F3-12; catálogo no perfil e aviso "Conquista desbloqueada" na web (TC-01–TC-13).
-- **Suíte: 200 testes passando** em 24 arquivos (`npm test`); **`npm run typecheck` passando** (ambos verificados em 2026-10-02).
+- **Suíte: 201 testes passando** em 24 arquivos (`npm test`); **`npm run typecheck` passando** (ambos verificados em 2026-10-02).
 - **Deploy:** aplicação publica na URL da [§15](#15-deploy-url-pública) — **Render** (Blueprint `render.yaml` + Docker + PostgreSQL gerenciado); migrations aplicadas automaticamente por `npx prisma migrate deploy` na subida do container e seed via `initialDeployHook` no primeiro deploy.
 - **Contagem de código (`cloc`, 2026-10-01):** **10.049 linhas** em 69 arquivos (TypeScript 8.423, CSS 1.037, Prisma 289, SQL 258, Dockerfile 24, HTML 18), com `cloc . --vcs=git --exclude-dir=node_modules,vendor,dist,build,prompts --exclude-lang=Markdown,JSON,YAML,CSV,Text,SVG --not-match-f='(lock|\.min\.)'`.
 - **DP-19 resolvida:** `SPEC/2026-09-30-conteudo-aula.md` **aprovada** após auditoria (§13 da SPEC); `PLAN.md`, `TASKS.md` (T2.3), `decisoes-pendentes.md` e SPEC D3 revisados formalmente. Pendências derivadas abertas: P-18–P-21.
@@ -227,7 +227,7 @@ Antes de implementar qualquer funcionalidade:
 14. ~~T5.4 (configuração de XP F5-02–F5-05 e telas)~~ — feito (2026-10-02).
 15. ~~SPEC de D8 (T5.5, DP-18 parcela D8)~~ — feito (2026-10-02): `SPEC/2026-10-02-conquistas.md`.
 16. ~~T5.6 (desbloqueio de conquistas)~~ — feito (2026-10-02).
-17. ~~Validar a F5 (T5.7)~~ — feito (2026-10-02): `docs/validacao/F5.md` (F5 validada; divergência 403 × 404 em F5-04/F5-05 a decidir).
+17. ~~Validar a F5 (T5.7)~~ — feito (2026-10-02): `docs/validacao/F5.md` (F5 validada; F5-04/F5-05 alinhadas à SPEC: curso não publicado de outro dono → 404).
 18. **Próximo:** F6 — Missões e desafios (D9, D10), começando pelas SPECs de D9 (T6.1) e D10 (T6.3), que tratam a DP-18 nessas parcelas.
 
 ## 13. Git

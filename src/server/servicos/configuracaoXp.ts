@@ -1,6 +1,7 @@
-import { erroValidacao } from '../erros'
+import { erroNaoEncontrado, erroValidacao } from '../erros'
 import { prisma } from '../prisma'
-import { cursoParaAlteracao, type UsuarioSessao } from './catalogo'
+import { uuidValido } from '../tipos'
+import { ehDonoOuAdmin, exigirAutoria, type UsuarioSessao } from './catalogo'
 import { PADRAO_XP, valoresEfetivos, type ParametroXp, type ValoresXp } from './xp'
 
 // SPEC/2026-10-02-xp-niveis.md §4.2 e §6.2 — configuração de XP por escopo (T5.4)
@@ -70,6 +71,20 @@ export async function substituirConfigGlobal(corpo: unknown): Promise<ConfigGlob
   return lerConfigGlobal()
 }
 
+// §6.2/EX-02/EX-03: 401 → 404 → 403. Curso inexistente ou não visível (não publicado e sem
+// titularidade) → 404; curso visível a quem não é dono nem administrador → 403.
+async function cursoParaConfiguracao(id: unknown, usuario: UsuarioSessao) {
+  const curso =
+    typeof id === 'string' && uuidValido.test(id)
+      ? await prisma.curso.findUnique({ where: { id }, select: { id: true, dono_id: true, publicado: true } })
+      : null
+  if (!curso || (!curso.publicado && !ehDonoOuAdmin(curso.dono_id, usuario))) {
+    throw erroNaoEncontrado('curso nao encontrado')
+  }
+  exigirAutoria(curso.dono_id, usuario)
+  return curso
+}
+
 async function montarConfigCurso(cursoId: string): Promise<ConfigCurso> {
   const [globais, ajuste, efetivos] = await Promise.all([
     valoresGlobais(),
@@ -86,7 +101,7 @@ async function montarConfigCurso(cursoId: string): Promise<ConfigCurso> {
 
 // F5-04 — R-X12/R-X13: dono do curso ou administrador
 export async function lerConfigCurso(usuario: UsuarioSessao, id: unknown): Promise<ConfigCurso> {
-  const curso = await cursoParaAlteracao(id, usuario)
+  const curso = await cursoParaConfiguracao(id, usuario)
   return montarConfigCurso(curso.id)
 }
 
@@ -96,7 +111,7 @@ export async function ajustarConfigCurso(
   id: unknown,
   corpo: unknown
 ): Promise<ConfigCurso> {
-  const curso = await cursoParaAlteracao(id, usuario)
+  const curso = await cursoParaConfiguracao(id, usuario)
   const entrada = objeto(corpo)
   const extras = Object.keys(entrada).filter((chave) => !(chave in CAMPOS))
   if (extras.length > 0) throw erroValidacao(`campos nao permitidos: ${extras.join(', ')}`)
