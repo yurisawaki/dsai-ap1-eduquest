@@ -5,7 +5,7 @@
 | Artefato | `SPEC/2026-09-30-decisoes-pendentes.md` (apoio ao processo SDD) |
 | Tarefa de origem | T0.1 — Inventário das decisões pendentes do EduQuest (`TASKS.md`, fase F0) |
 | Fonte de autoridade | SPEC → PLAN → TASKS → este documento |
-| Status | Inventário registrado. **Revisão 2026-09-30:** DP-19 marcada como **Resolvida** (`SPEC/2026-09-30-conteudo-aula.md`, aprovada) — critério §6 atendido. **Revisão 2026-10-01:** DP-08 marcada como **Resolvida** (`SPEC/2026-10-01-questoes-exercicios.md`, aprovada); DP-09 marcada como **Resolvida** (`SPEC/2026-10-01-avaliacoes.md`, aprovada). **Revisão 2026-10-02:** DP-07 marcada como **Resolvida** (`SPEC/2026-10-02-xp-niveis.md`, aprovada). Demais DPs inalteradas neste documento |
+| Status | Inventário registrado. **Revisão 2026-09-30:** DP-19 marcada como **Resolvida** (`SPEC/2026-09-30-conteudo-aula.md`, aprovada) — critério §6 atendido. **Revisão 2026-10-01:** DP-08 marcada como **Resolvida** (`SPEC/2026-10-01-questoes-exercicios.md`, aprovada); DP-09 marcada como **Resolvida** (`SPEC/2026-10-01-avaliacoes.md`, aprovada). **Revisão 2026-10-02:** DP-07 marcada como **Resolvida** (`SPEC/2026-10-02-xp-niveis.md`, aprovada); DP-18 **parcialmente resolvida** — parcela D8 (`SPEC/2026-10-02-conquistas.md`, aprovada). Demais DPs inalteradas neste documento |
 | Data | 2026-09-30 |
 | Fora de escopo deste artefato | Resolver DP-01–DP-19; escolher stack, arquitetura, endpoints, schemas, fórmulas ou tipos de questão; alterar SPEC/PLAN/TASKS; escrever código |
 
@@ -50,7 +50,7 @@ Legenda de status: **Pendente** = decisão ainda não tomada, com artefato futur
 | DP-15 | Testes de carga, backup, disaster recovery | Pendente | Não atribuída no `PLAN.md` | Não gera tarefas no `TASKS.md` atual | **Depende de DP-04** (tratamento do `PLAN.md` §8: "SPEC de NFRs (DP-04)") |
 | DP-16 | Aspectos legais (termos de uso, LGPD/GDPR, consentimentos) | Pendente (consideração futura) | Não atribuída no `PLAN.md` | Não gera tarefas | Nenhuma declarada |
 | DP-17 | Persona P4 e relatórios de analytics | Pendente | F11 (antes/durante F11) | **Parcial** — só P4: T11.5 bloqueada; T11.1 parcial (`[Livre]` para professor/admin) | Nenhuma outra DP declarada |
-| DP-18 | Catálogos e tabelas de gamificação (conquistas, missões, itens/preços, desafios) | Pendente | F5, F6, F8 | **Sim** — T5.5, T6.1, T6.3, T8.1 | Nenhuma outra DP declarada |
+| DP-18 | Catálogos e tabelas de gamificação (conquistas, missões, itens/preços, desafios) | Pendente — **parcela D8 resolvida (2026-10-02 — `SPEC/2026-10-02-conquistas.md`)** | F5, F6, F8 | **Sim** — T6.1, T6.3, T8.1 (T5.5 desbloqueada na revisão de `TASKS.md` de 2026-10-02) | Nenhuma outra DP declarada |
 | DP-19 | Formato de conteúdo de aula, limites de upload, embeds | **Resolvida (2026-09-30 — `SPEC/2026-09-30-conteudo-aula.md`)** | F2 (antes do detalhe de F2) | **Não mais** — bloqueio de T2.3 removido na revisão de `TASKS.md` de 2026-09-30 | Nenhuma outra DP declarada |
 
 **Contagem:** 19 decisões (DP-01–DP-19); 12 com status **Pendente**; 3 **Fora de escopo (desta visão)** (DP-12, DP-13, DP-14); **4 resolvidas** (DP-19, 2026-09-30; DP-08 e DP-09, 2026-10-01; DP-07, 2026-10-02).
@@ -263,6 +263,7 @@ Para cada decisão: ID; nome; descrição objetiva; origem no `PLAN.md`; domíni
 - **Dependências:** nenhuma outra DP declarada.
 - **Bloqueadora:** **Sim** (para as tarefas de SPEC/definição de catálogo de F5, F6 e F8).
 - **Artefato futuro:** **SPECs de cada domínio correspondente** (D8, D9, D10, D12) — `PLAN.md` §8.
+- **Resolução parcial (2026-10-02):** `SPEC/2026-10-02-conquistas.md` — aprovada após auditoria (§12 daquela SPEC). Parcela **D8**: catálogo fixo de 10 conquistas com critérios sobre o estado verificado (aulas, cursos 100%, acertos de exercício, entregas, nota 10, nível); desbloqueio permanente e idempotente; sem recompensa na F5. Parcelas D9, D10 e D12 seguem pendentes.
 
 ### DP-19 — Formato de conteúdo de aula, limites de upload e embeds
 

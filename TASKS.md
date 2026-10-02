@@ -425,7 +425,7 @@
 - **Artefatos esperados:** `SPEC/` de D8 com catálogo e critérios.
 - **Validação:** regras de D8 da visão cobertas; catálogo presente apenas na SPEC D8.
 - **Rastreabilidade:** `PLAN.md` §5.8, §7 F5, §8 DP-18; SPEC §5 D8.
-- **Bloqueios:** `[Bloqueada: DP-18]` para o catálogo
+- **Bloqueios:** **Concluída em 2026-10-02** — `SPEC/2026-10-02-conquistas.md` aprovada; DP-18 resolvida na parcela D8 (revisão formal desta data)
 
 #### T5.6 — Implementar desbloqueio de conquistas
 
@@ -435,7 +435,7 @@
 - **Artefatos esperados:** conquistas desbloqueadas por evento; testes de idempotência (segundo evento não duplica); notificação enfileirada para F9.
 - **Validação:** desbloqueio permanente e idempotente; passo 8 executável; funcionalidade 12 verificável.
 - **Rastreabilidade:** `PLAN.md` §5.8, §7 F5; SPEC §5 D8, §1, §4 passo 8; funcionalidade 12.
-- **Bloqueios:** `[Depende de SPEC D8]` + global DP-01–DP-03
+- **Bloqueios:** `[Livre]` — SPEC D8 aprovada (`SPEC/2026-10-02-conquistas.md`: §4.1 catálogo, R-C1–R-C10, F5-06, TC-01–TC-13) + global DP-01–DP-03
 
 #### T5.7 — Validar F5 (D7 e D8)
 

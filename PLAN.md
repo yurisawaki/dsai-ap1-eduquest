@@ -219,7 +219,7 @@ Cada subseção declara: **escopo de implementação**, **entidades** (herdadas 
 - **Entidades:** conquista, critério, desbloqueio.
 - **Regras a preservar:** desbloqueio permanente e idempotente (nunca duplica); critérios avaliados por eventos de progresso/gamificação; alteração de parâmetros globais não altera conquistas já desbloqueadas (SPEC D17).
 - **Dependências:** eventos de D6/D7; alimenta D12 (conquistas pagam moedas/recompensas — SPEC §1) e D13 (notificação de nova conquista — SPEC §4 passo 11).
-- **Pendências:** catálogo inicial de conquistas e critérios — SPEC de conquistas.
+- **Pendências:** ~~catálogo inicial de conquistas e critérios~~ **resolvido (DP-18 parcela D8, 2026-10-02 — `SPEC/2026-10-02-conquistas.md`)** — definido somente naquela SPEC, não neste PLAN. Pendências derivadas P-50–P-55 abertas.
 
 ### 5.9 Gamificação: missões (D9)
 
@@ -394,7 +394,7 @@ Ordem lógica derivada das dependências da Seção 6. Cada fase: objetivo, dom�
 - **Resultado esperado:** concessão de XP apenas por ações verificadas, no servidor; configuração de XP ajustável por escopo; níveis monotônicos; separação XP total × XP do período; desbloqueio de conquistas permanente e idempotente; nível e conquistas exibidos no perfil (D2).
 - **Validação:** regras de D7/D8 (monotonicidade; idempotência; sem XP sem ação verificada; XP não comprável/transferível); passo 8 do fluxo; verificação da regra de ouro.
 - **Rastreabilidade:** SPEC §5 D7/D8; §1 definições de XP/Nível/Conquista; §4 passo 8; funcionalidades 10–12.
-- **Pendências vinculadas (bloqueiam detalhe):** ~~fórmula de XP, fórmula/tabela de níveis~~ — **resolvida** (DP-07, `SPEC/2026-10-02-xp-niveis.md`, 2026-10-02); catálogo de conquistas (SPEC §7.7, DP-18) — segue aberto.
+- **Pendências vinculadas (bloqueiam detalhe):** ~~fórmula de XP, fórmula/tabela de níveis~~ — **resolvida** (DP-07, `SPEC/2026-10-02-xp-niveis.md`, 2026-10-02); ~~catálogo de conquistas~~ — **resolvido** (DP-18 parcela D8, `SPEC/2026-10-02-conquistas.md`, 2026-10-02).
 
 ### Fase 6 — Missões e desafios
 
@@ -510,7 +510,7 @@ Ordem lógica derivada das dependências da Seção 6. Cada fase: objetivo, dom�
 | DP-15 | Testes de carga, backup, disaster recovery | SPEC §7.13 | SPEC de NFRs (DP-04) |
 | DP-16 | Aspectos legais (termos de uso, LGPD/GDPR, consentimentos) | SPEC §7.14 | Consideração futura própria |
 | DP-17 | Persona P4 (observador/analista) e relatórios de analytics | SPEC §3 P4 | SPEC de analytics antes/F11 |
-| DP-18 | Catálogos e tabelas de gamificação (conquistas, missões, itens/preços, desafios) | SPEC D8, D9, D10, D12 (escopos citados sem catálogo) | SPECs de cada domínio correspondente |
+| DP-18 | Catálogos e tabelas de gamificação (conquistas, missões, itens/preços, desafios) | SPEC D8, D9, D10, D12 (escopos citados sem catálogo) | SPECs de cada domínio correspondente — **parcela D8 resolvida em 2026-10-02** (ver `SPEC/2026-10-02-conquistas.md`, aprovada); D9, D10 e D12 pendentes |
 | DP-19 | Formato de conteúdo de aula, limites de upload, embeds | SPEC D3 (entidades citadas sem detalhe) | SPEC de conteúdo — **Resolvida em 2026-09-30** (ver `SPEC/2026-09-30-conteudo-aula.md`, aprovada; pendências derivadas P-18–P-21 abertas) |
 
 **Regra:** se uma tarefa futura exigir uma decisão listada acima, ela deve ser resolvida pela SPEC correspondente **antes** da execução detalhada da fase vinculada — nunca improvisada na tarefa.
