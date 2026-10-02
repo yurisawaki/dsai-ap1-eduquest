@@ -11,6 +11,7 @@ import {
   type QuestaoComCadeia,
   type QuestaoLida,
 } from './questoes'
+import { concederXp, eventoDeNota, maiorNotaRemunerada, type EventoNovo } from './xp'
 
 // SPEC/2026-10-01-avaliacoes.md (D5, DP-09)
 const Decimal = Prisma.Decimal
@@ -346,8 +347,8 @@ export async function realizarAvaliacao(usuario: UsuarioSessao, id: unknown, cor
         corrigidas.map((resposta) => resposta.pontos!)
       )
   const tentativaId = randomUUID()
-  await prisma.$transaction([
-    prisma.tentativaAvaliacao.create({
+  const xp = await prisma.$transaction(async (tx) => {
+    await tx.tentativaAvaliacao.create({
       data: {
         id: tentativaId,
         avaliacao_id: avaliacao.id,
@@ -356,8 +357,8 @@ export async function realizarAvaliacao(usuario: UsuarioSessao, id: unknown, cor
         nota,
         enviada_em: agora,
       },
-    }),
-    prisma.respostaAvaliacao.createMany({
+    })
+    await tx.respostaAvaliacao.createMany({
       data: corrigidas.map((resposta) => ({
         id: randomUUID(),
         tentativa_id: tentativaId,
@@ -366,13 +367,32 @@ export async function realizarAvaliacao(usuario: UsuarioSessao, id: unknown, cor
         acerto: resposta.acerto,
         pontos: resposta.pontos,
       })),
-    }),
-  ])
+    })
+    // R-X4/R-X5/R-X8 (D7): entrega (só a primeira paga) + melhoria da nota, se já corrigida.
+    // R-X6: respostas de avaliação não pagam XP por acerto.
+    return concederXp(tx, usuario.id, avaliacao.curso_id, async (valores) => {
+      const eventos: EventoNovo[] = [
+        {
+          origem: 'entrega_avaliacao',
+          referenciaId: avaliacao.id,
+          chave: `entrega:${avaliacao.id}`,
+          xp: valores.xp_entrega_avaliacao,
+        },
+      ]
+      if (nota) {
+        const anterior = await maiorNotaRemunerada(tx, usuario.id, avaliacao.id)
+        const evento = eventoDeNota(avaliacao.id, nota, anterior, valores.xp_por_ponto_nota)
+        if (evento) eventos.push(evento)
+      }
+      return eventos
+    })
+  })
   // R-A11: só status e nota — nem gabarito nem acerto por questão
   return {
     tentativaId,
     status: pendente ? 'aguardando_correcao' : 'corrigida',
     nota: nota?.toNumber() ?? null,
+    xp,
   }
 }
 
@@ -483,13 +503,27 @@ export async function corrigirDissertativa(
         tentativa.avaliacao.questoes.map((item) => item.peso),
         [...pontosPorQuestao.values()] as Prisma.Decimal[]
       )
-  await prisma.$transaction([
-    prisma.respostaAvaliacao.update({ where: { id: resposta.id }, data: { pontos: new Decimal(pontos) } }),
-    prisma.tentativaAvaliacao.update({
+  await prisma.$transaction(async (tx) => {
+    await tx.respostaAvaliacao.update({
+      where: { id: resposta.id },
+      data: { pontos: new Decimal(pontos) },
+    })
+    await tx.tentativaAvaliacao.update({
       where: { id: tentativa.id },
       data: { status: pendente ? 'aguardando_correcao' : 'corrigida', nota },
-    }),
-  ])
+    })
+    // R-X5/R-X9/R-X21 (D7): ao ficar corrigida, o dono da tentativa recebe a melhoria da nota;
+    // recorreção que baixa a nota não retira XP. A resposta de F3-15 não muda (§6.3).
+    if (nota) {
+      const estudanteId = tentativa.usuario_id
+      const avaliacaoId = tentativa.avaliacao_id
+      await concederXp(tx, estudanteId, tentativa.avaliacao.curso_id, async (valores) => {
+        const anterior = await maiorNotaRemunerada(tx, estudanteId, avaliacaoId)
+        const evento = eventoDeNota(avaliacaoId, nota, anterior, valores.xp_por_ponto_nota)
+        return evento ? [evento] : []
+      })
+    }
+  })
   const atualizada = await prisma.tentativaAvaliacao.findUnique({
     where: { id: tentativa.id },
     include: incluirRespostas,

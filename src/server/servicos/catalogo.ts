@@ -9,6 +9,7 @@ import {
   validarArquivo,
   validarBlocos,
 } from './conteudo'
+import { concederXp, type XpDaAcao } from './xp'
 
 type Papel = 'estudante' | 'professor' | 'administrador'
 
@@ -106,6 +107,7 @@ export interface ResultadoConclusao {
   aulaId: string
   concluidaEm: string
   repetida: boolean
+  xp: XpDaAcao
 }
 
 interface Alteracoes {
@@ -563,33 +565,39 @@ export async function concluirAula(
   if (!aulaVisivel(aula, usuario)) {
     throw erroNaoEncontrado('aula nao encontrada')
   }
-  const existente = await prisma.conclusaoAula.findFirst({
-    where: { aula_id: aula.id, usuario_id: usuario.id },
-    orderBy: [{ concluida_em: 'asc' }, { criado_em: 'asc' }],
-  })
-  if (existente) {
-    return {
-      aulaId: existente.aula_id,
-      concluidaEm: existente.concluida_em.toISOString(),
-      repetida: true,
-    }
-  }
+  const cursoId = aula.modulo.curso_id
   // R-D6-2: a unique de (aula_id, usuario_id) torna a escrita idempotente até em corrida;
   // skipDuplicates não gera erro quando outra requisição criou o mesmo registro.
-  const criado = await prisma.conclusaoAula.createMany({
-    data: [
-      {
-        id: randomUUID(),
-        aula_id: aula.id,
-        usuario_id: usuario.id,
-        concluida_em: new Date(),
-      },
-    ],
-    skipDuplicates: true,
-  })
-  const registro = await prisma.conclusaoAula.findFirst({
-    where: { aula_id: aula.id, usuario_id: usuario.id },
-    orderBy: [{ concluida_em: 'asc' }, { criado_em: 'asc' }],
+  // R-X2/R-X8 (D7): só a primeira conclusão paga XP, na mesma transação da conclusão.
+  const { criado, registro, xp } = await prisma.$transaction(async (tx) => {
+    const criado = await tx.conclusaoAula.createMany({
+      data: [
+        {
+          id: randomUUID(),
+          aula_id: aula.id,
+          usuario_id: usuario.id,
+          concluida_em: new Date(),
+        },
+      ],
+      skipDuplicates: true,
+    })
+    const registro = await tx.conclusaoAula.findFirst({
+      where: { aula_id: aula.id, usuario_id: usuario.id },
+      orderBy: [{ concluida_em: 'asc' }, { criado_em: 'asc' }],
+    })
+    const xp = await concederXp(tx, usuario.id, cursoId, (valores) =>
+      criado.count > 0
+        ? [
+            {
+              origem: 'conclusao_aula',
+              referenciaId: aula.id,
+              chave: `aula:${aula.id}`,
+              xp: valores.xp_conclusao_aula,
+            },
+          ]
+        : []
+    )
+    return { criado, registro, xp }
   })
   if (!registro) {
     throw erroNaoEncontrado('aula nao encontrada')
@@ -597,6 +605,7 @@ export async function concluirAula(
   return {
     aulaId: registro.aula_id,
     concluidaEm: registro.concluida_em.toISOString(),
+    xp,
     repetida: criado.count === 0,
   }
 }

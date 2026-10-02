@@ -89,7 +89,7 @@ describe('T2.5 — consumo e conclusão de aula (F2-14, E-21–E-23)', () => {
 
     const resposta = await estudante.agente.post(`/api/v1/aulas/${aulaId}/conclusao`).send({})
     expect(resposta.status).toBe(201)
-    expect(Object.keys(resposta.body).sort()).toEqual(['aulaId', 'concluidaEm'])
+    expect(Object.keys(resposta.body).sort()).toEqual(['aulaId', 'concluidaEm', 'xp']) // xp: campo aditivo de D7 (§6.3)
     expect(resposta.body.aulaId).toBe(aulaId)
     expect(new Date(resposta.body.concluidaEm).toISOString()).toBe(resposta.body.concluidaEm)
   })

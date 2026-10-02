@@ -4,6 +4,7 @@ import { erroNaoEncontrado, erroValidacao } from '../erros'
 import { prisma } from '../prisma'
 import { uuidValido } from '../tipos'
 import { ehDonoOuAdmin, exigirAutoria, type UsuarioSessao } from './catalogo'
+import { concederXp, type XpDaAcao } from './xp'
 
 // SPEC/2026-10-01-questoes-exercicios.md (D4, DP-08)
 const TIPOS_QUESTAO: readonly TipoQuestao[] = [
@@ -48,6 +49,7 @@ export interface ResultadoTentativa {
   tentativaId: string
   acerto: boolean | null
   feedback: { explicacao: string | null }
+  xp: XpDaAcao
 }
 
 function pontosDeCodigo(valor: string): number {
@@ -149,7 +151,11 @@ function questaoVisivel(questao: CadeiaDaQuestao, usuario: UsuarioSessao): boole
 export const incluirCadeia = {
   alternativas: { orderBy: { posicao: 'asc' } },
   modulo: {
-    select: { publicado: true, curso: { select: { dono_id: true, publicado: true } } },
+    select: {
+      publicado: true,
+      curso_id: true,
+      curso: { select: { dono_id: true, publicado: true } },
+    },
   },
 } satisfies Prisma.QuestaoInclude
 
@@ -388,10 +394,26 @@ export async function responderQuestao(
     throw erroNaoEncontrado('questao nao encontrada')
   }
   const { resposta, acerto } = corrigirResposta(questao, corpo)
-  const tentativa = await prisma.tentativa.create({
-    data: { id: randomUUID(), questao_id: questao.id, usuario_id: usuario.id, resposta, acerto },
-    select: { id: true },
+  // R-X3/R-X8 (D7): só o primeiro acerto da questão paga XP (chave única), na mesma transação
+  const { tentativa, xp } = await prisma.$transaction(async (tx) => {
+    const tentativa = await tx.tentativa.create({
+      data: { id: randomUUID(), questao_id: questao.id, usuario_id: usuario.id, resposta, acerto },
+      select: { id: true },
+    })
+    const xp = await concederXp(tx, usuario.id, questao.modulo.curso_id, (valores) =>
+      acerto === true
+        ? [
+            {
+              origem: 'acerto_questao',
+              referenciaId: questao.id,
+              chave: `acerto:${questao.id}`,
+              xp: valores.xp_acerto_questao,
+            },
+          ]
+        : []
+    )
+    return { tentativa, xp }
   })
   // R-Q10/D4-c: feedback com acerto e explicação; o gabarito nunca é devolvido
-  return { tentativaId: tentativa.id, acerto, feedback: { explicacao: questao.explicacao } }
+  return { tentativaId: tentativa.id, acerto, feedback: { explicacao: questao.explicacao }, xp }
 }

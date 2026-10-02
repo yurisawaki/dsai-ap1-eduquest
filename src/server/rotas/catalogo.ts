@@ -108,6 +108,7 @@ rotasCatalogo.post(
     res.status(conclusao.repetida ? 200 : 201).json({
       aulaId: conclusao.aulaId,
       concluidaEm: conclusao.concluidaEm,
+      xp: conclusao.xp,
     })
   }
 )

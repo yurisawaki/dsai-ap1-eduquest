@@ -49,6 +49,8 @@ model Usuario {
   conclusoes         ConclusaoAula[]
   tentativas         Tentativa[]
   tentativas_avaliacao TentativaAvaliacao[]
+  eventos_xp         EventoXp[]
+  saldo_xp           SaldoXp?
 
   @@map("usuario")
 }
@@ -131,6 +133,7 @@ model Curso {
   dono    Usuario  @relation(fields: [dono_id], references: [id], onDelete: Cascade)
   modulos    Modulo[]
   avaliacoes Avaliacao[]
+  config_xp  ConfigXpCurso?
 
   @@index([dono_id])
   @@map("curso")
@@ -354,4 +357,75 @@ model RespostaAvaliacao {
   @@unique([tentativa_id, questao_id])
   @@index([questao_id])
   @@map("resposta_avaliacao")
+}
+
+// D7 (SPEC/2026-10-02-xp-niveis.md §5): XP e níveis
+
+enum OrigemXp {
+  conclusao_aula
+  acerto_questao
+  entrega_avaliacao
+  nota_avaliacao
+}
+
+// §5.1 — linha única, criada na migração com os padrões (U-1–U-3)
+model ConfigXpGlobal {
+  id                   String   @id @db.Uuid
+  xp_conclusao_aula    Int      @default(10)
+  xp_acerto_questao    Int      @default(5)
+  xp_entrega_avaliacao Int      @default(20)
+  xp_por_ponto_nota    Int      @default(3)
+  criado_em            DateTime @default(now())
+  atualizado_em        DateTime @updatedAt
+
+  @@map("config_xp_global")
+}
+
+// §5.2 — ajuste por curso (null = usa o global; teto 2× global aplicado no uso, R-X13)
+model ConfigXpCurso {
+  curso_id             String   @id @db.Uuid
+  xp_conclusao_aula    Int?
+  xp_acerto_questao    Int?
+  xp_entrega_avaliacao Int?
+  xp_por_ponto_nota    Int?
+  criado_em            DateTime @default(now())
+  atualizado_em        DateTime @updatedAt
+
+  curso Curso @relation(fields: [curso_id], references: [id], onDelete: Cascade)
+
+  @@map("config_xp_curso")
+}
+
+// §5.3 — somente inclusão; referencia_id e curso_id sem FK (R-X20)
+model EventoXp {
+  id              String   @id @db.Uuid
+  usuario_id      String   @db.Uuid
+  origem          OrigemXp
+  referencia_id   String   @db.Uuid
+  curso_id        String   @db.Uuid
+  chave           String   @db.Text
+  xp              Int
+  nota_referencia Decimal? @db.Decimal(4, 2)
+  concedido_em    DateTime
+  criado_em       DateTime @default(now())
+  atualizado_em   DateTime @updatedAt
+
+  usuario Usuario @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+
+  @@unique([usuario_id, chave])
+  @@index([usuario_id, concedido_em])
+  @@map("evento_xp")
+}
+
+// §5.4 — xp_total = Σ evento_xp.xp; nivel = máximo atingido (R-X17)
+model SaldoXp {
+  usuario_id    String   @id @db.Uuid
+  xp_total      Int      @default(0)
+  nivel         Int      @default(1)
+  criado_em     DateTime @default(now())
+  atualizado_em DateTime @updatedAt
+
+  usuario Usuario @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+
+  @@map("saldo_xp")
 }

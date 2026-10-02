@@ -207,7 +207,13 @@ describe('T3.5 — avaliações: realização, nota, correção e resultado (F3-
     expect((await aberta.estudante.agente.post(`/api/v1/avaliacoes/${aberta.avaliacaoId}/tentativas`).send({ respostas: 'x' })).status).toBe(400)
 
     const parcial = await realizar(aberta.estudante.agente, aberta.avaliacaoId, [{ questaoId: vf, resposta: { valor: true } }])
-    expect(parcial.body).toEqual({ tentativaId: expect.any(String), status: 'corrigida', nota: 2.5 })
+    expect(parcial.body).toEqual({
+      tentativaId: expect.any(String),
+      status: 'corrigida',
+      nota: 2.5,
+      // campo aditivo de D7 (§6.3)
+      xp: expect.objectContaining({ ganho: expect.any(Number) }),
+    })
   })
 
   it('TA-07/TA-13: sem dissertativa, nota = 10 × pesos acertados ÷ pesos, 2 casas; sem gabarito nem acerto por questão', async () => {
@@ -218,7 +224,12 @@ describe('T3.5 — avaliações: realização, nota, correção e resultado (F3-
       { questaoId: num, resposta: { valor: 5 } },
     ])
     expect(envio.status).toBe(201)
-    expect(envio.body).toEqual({ tentativaId: expect.any(String), status: 'corrigida', nota: 3.33 })
+    expect(envio.body).toEqual({
+      tentativaId: expect.any(String),
+      status: 'corrigida',
+      nota: 3.33,
+      xp: expect.objectContaining({ ganho: expect.any(Number) }),
+    })
 
     const segunda = await realizar(aberta.estudante.agente, aberta.avaliacaoId, [
       { questaoId: vf, resposta: { valor: false } },

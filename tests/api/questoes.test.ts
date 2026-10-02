@@ -296,11 +296,19 @@ describe('T3.3 — tentativas e feedback imediato (F3-06, SPEC D4)', () => {
       tentativaId: expect.any(String),
       acerto: false,
       feedback: { explicacao: MULTIPLA.explicacao },
+      // campo aditivo de D7 (§6.3)
+      xp: { ganho: 0, total: 0, nivel: 1, subiuNivel: false },
     })
 
     const semExplicacao = await questaoPublicada(NUMERICA)
     const numerica = await responder(semExplicacao.estudante.agente, semExplicacao.questaoId, { valor: 1 })
-    expect(numerica.body).toEqual({ tentativaId: expect.any(String), acerto: false, feedback: { explicacao: null } })
+    expect(numerica.body).toEqual({
+      tentativaId: expect.any(String),
+      acerto: false,
+      feedback: { explicacao: null },
+      // campo aditivo de D7 (§6.3)
+      xp: { ganho: 0, total: expect.any(Number), nivel: expect.any(Number), subiuNivel: false },
+    })
     expect(JSON.stringify(numerica.body)).not.toContain('3.14')
   })
 })
