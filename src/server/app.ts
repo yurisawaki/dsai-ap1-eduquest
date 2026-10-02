@@ -10,6 +10,7 @@ import { rotasAvaliacoes } from './rotas/avaliacoes'
 import { rotasCatalogo } from './rotas/catalogo'
 import { rotasPerfis } from './rotas/perfis'
 import { rotasQuestoes } from './rotas/questoes'
+import { rotasXp } from './rotas/xp'
 import { LIMITE_CORPO_CONTEUDO } from './servicos/conteudo'
 
 export function criarApp() {
@@ -35,6 +36,7 @@ export function criarApp() {
   app.use('/api/v1', rotasCatalogo)
   app.use('/api/v1', rotasQuestoes)
   app.use('/api/v1', rotasAvaliacoes)
+  app.use('/api/v1', rotasXp)
   app.use('/api', (_req, res) => {
     res.status(404).json({ erro: { codigo: 'nao_encontrado', mensagem: 'rota nao encontrada' } })
   })

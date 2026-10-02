@@ -3,6 +3,7 @@ import { abrirCurso, irPara, useLocalizacao, voltar } from '../navegacao'
 import { api, mensagemDeErro } from '../cliente'
 import type { Sessao } from '../App'
 import { ConteudoAula, type BlocoConteudo } from '../componentes/ConteudoAula'
+import { AvisoXp, type XpDaAcao } from '../componentes/AvisoXp'
 import { QuestoesModulo } from './Questoes'
 import { AvaliacaoDetalhe } from './Avaliacoes'
 
@@ -746,6 +747,7 @@ function DetalheAula({
   const [urlNova, setUrlNova] = useState('')
   const [arquivoNovo, setArquivoNovo] = useState<File | null>(null)
   const [concluida, setConcluida] = useState(false)
+  const [xpConclusao, setXpConclusao] = useState<XpDaAcao | null>(null)
   const [enviandoConclusao, setEnviandoConclusao] = useState(false)
 
   const carregar = useCallback(async () => {
@@ -836,8 +838,12 @@ function DetalheAula({
     setMensagem(null)
     setEnviandoConclusao(true)
     try {
-      await api(`/api/v1/aulas/${aulaId}/conclusao`, { metodo: 'POST', corpo: {} })
+      const conclusao = await api<{ xp?: XpDaAcao }>(`/api/v1/aulas/${aulaId}/conclusao`, {
+        metodo: 'POST',
+        corpo: {},
+      })
       setConcluida(true)
+      setXpConclusao(conclusao.xp ?? null)
       setMensagem('Conclusao registrada.')
     } catch (erroConclusao) {
       setErro(mensagemDeErro(erroConclusao))
@@ -997,6 +1003,7 @@ function DetalheAula({
           </button>
         </p>
       )}
+      <AvisoXp xp={xpConclusao} />
     </main>
   )
 }

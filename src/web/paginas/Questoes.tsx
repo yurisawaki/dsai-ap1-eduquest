@@ -1,5 +1,6 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react'
 import { api, mensagemDeErro } from '../cliente'
+import { AvisoXp, type XpDaAcao } from '../componentes/AvisoXp'
 
 interface AlternativaLida {
   id: string
@@ -21,6 +22,7 @@ interface RespostaEnvio {
   tentativaId: string
   acerto: boolean | null
   feedback: { explicacao: string | null }
+  xp?: XpDaAcao
 }
 
 interface Props {
@@ -147,6 +149,7 @@ function QuestaoResposta({ questao }: { questao: QuestaoLida }) {
           {resultado.acerto === false && '✗ Resposta incorreta'}
           {resultado.acerto === null && 'Resposta enviada'}
         </p>
+        <AvisoXp xp={resultado.xp} />
         {resultado.feedback.explicacao && (
           <div className="feedback-explicacao">
             <strong>Explicação:</strong> {resultado.feedback.explicacao}

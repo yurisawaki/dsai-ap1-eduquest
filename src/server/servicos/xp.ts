@@ -1,9 +1,10 @@
 import { randomUUID } from 'node:crypto'
-import { Prisma, type OrigemXp } from '@prisma/client'
+import { Prisma, type OrigemXp, type PrismaClient } from '@prisma/client'
 
 // SPEC/2026-10-02-xp-niveis.md (D7, DP-07) — concessão de XP por ações verificadas (T5.2)
 
 type Tx = Prisma.TransactionClient
+type Db = Tx | PrismaClient
 
 // U-1–U-3: padrões, usados se a linha global não existir
 const PADRAO = {
@@ -148,4 +149,100 @@ export async function concederXp(
     })
   }
   return { ganho, total, nivel, subiuNivel: nivel > anterior.nivel }
+}
+
+// R-X18/U-5: semana ISO (segunda 00:00 a domingo 23:59:59.999) no fuso America/Sao_Paulo
+export const FUSO_SEMANA = 'America/Sao_Paulo'
+
+const formatoLocal = new Intl.DateTimeFormat('en-US', {
+  timeZone: FUSO_SEMANA,
+  year: 'numeric',
+  month: 'numeric',
+  day: 'numeric',
+  hour: 'numeric',
+  minute: 'numeric',
+  second: 'numeric',
+  weekday: 'short',
+  hourCycle: 'h23',
+})
+
+const DIAS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+
+function partesLocais(instante: Date) {
+  const partes = Object.fromEntries(
+    formatoLocal.formatToParts(instante).map((parte) => [parte.type, parte.value])
+  )
+  return {
+    ano: Number(partes.year),
+    mes: Number(partes.month),
+    dia: Number(partes.day),
+    hora: Number(partes.hour),
+    minuto: Number(partes.minute),
+    segundo: Number(partes.second),
+    diasDesdeSegunda: DIAS.indexOf(partes.weekday),
+  }
+}
+
+// deslocamento do fuso (local − UTC, em ms) no instante dado
+function deslocamento(instante: Date): number {
+  const p = partesLocais(instante)
+  const localComoUtc = Date.UTC(p.ano, p.mes - 1, p.dia, p.hora, p.minuto, p.segundo)
+  return localComoUtc - Math.floor(instante.getTime() / 1000) * 1000
+}
+
+export function inicioDaSemana(agora: Date): Date {
+  const p = partesLocais(agora)
+  const meiaNoite = Date.UTC(p.ano, p.mes - 1, p.dia - p.diasDesdeSegunda)
+  const estimativa = meiaNoite - deslocamento(agora)
+  // reaplica com o deslocamento vigente na própria segunda (mudança de horário no meio da semana)
+  return new Date(meiaNoite - deslocamento(new Date(estimativa)))
+}
+
+export function semanaDe(agora: Date): { inicio: Date; fim: Date } {
+  const inicio = inicioDaSemana(agora)
+  // fim exclusivo = início da semana seguinte (8 dias à frente cai com folga na próxima semana)
+  const fim = inicioDaSemana(new Date(inicio.getTime() + 8 * 24 * 60 * 60 * 1000))
+  return { inicio, fim }
+}
+
+export interface XpDoEstudante {
+  xpTotal: number
+  xpSemana: number
+  nivel: number
+  xpNivelAtual: number
+  xpProximoNivel: number
+}
+
+// F5-01 — R-X15/R-X17/R-X18/R-X19: XP total ≠ XP da semana; sem eventos → nível 1
+export async function lerXp(
+  db: Db,
+  usuarioId: string,
+  agora = new Date()
+): Promise<XpDoEstudante> {
+  const { inicio, fim } = semanaDe(agora)
+  const [saldo, semana] = await Promise.all([
+    db.saldoXp.findUnique({ where: { usuario_id: usuarioId } }),
+    db.eventoXp.aggregate({
+      where: { usuario_id: usuarioId, concedido_em: { gte: inicio, lt: fim } },
+      _sum: { xp: true },
+    }),
+  ])
+  const xpTotal = saldo?.xp_total ?? 0
+  const nivel = Math.max(saldo?.nivel ?? 1, nivelDe(xpTotal))
+  return {
+    xpTotal,
+    xpSemana: semana._sum.xp ?? 0,
+    nivel,
+    xpNivelAtual: xpParaNivel(nivel),
+    xpProximoNivel: xpParaNivel(nivel + 1),
+  }
+}
+
+// R-X23: nível exibido no perfil (estudante sem saldo → 1)
+export async function nivelDoEstudante(
+  db: Db,
+  usuarioId: string
+): Promise<number> {
+  const saldo = await db.saldoXp.findUnique({ where: { usuario_id: usuarioId } })
+  return Math.max(saldo?.nivel ?? 1, nivelDe(saldo?.xp_total ?? 0))
 }

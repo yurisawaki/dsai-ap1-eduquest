@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { Prisma } from '@prisma/client'
-import { eventoDeNota, nivelDe, xpParaNivel } from '../../src/server/servicos/xp'
+import { eventoDeNota, inicioDaSemana, nivelDe, semanaDe, xpParaNivel } from '../../src/server/servicos/xp'
 
 // SPEC/2026-10-02-xp-niveis.md (D7) — R-X5 e R-X16
 
@@ -41,5 +41,31 @@ describe('D7 — XP de nota (R-X5)', () => {
     expect([primeira.xp, segunda.xp, terceira.xp]).toEqual([11, 0, 19])
     expect(primeira.xp + segunda.xp + terceira.xp).toBe(30)
     expect(segunda.chave).toBe('nota:a:383')
+  })
+})
+
+describe('D7 — semana ISO em America/Sao_Paulo (R-X18)', () => {
+  const inicio = (iso: string) => inicioDaSemana(new Date(iso)).toISOString()
+
+  it('TX-12: domingo 23:59:59 local pertence à semana que começou na segunda anterior', () => {
+    expect(inicio('2026-10-04T23:59:59-03:00')).toBe('2026-09-28T03:00:00.000Z')
+    // já é segunda em UTC, mas ainda domingo no fuso local
+    expect(inicio('2026-10-05T02:59:59Z')).toBe('2026-09-28T03:00:00.000Z')
+  })
+
+  it('TX-12: segunda 00:00 local abre a semana seguinte', () => {
+    expect(inicio('2026-10-05T00:00:00-03:00')).toBe('2026-10-05T03:00:00.000Z')
+    expect(inicio('2026-10-07T15:30:00-03:00')).toBe('2026-10-05T03:00:00.000Z')
+  })
+
+  it('usa o deslocamento vigente na segunda, mesmo após mudança de horário na semana', () => {
+    // fim do horário de verão em 17/02/2019: segunda 11/02 ainda era UTC−2
+    expect(inicio('2019-02-17T12:00:00-03:00')).toBe('2019-02-11T02:00:00.000Z')
+  })
+
+  it('semanaDe: fim exclusivo é o início da semana seguinte', () => {
+    const { inicio: comeco, fim } = semanaDe(new Date('2026-10-07T15:30:00-03:00'))
+    expect(comeco.toISOString()).toBe('2026-10-05T03:00:00.000Z')
+    expect(fim.toISOString()).toBe('2026-10-12T03:00:00.000Z')
   })
 })

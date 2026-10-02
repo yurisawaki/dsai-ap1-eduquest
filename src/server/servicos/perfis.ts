@@ -2,12 +2,13 @@ import type { Papel } from '@prisma/client'
 import { erroNaoEncontrado, erroProibido, erroValidacao } from '../erros'
 import { prisma } from '../prisma'
 import { uuidValido } from '../tipos'
+import { nivelDoEstudante } from './xp'
 
 export interface RespostaPerfil {
   id: string
   papel: Papel
   bio?: string | null
-  nivel: null
+  nivel: number | null
   conquistas: []
   inventario: []
 }
@@ -18,11 +19,13 @@ interface UsuarioComPerfil {
   perfil_professor: { bio: string | null } | null
 }
 
-function montarResposta(usuario: UsuarioComPerfil): RespostaPerfil {
+// R-X23 (D7): estudante recebe o nível (inteiro); professor/admin, null.
+// R-X24: XP total e da semana nunca aparecem no perfil (só em F5-01, para o próprio estudante).
+async function montarResposta(usuario: UsuarioComPerfil): Promise<RespostaPerfil> {
   const base = {
     id: usuario.id,
     papel: usuario.papel,
-    nivel: null,
+    nivel: usuario.papel === 'estudante' ? await nivelDoEstudante(prisma, usuario.id) : null,
     conquistas: [] as [],
     inventario: [] as [],
   }

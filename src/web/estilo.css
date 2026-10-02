@@ -1253,3 +1253,67 @@ main.principal-estreito .titulo-pagina {
 .estado-vazio .lista-historico {
   margin-top: var(--esp-4);
 }
+
+/* ============================ XP e níveis (D7) ============================ */
+
+.aviso-xp {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--esp-2);
+  margin: var(--esp-3) 0;
+}
+
+.aviso-xp-ganho,
+.aviso-xp-nivel {
+  padding: var(--esp-1) var(--esp-3);
+  border-radius: var(--raio-pill);
+  font-size: var(--tam-sec);
+  font-weight: var(--peso-forte);
+}
+
+.aviso-xp-ganho {
+  background: var(--primaria-suave);
+  color: var(--primaria-escura);
+}
+
+.aviso-xp-nivel {
+  background: var(--aviso-suave);
+  color: var(--aviso);
+}
+
+.bloco-xp {
+  margin-bottom: var(--esp-6);
+}
+
+.bloco-xp h2 {
+  margin-bottom: var(--esp-3);
+}
+
+.metricas-xp {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--esp-4);
+  margin: 0 0 var(--esp-4);
+}
+
+.metricas-xp dt {
+  color: var(--texto-sec);
+  font-size: var(--tam-sec);
+}
+
+.metricas-xp dd {
+  margin: 0;
+  font-size: var(--tam-h2);
+  font-weight: var(--peso-forte);
+}
+
+.bloco-xp .progresso-preenchimento {
+  background: var(--primaria);
+}
+
+@media (max-width: 768px) {
+  .metricas-xp {
+    grid-template-columns: 1fr;
+  }
+}

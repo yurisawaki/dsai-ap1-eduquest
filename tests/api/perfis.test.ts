@@ -33,7 +33,7 @@ describe('T1.5 — perfis (contratos 7 e 8)', () => {
     expect(respostaEstudante.body).toEqual({
       id: estudante.id,
       papel: 'estudante',
-      nivel: null,
+      nivel: 1, // R-X23 (D7): estudante sem XP está no nível 1
       conquistas: [],
       inventario: [],
     })

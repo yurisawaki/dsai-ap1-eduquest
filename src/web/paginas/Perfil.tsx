@@ -11,8 +11,55 @@ export interface Perfil {
   inventario: unknown[]
 }
 
+// F5-01 (SPEC/2026-10-02-xp-niveis.md §6.1): calculado no servidor; o cliente só exibe
+export interface XpDoEstudante {
+  xpTotal: number
+  xpSemana: number
+  nivel: number
+  xpNivelAtual: number
+  xpProximoNivel: number
+}
+
 interface Props {
   sessao: Sessao
+}
+
+function BlocoXp({ xp }: { xp: XpDoEstudante }) {
+  const faixa = xp.xpProximoNivel - xp.xpNivelAtual
+  const percentual = Math.min(100, Math.max(0, Math.floor(((xp.xpTotal - xp.xpNivelAtual) * 100) / faixa)))
+  return (
+    <section className="bloco-xp">
+      <h2>Experiência</h2>
+      <dl className="metricas-xp">
+        <div>
+          <dt>Nível</dt>
+          <dd>{xp.nivel}</dd>
+        </div>
+        <div>
+          <dt>XP total</dt>
+          <dd>{xp.xpTotal}</dd>
+        </div>
+        <div>
+          <dt>XP desta semana</dt>
+          <dd>{xp.xpSemana}</dd>
+        </div>
+      </dl>
+      <div
+        className="progresso-barra"
+        role="progressbar"
+        aria-valuenow={percentual}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={`Progresso para o nível ${xp.nivel + 1}`}
+      >
+        <div className="progresso-preenchimento" style={{ width: `${percentual}%` }} />
+      </div>
+      <p className="progresso-texto">
+        {xp.xpTotal} / {xp.xpProximoNivel} XP — faltam {xp.xpProximoNivel - xp.xpTotal} XP para o nível{' '}
+        {xp.nivel + 1}
+      </p>
+    </section>
+  )
 }
 
 export function PaginaPerfil({ sessao }: Props) {
@@ -21,6 +68,7 @@ export function PaginaPerfil({ sessao }: Props) {
   const [bio, setBio] = useState('')
   const [mensagemBio, setMensagemBio] = useState<string | null>(null)
   const [erroBio, setErroBio] = useState<string | null>(null)
+  const [xp, setXp] = useState<XpDoEstudante | null>(null)
 
   const carregar = useCallback(async () => {
     try {
@@ -31,6 +79,14 @@ export function PaginaPerfil({ sessao }: Props) {
       setErro(mensagemDeErro(erroCarga))
     }
   }, [sessao.usuarioId])
+
+  // R-X24: XP total/semana só para o próprio estudante; falha aqui não impede o perfil
+  useEffect(() => {
+    if (sessao.papel !== 'estudante') return
+    api<XpDoEstudante>('/api/v1/xp')
+      .then(setXp)
+      .catch(() => setXp(null))
+  }, [sessao.papel, sessao.usuarioId])
 
   useEffect(() => {
     void carregar()
@@ -95,6 +151,8 @@ export function PaginaPerfil({ sessao }: Props) {
             <button type="submit">Salvar bio</button>
           </form>
         )}
+
+        {xp && <BlocoXp xp={xp} />}
 
         <div className="grade-perfil">
           <section>

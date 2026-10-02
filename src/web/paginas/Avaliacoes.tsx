@@ -1,5 +1,6 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react'
 import { api, mensagemDeErro } from '../cliente'
+import { AvisoXp, type XpDaAcao } from '../componentes/AvisoXp'
 
 interface QuestaoRef {
   questao: {
@@ -37,6 +38,7 @@ interface TentativaEnvio {
   tentativaId: string
   status: 'aguardando_correcao' | 'corrigida'
   nota: number | null
+  xp?: XpDaAcao
 }
 
 interface Props {
@@ -297,6 +299,7 @@ function FormularioAvaliacao({
         </p>
         <p>Status: {rotuloStatus(envioConcluido.status)}</p>
         <p>Nota: {envioConcluido.nota !== null ? formatarNota(envioConcluido.nota) : 'Disponível após correção'}</p>
+        <AvisoXp xp={envioConcluido.xp} />
       </div>
     )
   }

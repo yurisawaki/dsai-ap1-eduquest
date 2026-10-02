@@ -2,7 +2,8 @@ import { randomUUID } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
 import request from 'supertest'
 import { prisma } from '../../src/server/prisma'
-import { criarUsuarioComSessao } from '../utilidades/aplicacao'
+import { semanaDe } from '../../src/server/servicos/xp'
+import { app, criarUsuarioComSessao } from '../utilidades/aplicacao'
 
 // SPEC/2026-10-02-xp-niveis.md (D7) — T5.2: concessão de XP por ações verificadas
 
@@ -320,5 +321,103 @@ describe('T5.2 — concessão de XP por ações verificadas (SPEC D7)', () => {
     const novamente = await concluir(estudante.agente, aulaId)
     expect(novamente.status).toBe(201)
     expect(novamente.body.xp.ganho).toBe(10)
+  })
+})
+
+describe('T5.3 — consulta de XP, semana e nível no perfil (F5-01, SPEC D7)', () => {
+  it('TX-18: estudante sem eventos recebe {0, 0, 1, 0, 100}; professor/admin 403; sem sessão 401', async () => {
+    const estudante = await criarUsuarioComSessao('estudante')
+    const resposta = await estudante.agente.get('/api/v1/xp')
+    expect(resposta.status).toBe(200)
+    expect(resposta.body).toEqual({ xpTotal: 0, xpSemana: 0, nivel: 1, xpNivelAtual: 0, xpProximoNivel: 100 })
+
+    const professor = await criarUsuarioComSessao('professor')
+    const admin = await criarUsuarioComSessao('administrador')
+    expect((await professor.agente.get('/api/v1/xp')).status).toBe(403)
+    expect((await admin.agente.get('/api/v1/xp')).status).toBe(403)
+    expect((await request(app).get('/api/v1/xp')).status).toBe(401)
+  })
+
+  it('TX-18: reflete as concessões e a faixa do nível atual', async () => {
+    const { professor, moduloId } = await cursoPublicado()
+    const aulaId = await aulaPublicada(professor.agente, moduloId)
+    const estudante = await criarUsuarioComSessao('estudante')
+    await prisma.saldoXp.create({ data: { usuario_id: estudante.id, xp_total: 295, nivel: 2 } })
+    await concluir(estudante.agente, aulaId)
+
+    const resposta = await estudante.agente.get('/api/v1/xp')
+    expect(resposta.body).toEqual({ xpTotal: 305, xpSemana: 10, nivel: 3, xpNivelAtual: 300, xpProximoNivel: 600 })
+  })
+
+  it('TX-12/R-X18: XP da semana conta só a semana ISO corrente em America/Sao_Paulo', async () => {
+    const { cursoId } = await cursoPublicado()
+    const estudante = await criarUsuarioComSessao('estudante')
+    const { inicio } = semanaDe(new Date())
+    const evento = (xp: number, concedidoEm: Date) => ({
+      id: randomUUID(),
+      usuario_id: estudante.id,
+      origem: 'conclusao_aula' as const,
+      referencia_id: randomUUID(),
+      curso_id: cursoId,
+      chave: `aula:${randomUUID()}`,
+      xp,
+      concedido_em: concedidoEm,
+    })
+    await prisma.eventoXp.createMany({
+      data: [
+        evento(7, new Date(inicio.getTime() - 1)), // domingo 23:59:59.999 local: semana anterior
+        evento(11, inicio), // segunda 00:00 local: semana corrente
+        evento(13, new Date()),
+      ],
+    })
+    await prisma.saldoXp.create({ data: { usuario_id: estudante.id, xp_total: 31, nivel: 1 } })
+
+    const resposta = await estudante.agente.get('/api/v1/xp')
+    expect(resposta.body.xpTotal).toBe(31)
+    expect(resposta.body.xpSemana).toBe(24)
+  })
+
+  it('TX-11/R-X17/R-X20: excluir o curso não altera eventos, saldo nem nível', async () => {
+    const { professor, moduloId, cursoId } = await cursoPublicado()
+    const aulaId = await aulaPublicada(professor.agente, moduloId)
+    const questaoId = await questaoPublicada(professor.agente, moduloId)
+    const estudante = await criarUsuarioComSessao('estudante')
+    await prisma.saldoXp.create({ data: { usuario_id: estudante.id, xp_total: 90, nivel: 1 } })
+    await concluir(estudante.agente, aulaId)
+    await responder(estudante.agente, questaoId, CERTO)
+    const antes = await estudante.agente.get('/api/v1/xp')
+    expect(antes.body).toMatchObject({ xpTotal: 105, nivel: 2 })
+
+    expect((await professor.agente.delete(`/api/v1/cursos/${cursoId}`)).status).toBe(204)
+    expect(await prisma.eventoXp.count({ where: { usuario_id: estudante.id } })).toBe(2)
+    const depois = await estudante.agente.get('/api/v1/xp')
+    expect(depois.body).toEqual(antes.body)
+  })
+
+  it('R-X17: nível gravado nunca é rebaixado pela leitura', async () => {
+    const estudante = await criarUsuarioComSessao('estudante')
+    await prisma.saldoXp.create({ data: { usuario_id: estudante.id, xp_total: 120, nivel: 3 } })
+    const resposta = await estudante.agente.get('/api/v1/xp')
+    expect(resposta.body).toMatchObject({ nivel: 3, xpNivelAtual: 300, xpProximoNivel: 600 })
+    expect((await estudante.agente.get(`/api/v1/perfis/${estudante.id}`)).body.nivel).toBe(3)
+  })
+
+  it('TX-19/R-X23/R-X24: perfil mostra nível do estudante (null para professor) e nunca o XP', async () => {
+    const { professor, moduloId } = await cursoPublicado()
+    const aulaId = await aulaPublicada(professor.agente, moduloId)
+    const estudante = await criarUsuarioComSessao('estudante')
+    const outro = await criarUsuarioComSessao('estudante')
+    expect((await outro.agente.get(`/api/v1/perfis/${estudante.id}`)).body.nivel).toBe(1)
+
+    await prisma.saldoXp.create({ data: { usuario_id: estudante.id, xp_total: 95, nivel: 1 } })
+    await concluir(estudante.agente, aulaId)
+    const visto = await outro.agente.get(`/api/v1/perfis/${estudante.id}`)
+    expect(visto.status).toBe(200)
+    expect(visto.body.nivel).toBe(2)
+    expect(visto.body).not.toHaveProperty('xpTotal')
+    expect(visto.body).not.toHaveProperty('xpSemana')
+
+    const doProfessor = await estudante.agente.get(`/api/v1/perfis/${professor.id}`)
+    expect(doProfessor.body.nivel).toBeNull()
   })
 })
