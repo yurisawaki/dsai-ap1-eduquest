@@ -227,7 +227,8 @@ Antes de implementar qualquer funcionalidade:
 14. ~~T5.4 (configuração de XP F5-02–F5-05 e telas)~~ — feito (2026-10-02).
 15. ~~SPEC de D8 (T5.5, DP-18 parcela D8)~~ — feito (2026-10-02): `SPEC/2026-10-02-conquistas.md`.
 16. ~~T5.6 (desbloqueio de conquistas)~~ — feito (2026-10-02).
-17. **Próximo:** validar a F5 (T5.7) — relatório em `docs/validacao/F5.md`.
+17. ~~Validar a F5 (T5.7)~~ — feito (2026-10-02): `docs/validacao/F5.md` (F5 validada; divergência 403 × 404 em F5-04/F5-05 a decidir).
+18. **Próximo:** F6 — Missões e desafios (D9, D10), começando pelas SPECs de D9 (T6.1) e D10 (T6.3), que tratam a DP-18 nessas parcelas.
 
 ## 13. Git
 
